@@ -170,13 +170,13 @@ const messageHistory = [
 ]
 
 // helper function to group messages by date
-const groupMessagesByDate = (messages) => {
-  const groups = {}
-  messages.forEach((msg) => {
+function groupMessagesByDate(messages) {
+  const groups: Record<string, typeof messageHistory> = {}
+  for (const msg of messages) {
     const group = msg.date || 'today'
     if (!groups[group]) groups[group] = []
     groups[group].push(msg)
-  })
+  }
   return groups
 }
 
@@ -203,11 +203,15 @@ const Messages = () => {
     setMessage('')
   }
 
-  const handleSelectConversation = (conversation) => {
+  const handleSelectConversation = (conversation: any) => {
     setActiveConversation(conversation)
     if (isMobile) {
       setShowConversation(true)
     }
+  }
+
+  const handleBackToList = () => {
+    setShowConversation(false)
   }
 
   const filteredConversations = conversationsList.filter(
@@ -216,26 +220,25 @@ const Messages = () => {
       conversation.company.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleBackToList = () => {
-    setShowConversation(false)
-  }
-
   const groupedMessages = groupMessagesByDate(messageHistory)
 
   return (
     <div className="container px-4 py-6 md:py-8 h-[600px] overflow-hidden">
+      {/* Outer container with fixed height so the entire page doesn't scroll */}
       <div className="flex flex-col h-full border rounded-lg overflow-hidden max-w-6xl mx-auto">
+        {/* Two columns: conversation list (left) + conversation view (right) */}
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
           {/* conversation list */}
           <div
-            className={`md:col-span-4 lg:col-span-3 flex flex-col h-full overflow-y-auto ${
+            className={`md:col-span-4 lg:col-span-3 flex flex-col ${
               isMobile && showConversation ? 'hidden' : 'block'
             }`}
           >
+            {/* top bar for conversation list */}
             <div className="p-4 border-b">
               <h1 className="text-xl font-bold mb-4">messages</h1>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="search conversations..."
@@ -245,7 +248,8 @@ const Messages = () => {
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto">
+            {/* scrollable conversation list */}
+            <ScrollArea className="flex-1 overflow-y-auto">
               {filteredConversations.length > 0 ? (
                 <div className="divide-y">
                   {filteredConversations.map((conversation) => (
@@ -268,9 +272,13 @@ const Messages = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
                           <p className="font-medium text-sm truncate">{conversation.name}</p>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">{conversation.time}</span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {conversation.time}
+                          </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1 truncate">{conversation.company}</p>
+                        <p className="text-xs text-muted-foreground mb-1 truncate">
+                          {conversation.company}
+                        </p>
                         <div className="flex justify-between items-center">
                           <p className="text-xs truncate">{conversation.lastMessage}</p>
                           {conversation.unread > 0 && (
@@ -288,18 +296,19 @@ const Messages = () => {
                   <p className="text-sm text-muted-foreground">no conversations found</p>
                 </div>
               )}
-            </div>
+            </ScrollArea>
           </div>
+
           {/* conversation view */}
           <div
-            className={`md:col-span-8 lg:col-span-9 flex flex-col h-full ${
-              isMobile && !showConversation ? 'hidden' : 'block'
-            }`}
+            className={`md:col-span-8 lg:col-span-9 ${
+              isMobile && !showConversation ? 'hidden' : 'flex'
+            } flex-col h-full`}
           >
             {activeConversation ? (
               <div className="flex flex-col h-full">
-                {/* conversation header */}
-                <div className="p-3 md:p-4 border-b flex items-center justify-between bg-background z-10">
+                {/* conversation header (pinned top) */}
+                <div className="flex-none p-3 md:p-4 border-b flex items-center justify-between bg-background z-10">
                   <div className="flex items-center gap-3">
                     {isMobile && (
                       <Button variant="ghost" size="icon" onClick={handleBackToList} className="md:hidden">
@@ -355,9 +364,10 @@ const Messages = () => {
                     </DropdownMenu>
                   </div>
                 </div>
-                {/* messages scroll area with shorter max-height */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[350px]">
-                  {Object.entries(groupMessagesByDate(messageHistory)).map(([group, msgs]) => (
+
+                {/* messages list (flex-1, pinned input below) */}
+                <ScrollArea className="flex-1 min-h-0 p-4">
+                  {Object.entries(groupedMessages).map(([group, msgs]) => (
                     <div key={group}>
                       <div className="text-center mb-2">
                         <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
@@ -378,11 +388,13 @@ const Messages = () => {
                                 </Avatar>
                               )}
                               <div>
-                                <div className={`rounded-lg px-3 py-2 text-sm ${
-                                  msg.sender === 'me'
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted text-foreground'
-                                }`}>
+                                <div
+                                  className={`rounded-lg px-3 py-2 text-sm ${
+                                    msg.sender === 'me'
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted text-foreground'
+                                  }`}
+                                >
                                   {msg.content}
                                 </div>
                                 <div className="flex items-center mt-1 gap-1">
@@ -402,9 +414,10 @@ const Messages = () => {
                     </div>
                   ))}
                   <div ref={messageEndRef} />
-                </div>
-                {/* message input (reduced padding and gap) */}
-                <div className="p-2 border-t bg-background">
+                </ScrollArea>
+
+                {/* pinned input row (bottom) */}
+                <div className="flex-none p-2 border-t bg-background">
                   <div className="flex items-center gap-1">
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
@@ -423,7 +436,7 @@ const Messages = () => {
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'enter' && !e.shiftKey) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault()
                           handleSendMessage()
                         }
@@ -441,6 +454,7 @@ const Messages = () => {
                 </div>
               </div>
             ) : (
+              // fallback when no conversation is selected
               <div className="flex flex-col items-center justify-center h-full p-4">
                 <div className="max-w-md text-center">
                   <h3 className="text-lg font-medium mb-2">select a conversation</h3>
