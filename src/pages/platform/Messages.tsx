@@ -209,8 +209,8 @@ const Messages = () => {
   };
 
   return (
-    <div className="container h-[calc(100vh-4rem)] flex flex-col px-0 py-0 md:px-4 md:py-4">
-      <div className="flex flex-col h-full md:border md:rounded-lg overflow-hidden">
+    <div className="container px-4 py-6 md:py-8">
+      <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-12rem)] md:border md:rounded-lg overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
           {/* Conversation List */}
           <div className={`md:col-span-4 lg:col-span-3 flex flex-col 
