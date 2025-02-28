@@ -442,7 +442,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-20 md:hidden"
-          onClick={toggleSidebar}
+          onClick={toggleSidebar} 
           aria-hidden="true"
         />
       )}
