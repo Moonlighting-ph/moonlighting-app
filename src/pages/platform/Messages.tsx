@@ -1,91 +1,39 @@
-import * as React from "react"
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
-
-import { cn } from "@/lib/utils"
-
-const ScrollArea = React.forwardRef<
-  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref) => (
-  <ScrollAreaPrimitive.Root
-    ref={ref}
-    className={cn("relative overflow-hidden", className)}
-    {...props}
-  >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
-      {children}
-    </ScrollAreaPrimitive.Viewport>
-    <ScrollBar />
-    <ScrollAreaPrimitive.Corner />
-  </ScrollAreaPrimitive.Root>
-))
-ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
-
-const ScrollBar = React.forwardRef<
-  React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
->(({ className, orientation = "vertical", ...props }, ref) => (
-  <ScrollAreaPrimitive.ScrollAreaScrollbar
-    ref={ref}
-    orientation={orientation}
-    className={cn(
-      "flex touch-none select-none transition-colors",
-      orientation === "vertical" &&
-        "h-full w-2.5 border-l border-l-transparent p-[1px]",
-      orientation === "horizontal" &&
-        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
-      className
-    )}
-    {...props}
-  >
-    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
-  </ScrollAreaPrimitive.ScrollAreaScrollbar>
-))
-ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
-
-export { ScrollArea, ScrollBar }
-Now let's fix the Messages component to properly handle scrolling and alignment:
-
-src/pages/platform/Messages.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Search, 
-  Send, 
-  Paperclip, 
-  MoreVertical, 
-  Phone, 
-  Video, 
-  Info, 
-  Clock, 
-  Check, 
-  CheckCheck,
+import React, { useState, useRef, useEffect } from 'react'
+import {
+  Search,
+  Send,
+  Paperclip,
+  MoreVertical,
+  Phone,
+  Video,
   ArrowLeft,
   Image as ImageIcon,
-  File,
-  Smile,
-  Mic
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
+  Check,
+  CheckCheck,
+  Smile
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
-import { useIsMobile } from '@/hooks/use-mobile';
+} from '@/components/ui/dropdown-menu'
+import { Separator } from '@/components/ui/separator'
+import { useIsMobile } from '@/hooks/use-mobile'
 
-// Sample conversation data
+// sample conversation data
 const conversations = [
   {
     id: 'conv1',
     name: 'Dr. Maria Reyes',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&crop=faces',
+    avatar:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&crop=faces',
     role: 'Cardiologist',
     company: 'Metro Manila General Hospital',
     status: 'online',
@@ -96,12 +44,14 @@ const conversations = [
   },
   {
     id: 'conv2',
-    name: 'St. Luke\'s Medical Center HR',
-    avatar: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=200&h=200&fit=crop',
+    name: "St. Luke's Medical Center HR",
+    avatar:
+      'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=200&h=200&fit=crop',
     role: 'Human Resources',
-    company: 'St. Luke\'s Medical Center',
+    company: "St. Luke's Medical Center",
     status: 'offline',
-    lastMessage: 'Your application for the ICU Nurse position has been reviewed. We would like to invite you for an interview.',
+    lastMessage:
+      'Your application for the ICU Nurse position has been reviewed. We would like to invite you for an interview.',
     time: 'Yesterday',
     unread: 2,
     isActive: false
@@ -109,11 +59,13 @@ const conversations = [
   {
     id: 'conv3',
     name: 'Dr. James Santos',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&crop=faces',
+    avatar:
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&crop=faces',
     role: 'Neurosurgeon',
     company: 'Philippine General Hospital',
     status: 'offline',
-    lastMessage: 'Can you please provide your availability for the upcoming week?',
+    lastMessage:
+      'Can you please provide your availability for the upcoming week?',
     time: 'Yesterday',
     unread: 0,
     isActive: false
@@ -121,11 +73,13 @@ const conversations = [
   {
     id: 'conv4',
     name: 'Makati Medical Center',
-    avatar: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=200&h=200&fit=crop',
+    avatar:
+      'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=200&h=200&fit=crop',
     role: 'Recruitment Team',
     company: 'Makati Medical Center',
     status: 'offline',
-    lastMessage: 'Thank you for your interest in our hospital. We have reviewed your profile.',
+    lastMessage:
+      'Thank you for your interest in our hospital. We have reviewed your profile.',
     time: 'Monday',
     unread: 0,
     isActive: false
@@ -133,65 +87,72 @@ const conversations = [
   {
     id: 'conv5',
     name: 'Nurse Coordinator',
-    avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&crop=faces',
+    avatar:
+      'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&h=200&crop=faces',
     role: 'Nursing Department',
     company: 'Philippine Heart Center',
     status: 'online',
-    lastMessage: 'Hi Maria, your shift schedule for next week has been finalized.',
+    lastMessage:
+      'Hi Maria, your shift schedule for next week has been finalized.',
     time: 'Aug 15',
     unread: 1,
     isActive: false
   }
-];
+]
 
-// Sample messages for the active conversation
+// sample messages for the active conversation
 const messageHistory = [
   {
     id: 'msg1',
     sender: 'them',
-    content: 'Hello Maria, I hope you\'re doing well today.',
+    content: "Hello Maria, I hope you're doing well today.",
     time: '10:30 AM',
     read: true
   },
   {
     id: 'msg2',
     sender: 'them',
-    content: 'I wanted to discuss your upcoming shift at the cardiac care unit next week.',
+    content:
+      "I wanted to discuss your upcoming shift at the cardiac care unit next week.",
     time: '10:31 AM',
     read: true
   },
   {
     id: 'msg3',
     sender: 'me',
-    content: 'Hi Dr. Reyes, I\'m doing great. Thanks for reaching out.',
+    content: "Hi Dr. Reyes, I'm doing great. Thanks for reaching out.",
     time: '10:35 AM',
     read: true
   },
   {
     id: 'msg4',
     sender: 'me',
-    content: 'Yes, I\'m available for the shift. Is there anything specific I should prepare for?',
+    content:
+      "Yes, I'm available for the shift. Is there anything specific I should prepare for?",
     time: '10:36 AM',
     read: true
   },
   {
     id: 'msg5',
     sender: 'them',
-    content: 'We\'re expecting a patient transfer from another facility. They have a complex cardiac condition that will require close monitoring.',
+    content:
+      "We're expecting a patient transfer from another facility. They have a complex cardiac condition that will require close monitoring.",
     time: '10:40 AM',
     read: true
   },
   {
     id: 'msg6',
     sender: 'them',
-    content: 'I\'ll share the patient\'s details with you before your shift starts. Would you be able to come in 30 minutes early for a briefing?',
+    content:
+      "I'll share the patient's details with you before your shift starts. Would you be able to come in 30 minutes early for a briefing?",
     time: '10:42 AM',
     read: true
   },
   {
     id: 'msg7',
     sender: 'me',
-    content: 'Absolutely, I can come early. I appreciate the heads up about the patient transfer.',
+    content:
+      "Absolutely, I can come early. I appreciate the heads up about the patient transfer.",
     time: '10:44 AM',
     read: true
   },
@@ -202,68 +163,67 @@ const messageHistory = [
     time: '10:45 AM',
     read: false
   }
-];
+]
 
 const Messages = () => {
-  const [activeConversation, setActiveConversation] = useState(conversations[0]);
-  const [message, setMessage] = useState('');
-  const [conversationsList, setConversationsList] = useState(conversations);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showConversation, setShowConversation] = useState(false);
-  const messageEndRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile();
-  
-  useEffect(() => {
-    // Scroll to bottom of message list when messages change
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    
-    // Set active conversation on desktop, show conversation list on mobile
-    if (isMobile) {
-      setShowConversation(false);
-    }
-  }, [isMobile]);
-  
-  // Handle message send
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
-    
-    // In a real app, this would send the message to the server
-    console.log(`Sending message: ${message}`);
-    setMessage('');
-  };
+  const [activeConversation, setActiveConversation] = useState(conversations[0])
+  const [message, setMessage] = useState('')
+  const [conversationsList, setConversationsList] = useState(conversations)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [showConversation, setShowConversation] = useState(false)
+  const messageEndRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
 
-  // Handle conversation selection
-  const handleSelectConversation = (conversation) => {
-    setActiveConversation(conversation);
-    
-    // Set all messages in the conversation as read
-    // In a real app, this would update the read status on the server
-    
-    // On mobile, show the conversation
+  useEffect(() => {
+    // scroll to bottom of message list when messages change
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+
+    // set active conversation on desktop, show conversation list on mobile
     if (isMobile) {
-      setShowConversation(true);
+      setShowConversation(false)
     }
-  };
-  
-  // Filter conversations by search term
+  }, [isMobile])
+
+  // handle message send
+  const handleSendMessage = () => {
+    if (!message.trim()) return
+
+    // in a real app, this would send the message to the server
+    console.log(`sending message: ${message}`)
+    setMessage('')
+  }
+
+  // handle conversation selection
+  const handleSelectConversation = (conversation) => {
+    setActiveConversation(conversation)
+    // on mobile, show the conversation view
+    if (isMobile) {
+      setShowConversation(true)
+    }
+  }
+
+  // filter conversations by search term
   const filteredConversations = conversationsList.filter(
-    conversation => 
+    (conversation) =>
       conversation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       conversation.company.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  // Go back to conversation list on mobile
+  )
+
+  // go back to conversation list on mobile
   const handleBackToList = () => {
-    setShowConversation(false);
-  };
+    setShowConversation(false)
+  }
 
   return (
     <div className="container px-4 py-6 md:py-8">
       <div className="flex flex-col h-[calc(100vh-10rem)] max-h-[800px] border rounded-lg overflow-hidden max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
-          {/* Conversation List */}
-          <div className={`md:col-span-4 lg:col-span-3 flex flex-col h-full
-            ${isMobile && showConversation ? 'hidden' : 'block'}`}>
+          {/* conversation list */}
+          <div
+            className={`md:col-span-4 lg:col-span-3 flex flex-col h-full ${
+              isMobile && showConversation ? 'hidden' : 'block'
+            }`}
+          >
             <div className="p-4 border-b">
               <h1 className="text-xl font-bold mb-4">Messages</h1>
               <div className="relative">
@@ -277,21 +237,29 @@ const Messages = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-auto">
               {filteredConversations.length > 0 ? (
                 <div className="divide-y">
                   {filteredConversations.map((conversation) => (
                     <div
                       key={conversation.id}
-                      className={`p-3 md:p-4 flex gap-3 hover:bg-muted/50 cursor-pointer transition-colors
-                        ${conversation.id === activeConversation?.id ? 'bg-muted/50' : ''}`}
+                      className={`p-3 md:p-4 flex gap-3 hover:bg-muted/50 cursor-pointer transition-colors ${
+                        conversation.id === activeConversation?.id
+                          ? 'bg-muted/50'
+                          : ''
+                      }`}
                       onClick={() => handleSelectConversation(conversation)}
                     >
                       <div className="relative">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage src={conversation.avatar} alt={conversation.name} />
-                          <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
+                          <AvatarImage
+                            src={conversation.avatar}
+                            alt={conversation.name}
+                          />
+                          <AvatarFallback>
+                            {conversation.name.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
                         {conversation.status === 'online' && (
                           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-gray-800"></span>
@@ -299,12 +267,20 @@ const Messages = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
-                          <p className="font-medium text-sm truncate">{conversation.name}</p>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">{conversation.time}</span>
+                          <p className="font-medium text-sm truncate">
+                            {conversation.name}
+                          </p>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {conversation.time}
+                          </span>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1 truncate">{conversation.company}</p>
+                        <p className="text-xs text-muted-foreground mb-1 truncate">
+                          {conversation.company}
+                        </p>
                         <div className="flex justify-between items-center">
-                          <p className="text-xs truncate">{conversation.lastMessage}</p>
+                          <p className="text-xs truncate">
+                            {conversation.lastMessage}
+                          </p>
                           {conversation.unread > 0 && (
                             <span className="ml-2 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium">
                               {conversation.unread}
@@ -317,42 +293,64 @@ const Messages = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full p-4">
-                  <p className="text-sm text-muted-foreground">No conversations found</p>
+                  <p className="text-sm text-muted-foreground">
+                    no conversations found
+                  </p>
                 </div>
               )}
             </div>
           </div>
-          
-          {/* Conversation */}
-          <div className={`md:col-span-8 lg:col-span-9 flex flex-col h-full
-            ${isMobile && !showConversation ? 'hidden' : 'block'}`}>
+
+          {/* conversation */}
+          <div
+            className={`md:col-span-8 lg:col-span-9 flex flex-col h-full ${
+              isMobile && !showConversation ? 'hidden' : 'block'
+            }`}
+          >
             {activeConversation ? (
-              <>
-                {/* Conversation Header - Fixed at the top */}
+              <div className="flex flex-col h-full">
+                {/* conversation header - fixed at the top */}
                 <div className="p-3 md:p-4 border-b flex items-center justify-between bg-background z-10">
                   <div className="flex items-center gap-3">
                     {isMobile && (
-                      <Button variant="ghost" size="icon" onClick={handleBackToList} className="md:hidden">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleBackToList}
+                        className="md:hidden"
+                      >
                         <ArrowLeft className="h-5 w-5" />
                       </Button>
                     )}
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={activeConversation.avatar} alt={activeConversation.name} />
-                      <AvatarFallback>{activeConversation.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage
+                        src={activeConversation.avatar}
+                        alt={activeConversation.name}
+                      />
+                      <AvatarFallback>
+                        {activeConversation.name.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-sm">{activeConversation.name}</p>
+                      <p className="font-medium text-sm">
+                        {activeConversation.name}
+                      </p>
                       <div className="flex items-center text-xs text-muted-foreground">
-                        <span className="truncate">{activeConversation.role} • {activeConversation.company}</span>
+                        <span className="truncate">
+                          {activeConversation.role} • {activeConversation.company}
+                        </span>
                         {activeConversation.status === 'online' && (
-                          <Badge variant="outline" className="ml-2 h-auto py-0 px-1.5 text-[10px] bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800">
-                            Online
+                          <Badge
+                            variant="outline"
+                            className="ml-2 h-auto py-0 px-1.5 text-[10px] bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800"
+                          >
+                            online
                           </Badge>
                         )}
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="hidden md:flex">
                       <Phone className="h-4 w-4" />
@@ -368,58 +366,69 @@ const Messages = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem className="text-xs cursor-pointer">
-                          View Profile
+                          view profile
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-xs cursor-pointer">
-                          Search in Conversation
+                          search in conversation
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-xs cursor-pointer text-destructive">
-                          Delete Conversation
+                          delete conversation
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                 </div>
-                
-                {/* Message History - Using a standard div with overflow for scrolling */}
-                <div className="flex-1 overflow-y-auto p-4 h-0">
+
+                {/* message history - scrollable area */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-4">
                   <div className="space-y-4">
                     <div className="text-center">
                       <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
-                        Today
+                        today
                       </span>
                     </div>
-                    
                     {messageHistory.map((msg) => (
-                      <div 
-                        key={msg.id} 
-                        className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+                      <div
+                        key={msg.id}
+                        className={`flex ${
+                          msg.sender === 'me'
+                            ? 'justify-end'
+                            : 'justify-start'
+                        }`}
                       >
                         <div className="flex gap-2 max-w-[80%]">
                           {msg.sender === 'them' && (
                             <Avatar className="h-8 w-8 mt-1">
-                              <AvatarImage src={activeConversation.avatar} alt={activeConversation.name} />
-                              <AvatarFallback>{activeConversation.name.charAt(0)}</AvatarFallback>
+                              <AvatarImage
+                                src={activeConversation.avatar}
+                                alt={activeConversation.name}
+                              />
+                              <AvatarFallback>
+                                {activeConversation.name.charAt(0)}
+                              </AvatarFallback>
                             </Avatar>
                           )}
                           <div>
-                            <div 
-                              className={`rounded-lg px-3 py-2 text-sm
-                                ${msg.sender === 'me' 
-                                  ? 'bg-primary text-primary-foreground' 
+                            <div
+                              className={`rounded-lg px-3 py-2 text-sm ${
+                                msg.sender === 'me'
+                                  ? 'bg-primary text-primary-foreground'
                                   : 'bg-muted text-foreground'
-                                }`}
+                              }`}
                             >
                               {msg.content}
                             </div>
                             <div className="flex items-center mt-1 gap-1">
-                              <span className="text-[10px] text-muted-foreground">{msg.time}</span>
-                              {msg.sender === 'me' && (
-                                msg.read 
-                                  ? <CheckCheck className="h-3 w-3 text-primary" /> 
-                                  : <Check className="h-3 w-3 text-muted-foreground" />
-                              )}
+                              <span className="text-[10px] text-muted-foreground">
+                                {msg.time}
+                              </span>
+                              {msg.sender === 'me' &&
+                                (msg.read ? (
+                                  <CheckCheck className="h-3 w-3 text-primary" />
+                                ) : (
+                                  <Check className="h-3 w-3 text-muted-foreground" />
+                                ))}
                             </div>
                           </div>
                         </div>
@@ -428,36 +437,48 @@ const Messages = () => {
                     <div ref={messageEndRef} />
                   </div>
                 </div>
-                
-                {/* Message Input - Fixed at the bottom */}
+
+                {/* message input - fixed at the bottom */}
                 <div className="p-3 md:p-4 border-t bg-background">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 md:h-10 md:w-10"
+                      >
                         <Smile className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 md:h-10 md:w-10"
+                      >
                         <Paperclip className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 hidden md:flex">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 md:h-10 md:w-10 hidden md:flex"
+                      >
                         <ImageIcon className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                       </Button>
                     </div>
                     <Input
-                      placeholder="Type a message..."
+                      placeholder="type a message..."
                       className="text-sm h-8 md:h-10"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
+                        if (e.key === 'enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSendMessage()
                         }
                       }}
                     />
-                    <Button 
-                      size="icon" 
-                      className="h-8 w-8 md:h-10 md:w-10" 
+                    <Button
+                      size="icon"
+                      className="h-8 w-8 md:h-10 md:w-10"
                       onClick={handleSendMessage}
                       disabled={!message.trim()}
                     >
@@ -465,13 +486,15 @@ const Messages = () => {
                     </Button>
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-4">
                 <div className="max-w-md text-center">
-                  <h3 className="text-lg font-medium mb-2">Select a conversation</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    select a conversation
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    Choose a conversation from the list to start messaging.
+                    choose a conversation from the list to start messaging.
                   </p>
                 </div>
               </div>
@@ -480,7 +503,7 @@ const Messages = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Messages;
+export default Messages
