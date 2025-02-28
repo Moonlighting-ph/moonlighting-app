@@ -454,7 +454,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <h3 className="font-medium">Email Notifications</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Email Notifications</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -501,7 +501,7 @@ const Settings = () => {
               <Separator />
               
               <div className="space-y-4">
-                <h3 className="font-medium">Push Notifications</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Push Notifications</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
@@ -538,7 +538,7 @@ const Settings = () => {
               <Separator />
               
               <div className="space-y-4">
-                <h3 className="font-medium">Notification Delivery</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Notification Delivery</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 border rounded-lg">
                     <div className="flex items-center mb-4">
@@ -585,7 +585,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <h3 className="font-medium">Your Payment Methods</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Your Payment Methods</h3>
                 <div className="space-y-3">
                   <div className="p-4 border rounded-lg flex items-center justify-between">
                     <div className="flex items-center">
@@ -616,7 +616,7 @@ const Settings = () => {
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium">Billing History</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground">Billing History</h3>
                   <Button variant="outline" size="sm">
                     Download All
                   </Button>
@@ -680,7 +680,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <h3 className="font-medium">Password</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Password</h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -699,7 +699,7 @@ const Settings = () => {
               <Separator />
               
               <div className="space-y-4">
-                <h3 className="font-medium">Two-Factor Authentication</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Two-Factor Authentication</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   Add an extra layer of security to your account by enabling two-factor authentication
                 </p>
@@ -738,7 +738,7 @@ const Settings = () => {
               <Separator />
               
               <div className="space-y-4">
-                <h3 className="font-medium">Login Sessions</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Login Sessions</h3>
                 <p className="text-sm text-muted-foreground mb-4">
                   These are the devices that are currently logged into your account
                 </p>
