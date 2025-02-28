@@ -1,3 +1,52 @@
+import * as React from "react"
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+
+import { cn } from "@/lib/utils"
+
+const ScrollArea = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
+>(({ className, children, ...props }, ref) => (
+  <ScrollAreaPrimitive.Root
+    ref={ref}
+    className={cn("relative overflow-hidden", className)}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+      {children}
+    </ScrollAreaPrimitive.Viewport>
+    <ScrollBar />
+    <ScrollAreaPrimitive.Corner />
+  </ScrollAreaPrimitive.Root>
+))
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
+
+const ScrollBar = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
+>(({ className, orientation = "vertical", ...props }, ref) => (
+  <ScrollAreaPrimitive.ScrollAreaScrollbar
+    ref={ref}
+    orientation={orientation}
+    className={cn(
+      "flex touch-none select-none transition-colors",
+      orientation === "vertical" &&
+        "h-full w-2.5 border-l border-l-transparent p-[1px]",
+      orientation === "horizontal" &&
+        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+      className
+    )}
+    {...props}
+  >
+    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+  </ScrollAreaPrimitive.ScrollAreaScrollbar>
+))
+ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
+
+export { ScrollArea, ScrollBar }
+Now let's fix the Messages component to properly handle scrolling and alignment:
+
+src/pages/platform/Messages.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Search, 
@@ -229,7 +278,7 @@ const Messages = () => {
               </div>
             </div>
             
-            <ScrollArea className="flex-1">
+            <div className="flex-1 overflow-auto">
               {filteredConversations.length > 0 ? (
                 <div className="divide-y">
                   {filteredConversations.map((conversation) => (
@@ -271,7 +320,7 @@ const Messages = () => {
                   <p className="text-sm text-muted-foreground">No conversations found</p>
                 </div>
               )}
-            </ScrollArea>
+            </div>
           </div>
           
           {/* Conversation */}
@@ -280,7 +329,7 @@ const Messages = () => {
             {activeConversation ? (
               <>
                 {/* Conversation Header - Fixed at the top */}
-                <div className="p-3 md:p-4 border-b flex items-center justify-between sticky top-0 bg-background z-10">
+                <div className="p-3 md:p-4 border-b flex items-center justify-between bg-background z-10">
                   <div className="flex items-center gap-3">
                     {isMobile && (
                       <Button variant="ghost" size="icon" onClick={handleBackToList} className="md:hidden">
@@ -333,9 +382,9 @@ const Messages = () => {
                   </div>
                 </div>
                 
-                {/* Message History - Using ScrollArea for inner scroll, with proper padding for content */}
-                <ScrollArea className="flex-1 h-0">
-                  <div className="py-4 px-4 space-y-4">
+                {/* Message History - Using a standard div with overflow for scrolling */}
+                <div className="flex-1 overflow-y-auto p-4 h-0">
+                  <div className="space-y-4">
                     <div className="text-center">
                       <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
                         Today
@@ -378,10 +427,10 @@ const Messages = () => {
                     ))}
                     <div ref={messageEndRef} />
                   </div>
-                </ScrollArea>
+                </div>
                 
                 {/* Message Input - Fixed at the bottom */}
-                <div className="p-3 md:p-4 border-t sticky bottom-0 bg-background">
+                <div className="p-3 md:p-4 border-t bg-background">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
