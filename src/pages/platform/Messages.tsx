@@ -210,10 +210,10 @@ const Messages = () => {
 
   return (
     <div className="container px-4 py-6 md:py-8">
-      <div className="flex flex-col h-[calc(100vh-10rem)] max-h-[800px] md:h-[calc(100vh-12rem)] md:border md:rounded-lg overflow-hidden max-w-6xl mx-auto">
+      <div className="flex flex-col h-[calc(100vh-10rem)] max-h-[800px] border rounded-lg overflow-hidden max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
           {/* Conversation List */}
-          <div className={`md:col-span-4 lg:col-span-3 flex flex-col 
+          <div className={`md:col-span-4 lg:col-span-3 flex flex-col h-full
             ${isMobile && showConversation ? 'hidden' : 'block'}`}>
             <div className="p-4 border-b">
               <h1 className="text-xl font-bold mb-4">Messages</h1>
@@ -279,8 +279,8 @@ const Messages = () => {
             ${isMobile && !showConversation ? 'hidden' : 'block'}`}>
             {activeConversation ? (
               <>
-                {/* Conversation Header */}
-                <div className="p-3 md:p-4 border-b flex items-center justify-between">
+                {/* Conversation Header - Fixed at the top */}
+                <div className="p-3 md:p-4 border-b flex items-center justify-between sticky top-0 bg-background z-10">
                   <div className="flex items-center gap-3">
                     {isMobile && (
                       <Button variant="ghost" size="icon" onClick={handleBackToList} className="md:hidden">
@@ -333,8 +333,8 @@ const Messages = () => {
                   </div>
                 </div>
                 
-                {/* Message History - Using ScrollArea for inner scroll */}
-                <ScrollArea className="flex-1">
+                {/* Message History - Using ScrollArea for inner scroll, with proper padding for content */}
+                <ScrollArea className="flex-1 h-0">
                   <div className="py-4 px-4 space-y-4">
                     <div className="text-center">
                       <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
@@ -380,8 +380,8 @@ const Messages = () => {
                   </div>
                 </ScrollArea>
                 
-                {/* Message Input */}
-                <div className="p-3 md:p-4 border-t">
+                {/* Message Input - Fixed at the bottom */}
+                <div className="p-3 md:p-4 border-t sticky bottom-0 bg-background">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
