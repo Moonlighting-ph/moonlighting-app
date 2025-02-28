@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react';
+import { useState, ReactNode, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -18,7 +18,9 @@ import {
   Info,
   MessageCircle,
   Clock,
-  ChevronRight
+  ChevronRight,
+  ChevronLeft,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,6 +98,8 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationList, setNotificationList] = useState(notifications);
+  // Add state for the collapsible sidebar
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
   
@@ -110,6 +114,11 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
   // Toggle sidebar on mobile
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  // Toggle sidebar collapse state
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
   
   // Mark all notifications as read
@@ -150,6 +159,13 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
         return <Info className="h-5 w-5 text-primary" />;
     }
   };
+
+  // Use effect to handle mobile layout
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  }, [isMobile]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -313,78 +329,93 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-background border-r transition-transform duration-300 ease-in-out z-30 ${
+        className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-background border-r transition-all duration-300 ease-in-out z-30 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        } ${
+          sidebarCollapsed ? "md:w-[4.5rem]" : "md:w-64"
         }`}
       >
-        <div className="flex flex-col h-full py-4">
+        <div className="flex flex-col h-full py-4 relative">
+          {/* Collapse toggle button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="absolute right-0 top-2 -mr-3 bg-background border border-border rounded-full hidden md:flex"
+            onClick={toggleSidebarCollapse}
+          >
+            {sidebarCollapsed ? 
+              <ChevronRight className="h-4 w-4" /> : 
+              <ChevronLeft className="h-4 w-4" />
+            }
+          </Button>
+
           <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-sm font-semibold">Dashboard</h2>
+            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? "opacity-0" : ""}`}>Dashboard</h2>
             <div className="space-y-1">
               <Button
                 variant={isActive("/platform") && !isActive("/platform/jobs") && !isActive("/platform/messages") ? "secondary" : "ghost"}
-                className="w-full justify-start text-sm h-9"
+                className={`${sidebarCollapsed ? "justify-center" : "justify-start"} w-full text-sm h-9`}
                 asChild
               >
                 <Link to="/platform">
-                  <LayoutDashboard className="h-4 w-4 mr-3" />
-                  Dashboard
+                  <LayoutDashboard className={`h-4 w-4 ${sidebarCollapsed ? "" : "mr-3"}`} />
+                  {!sidebarCollapsed && "Dashboard"}
                 </Link>
               </Button>
               <Button
                 variant={isActive("/platform/jobs") ? "secondary" : "ghost"}
-                className="w-full justify-start text-sm h-9"
+                className={`${sidebarCollapsed ? "justify-center" : "justify-start"} w-full text-sm h-9`}
                 asChild
               >
                 <Link to="/platform/jobs">
-                  <Briefcase className="h-4 w-4 mr-3" />
-                  Jobs
+                  <Briefcase className={`h-4 w-4 ${sidebarCollapsed ? "" : "mr-3"}`} />
+                  {!sidebarCollapsed && "Jobs"}
                 </Link>
               </Button>
               <Button
                 variant={isActive("/platform/messages") ? "secondary" : "ghost"}
-                className="w-full justify-start text-sm h-9"
+                className={`${sidebarCollapsed ? "justify-center" : "justify-start"} w-full text-sm h-9`}
                 asChild
               >
                 <Link to="/platform/messages">
-                  <MessageSquare className="h-4 w-4 mr-3" />
-                  Messages
+                  <MessageSquare className={`h-4 w-4 ${sidebarCollapsed ? "" : "mr-3"}`} />
+                  {!sidebarCollapsed && "Messages"}
                 </Link>
               </Button>
             </div>
           </div>
           
           <div className="px-3 py-2 mt-1">
-            <h2 className="mb-2 px-4 text-sm font-semibold">Account</h2>
+            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? "opacity-0" : ""}`}>Account</h2>
             <div className="space-y-1">
               <Button
                 variant={isActive("/platform/professional-profile") ? "secondary" : "ghost"}
-                className="w-full justify-start text-sm h-9"
+                className={`${sidebarCollapsed ? "justify-center" : "justify-start"} w-full text-sm h-9`}
                 asChild
               >
                 <Link to="/platform/professional-profile">
-                  <User className="h-4 w-4 mr-3" />
-                  My Profile
+                  <User className={`h-4 w-4 ${sidebarCollapsed ? "" : "mr-3"}`} />
+                  {!sidebarCollapsed && "My Profile"}
                 </Link>
               </Button>
               <Button
                 variant={isActive("/platform/hospital-profile") ? "secondary" : "ghost"}
-                className="w-full justify-start text-sm h-9"
+                className={`${sidebarCollapsed ? "justify-center" : "justify-start"} w-full text-sm h-9`}
                 asChild
               >
                 <Link to="/platform/hospital-profile">
-                  <Building className="h-4 w-4 mr-3" />
-                  Hospital Profile
+                  <Building className={`h-4 w-4 ${sidebarCollapsed ? "" : "mr-3"}`} />
+                  {!sidebarCollapsed && "Hospital Profile"}
                 </Link>
               </Button>
               <Button
                 variant={isActive("/platform/settings") ? "secondary" : "ghost"}
-                className="w-full justify-start text-sm h-9"
+                className={`${sidebarCollapsed ? "justify-center" : "justify-start"} w-full text-sm h-9`}
                 asChild
               >
                 <Link to="/platform/settings">
-                  <Settings className="h-4 w-4 mr-3" />
-                  Settings
+                  <Settings className={`h-4 w-4 ${sidebarCollapsed ? "" : "mr-3"}`} />
+                  {!sidebarCollapsed && "Settings"}
                 </Link>
               </Button>
             </div>
@@ -393,17 +424,19 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
           <div className="mt-auto px-3 py-2">
             <Button
               variant="ghost"
-              className="w-full justify-start text-sm h-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+              className={`w-full ${sidebarCollapsed ? "justify-center" : "justify-start"} text-sm h-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20`}
             >
-              <LogOut className="h-4 w-4 mr-3" />
-              Sign Out
+              <LogOut className={`h-4 w-4 ${sidebarCollapsed ? "" : "mr-3"}`} />
+              {!sidebarCollapsed && "Sign Out"}
             </Button>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="pt-16 md:ml-64 min-h-screen">
+      <main className={`pt-16 transition-all duration-300 ${
+        sidebarCollapsed ? "md:ml-[4.5rem]" : "md:ml-64"
+      } min-h-screen`}>
         <div className="w-full max-w-7xl mx-auto">
           {children}
         </div>
