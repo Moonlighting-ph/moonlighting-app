@@ -220,21 +220,19 @@ const Messages = () => {
       conversation.company.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const groupedMessages = groupMessagesByDate(messageHistory)
+  const groupedMessages = groupMessagesByDate(messageHistory); // note the semicolon
 
   return (
     <div className="container px-4 py-6 md:py-8 h-[600px] overflow-hidden">
-      {/* Outer container with fixed height so the entire page doesn't scroll */}
+      {/* Fixed-height outer container */}
       <div className="flex flex-col h-full border rounded-lg overflow-hidden max-w-6xl mx-auto">
-        {/* Two columns: conversation list (left) + conversation view (right) */}
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
-          {/* conversation list */}
+          {/* Conversation list (left) */}
           <div
             className={`md:col-span-4 lg:col-span-3 flex flex-col ${
               isMobile && showConversation ? 'hidden' : 'block'
             }`}
           >
-            {/* top bar for conversation list */}
             <div className="p-4 border-b">
               <h1 className="text-xl font-bold mb-4">messages</h1>
               <div className="relative">
@@ -248,7 +246,6 @@ const Messages = () => {
                 />
               </div>
             </div>
-            {/* scrollable conversation list */}
             <ScrollArea className="flex-1 overflow-y-auto">
               {filteredConversations.length > 0 ? (
                 <div className="divide-y">
@@ -298,16 +295,15 @@ const Messages = () => {
               )}
             </ScrollArea>
           </div>
-
-          {/* conversation view */}
+          {/* Conversation view (right) */}
           <div
-            className={`md:col-span-8 lg:col-span-9 ${
+            className={`md:col-span-8 lg:col-span-9 flex flex-col h-full ${
               isMobile && !showConversation ? 'hidden' : 'flex'
-            } flex-col h-full`}
+            }`}
           >
             {activeConversation ? (
               <div className="flex flex-col h-full">
-                {/* conversation header (pinned top) */}
+                {/* Conversation header (pinned) */}
                 <div className="flex-none p-3 md:p-4 border-b flex items-center justify-between bg-background z-10">
                   <div className="flex items-center gap-3">
                     {isMobile && (
@@ -364,10 +360,9 @@ const Messages = () => {
                     </DropdownMenu>
                   </div>
                 </div>
-
-                {/* messages list (flex-1, pinned input below) */}
+                {/* Messages list (scrollable) */}
                 <ScrollArea className="flex-1 min-h-0 p-4">
-                  {Object.entries(groupedMessages).map(([group, msgs]) => (
+                  {Object.entries(groupMessagesByDate(messageHistory)).map(([group, msgs]) => (
                     <div key={group}>
                       <div className="text-center mb-2">
                         <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
@@ -388,13 +383,11 @@ const Messages = () => {
                                 </Avatar>
                               )}
                               <div>
-                                <div
-                                  className={`rounded-lg px-3 py-2 text-sm ${
-                                    msg.sender === 'me'
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'bg-muted text-foreground'
-                                  }`}
-                                >
+                                <div className={`rounded-lg px-3 py-2 text-sm ${
+                                  msg.sender === 'me'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-foreground'
+                                }`}>
                                   {msg.content}
                                 </div>
                                 <div className="flex items-center mt-1 gap-1">
@@ -415,8 +408,7 @@ const Messages = () => {
                   ))}
                   <div ref={messageEndRef} />
                 </ScrollArea>
-
-                {/* pinned input row (bottom) */}
+                {/* Pinned input row */}
                 <div className="flex-none p-2 border-t bg-background">
                   <div className="flex items-center gap-1">
                     <div className="flex gap-1">
@@ -454,7 +446,6 @@ const Messages = () => {
                 </div>
               </div>
             ) : (
-              // fallback when no conversation is selected
               <div className="flex flex-col items-center justify-center h-full p-4">
                 <div className="max-w-md text-center">
                   <h3 className="text-lg font-medium mb-2">select a conversation</h3>
