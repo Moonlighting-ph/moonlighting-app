@@ -223,12 +223,12 @@ const Messages = () => {
   const groupedMessages = groupMessagesByDate(messageHistory)
 
   return (
-    <div className="container px-4 py-6 md:py-8 h-full overflow-hidden">
+    <div className="container px-4 py-6 md:py-8 h-[600px] overflow-hidden">
       <div className="flex flex-col h-full border rounded-lg overflow-hidden max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
           {/* conversation list */}
           <div
-            className={`md:col-span-4 lg:col-span-3 flex flex-col h-full ${
+            className={`md:col-span-4 lg:col-span-3 flex flex-col h-full overflow-y-auto ${
               isMobile && showConversation ? 'hidden' : 'block'
             }`}
           >
@@ -355,8 +355,8 @@ const Messages = () => {
                     </DropdownMenu>
                   </div>
                 </div>
-                {/* messages scroll area with max-height */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[500px]">
+                {/* messages scroll area with shorter max-height */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[350px]">
                   {Object.entries(groupMessagesByDate(messageHistory)).map(([group, msgs]) => (
                     <div key={group}>
                       <div className="text-center mb-2">
@@ -448,13 +448,4 @@ const Messages = () => {
                     choose a conversation from the list to start messaging.
                   </p>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default Messages
+    
