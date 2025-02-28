@@ -63,8 +63,7 @@ const conversations = [
     role: 'Neurosurgeon',
     company: 'Philippine General Hospital',
     status: 'offline',
-    lastMessage:
-      'Can you please provide your availability for the upcoming week?',
+    lastMessage: 'Can you please provide your availability for the upcoming week?',
     time: 'Yesterday',
     unread: 0,
     isActive: false
@@ -77,8 +76,7 @@ const conversations = [
     role: 'Recruitment Team',
     company: 'Makati Medical Center',
     status: 'offline',
-    lastMessage:
-      'Thank you for your interest in our hospital. We have reviewed your profile.',
+    lastMessage: 'Thank you for your interest in our hospital. We have reviewed your profile.',
     time: 'Monday',
     unread: 0,
     isActive: false
@@ -91,15 +89,14 @@ const conversations = [
     role: 'Nursing Department',
     company: 'Philippine Heart Center',
     status: 'online',
-    lastMessage:
-      'Hi Maria, your shift schedule for next week has been finalized.',
+    lastMessage: 'Hi Maria, your shift schedule for next week has been finalized.',
     time: 'Aug 15',
     unread: 1,
     isActive: false
   }
 ]
 
-// sample messages for the active conversation, now with a date property
+// sample messages with a date property
 const messageHistory = [
   {
     id: 'msg1',
@@ -193,51 +190,41 @@ const Messages = () => {
   const isMobile = useIsMobile()
 
   useEffect(() => {
-    // scroll to bottom of message list when messages change
+    // scroll to bottom when messages change
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-
-    // set active conversation on desktop, show conversation list on mobile
     if (isMobile) {
       setShowConversation(false)
     }
   }, [isMobile])
 
-  // handle message send
   const handleSendMessage = () => {
     if (!message.trim()) return
-
-    // in a real app, this would send the message to the server
     console.log(`sending message: ${message}`)
     setMessage('')
   }
 
-  // handle conversation selection
   const handleSelectConversation = (conversation) => {
     setActiveConversation(conversation)
-    // on mobile, show the conversation view
     if (isMobile) {
       setShowConversation(true)
     }
   }
 
-  // filter conversations by search term
   const filteredConversations = conversationsList.filter(
     (conversation) =>
       conversation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       conversation.company.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // go back to conversation list on mobile
   const handleBackToList = () => {
     setShowConversation(false)
   }
 
-  // group messages by date
   const groupedMessages = groupMessagesByDate(messageHistory)
 
   return (
-    <div className="container px-4 py-6 md:py-8">
-      <div className="flex flex-col h-[calc(100vh-10rem)] max-h-[800px] border rounded-lg overflow-hidden max-w-6xl mx-auto">
+    <div className="container px-4 py-6 md:py-8 h-full">
+      <div className="flex flex-col h-full border rounded-lg overflow-hidden max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
           {/* conversation list */}
           <div
@@ -258,7 +245,6 @@ const Messages = () => {
                 />
               </div>
             </div>
-
             <div className="flex-1 overflow-auto">
               {filteredConversations.length > 0 ? (
                 <div className="divide-y">
@@ -266,21 +252,14 @@ const Messages = () => {
                     <div
                       key={conversation.id}
                       className={`p-3 md:p-4 flex gap-3 hover:bg-muted/50 cursor-pointer transition-colors ${
-                        conversation.id === activeConversation?.id
-                          ? 'bg-muted/50'
-                          : ''
+                        conversation.id === activeConversation?.id ? 'bg-muted/50' : ''
                       }`}
                       onClick={() => handleSelectConversation(conversation)}
                     >
                       <div className="relative">
                         <Avatar className="h-12 w-12">
-                          <AvatarImage
-                            src={conversation.avatar}
-                            alt={conversation.name}
-                          />
-                          <AvatarFallback>
-                            {conversation.name.charAt(0)}
-                          </AvatarFallback>
+                          <AvatarImage src={conversation.avatar} alt={conversation.name} />
+                          <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         {conversation.status === 'online' && (
                           <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-gray-800"></span>
@@ -288,20 +267,12 @@ const Messages = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between mb-1">
-                          <p className="font-medium text-sm truncate">
-                            {conversation.name}
-                          </p>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {conversation.time}
-                          </span>
+                          <p className="font-medium text-sm truncate">{conversation.name}</p>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">{conversation.time}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1 truncate">
-                          {conversation.company}
-                        </p>
+                        <p className="text-xs text-muted-foreground mb-1 truncate">{conversation.company}</p>
                         <div className="flex justify-between items-center">
-                          <p className="text-xs truncate">
-                            {conversation.lastMessage}
-                          </p>
+                          <p className="text-xs truncate">{conversation.lastMessage}</p>
                           {conversation.unread > 0 && (
                             <span className="ml-2 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium">
                               {conversation.unread}
@@ -314,15 +285,12 @@ const Messages = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full p-4">
-                  <p className="text-sm text-muted-foreground">
-                    no conversations found
-                  </p>
+                  <p className="text-sm text-muted-foreground">no conversations found</p>
                 </div>
               )}
             </div>
           </div>
-
-          {/* conversation */}
+          {/* conversation view */}
           <div
             className={`md:col-span-8 lg:col-span-9 flex flex-col h-full ${
               isMobile && !showConversation ? 'hidden' : 'block'
@@ -330,32 +298,20 @@ const Messages = () => {
           >
             {activeConversation ? (
               <div className="flex flex-col h-full">
-                {/* conversation header - fixed at the top */}
+                {/* conversation header */}
                 <div className="p-3 md:p-4 border-b flex items-center justify-between bg-background z-10">
                   <div className="flex items-center gap-3">
                     {isMobile && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleBackToList}
-                        className="md:hidden"
-                      >
+                      <Button variant="ghost" size="icon" onClick={handleBackToList} className="md:hidden">
                         <ArrowLeft className="h-5 w-5" />
                       </Button>
                     )}
                     <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={activeConversation.avatar}
-                        alt={activeConversation.name}
-                      />
-                      <AvatarFallback>
-                        {activeConversation.name.charAt(0)}
-                      </AvatarFallback>
+                      <AvatarImage src={activeConversation.avatar} alt={activeConversation.name} />
+                      <AvatarFallback>{activeConversation.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-sm">
-                        {activeConversation.name}
-                      </p>
+                      <p className="font-medium text-sm">{activeConversation.name}</p>
                       <div className="flex items-center text-xs text-muted-foreground">
                         <span className="truncate">
                           {activeConversation.role} • {activeConversation.company}
@@ -371,7 +327,6 @@ const Messages = () => {
                       </div>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="hidden md:flex">
                       <Phone className="h-4 w-4" />
@@ -400,10 +355,9 @@ const Messages = () => {
                     </DropdownMenu>
                   </div>
                 </div>
-
-                {/* message history - scrollable area */}
+                {/* messages scroll area */}
                 <div className="flex-1 min-h-0 overflow-y-auto p-4">
-                  {Object.entries(groupedMessages).map(([group, msgs]) => (
+                  {Object.entries(groupMessagesByDate(messageHistory)).map(([group, msgs]) => (
                     <div key={group}>
                       <div className="text-center mb-2">
                         <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
@@ -414,38 +368,25 @@ const Messages = () => {
                         {msgs.map((msg) => (
                           <div
                             key={msg.id}
-                            className={`flex ${
-                              msg.sender === 'me'
-                                ? 'justify-end'
-                                : 'justify-start'
-                            }`}
+                            className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
                           >
                             <div className="flex gap-2 max-w-[80%]">
                               {msg.sender === 'them' && (
                                 <Avatar className="h-8 w-8 mt-1">
-                                  <AvatarImage
-                                    src={activeConversation.avatar}
-                                    alt={activeConversation.name}
-                                  />
-                                  <AvatarFallback>
-                                    {activeConversation.name.charAt(0)}
-                                  </AvatarFallback>
+                                  <AvatarImage src={activeConversation.avatar} alt={activeConversation.name} />
+                                  <AvatarFallback>{activeConversation.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                               )}
                               <div>
-                                <div
-                                  className={`rounded-lg px-3 py-2 text-sm ${
-                                    msg.sender === 'me'
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'bg-muted text-foreground'
-                                  }`}
-                                >
+                                <div className={`rounded-lg px-3 py-2 text-sm ${
+                                  msg.sender === 'me'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-foreground'
+                                }`}>
                                   {msg.content}
                                 </div>
                                 <div className="flex items-center mt-1 gap-1">
-                                  <span className="text-[10px] text-muted-foreground">
-                                    {msg.time}
-                                  </span>
+                                  <span className="text-[10px] text-muted-foreground">{msg.time}</span>
                                   {msg.sender === 'me' &&
                                     (msg.read ? (
                                       <CheckCheck className="h-3 w-3 text-primary" />
@@ -462,30 +403,17 @@ const Messages = () => {
                   ))}
                   <div ref={messageEndRef} />
                 </div>
-
-                {/* message input - fixed at the bottom */}
+                {/* message input */}
                 <div className="p-3 md:p-4 border-t bg-background">
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 md:h-10 md:w-10"
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
                         <Smile className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 md:h-10 md:w-10"
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
                         <Paperclip className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 md:h-10 md:w-10 hidden md:flex"
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 hidden md:flex">
                         <ImageIcon className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                       </Button>
                     </div>
@@ -515,9 +443,7 @@ const Messages = () => {
             ) : (
               <div className="flex flex-col items-center justify-center h-full p-4">
                 <div className="max-w-md text-center">
-                  <h3 className="text-lg font-medium mb-2">
-                    select a conversation
-                  </h3>
+                  <h3 className="text-lg font-medium mb-2">select a conversation</h3>
                   <p className="text-sm text-muted-foreground">
                     choose a conversation from the list to start messaging.
                   </p>
