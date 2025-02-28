@@ -223,7 +223,7 @@ const Messages = () => {
   const groupedMessages = groupMessagesByDate(messageHistory)
 
   return (
-    <div className="container px-4 py-6 md:py-8 h-full">
+    <div className="container px-4 py-6 md:py-8 h-full overflow-hidden">
       <div className="flex flex-col h-full border rounded-lg overflow-hidden max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
           {/* conversation list */}
@@ -245,7 +245,7 @@ const Messages = () => {
                 />
               </div>
             </div>
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-y-auto">
               {filteredConversations.length > 0 ? (
                 <div className="divide-y">
                   {filteredConversations.map((conversation) => (
