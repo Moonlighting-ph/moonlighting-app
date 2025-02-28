@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Search, 
@@ -32,6 +31,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Sample job data
 const jobListings = [
@@ -175,6 +175,7 @@ const Jobs = () => {
   const [salaryRange, setSalaryRange] = useState([800, 2000]);
   const [jobType, setJobType] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const isMobile = useIsMobile();
 
   // Filter jobs based on selected filters
   const filteredJobs = jobListings.filter(job => {
@@ -229,11 +230,11 @@ const Jobs = () => {
   };
 
   return (
-    <div className="container px-4 py-8">
+    <div className="container px-4 py-6 md:py-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Browse Jobs</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl md:text-2xl font-bold">Browse Jobs</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">
             Find the perfect healthcare job opportunity
           </p>
         </div>
@@ -242,19 +243,19 @@ const Jobs = () => {
           <Button
             variant="outline"
             size="sm"
-            className="md:hidden"
+            className="md:hidden text-xs h-8"
             onClick={toggleMobileSortVisible}
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="h-3 w-3 mr-2" />
             Filters
           </Button>
           
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search jobs, keywords..."
-              className="pl-10"
+              className="pl-8 md:pl-10 text-xs md:text-sm h-8 md:h-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -262,20 +263,20 @@ const Jobs = () => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
         {/* Filters - Desktop */}
         <div className="md:col-span-3 lg:col-span-3 hidden md:block">
-          <div className="bg-card border rounded-lg p-5 space-y-6 sticky top-20">
+          <div className="bg-card border rounded-lg p-4 space-y-5 sticky top-20">
             <div>
-              <h3 className="font-medium mb-3">Job Filters</h3>
-              <div className="space-y-3">
+              <h3 className="font-medium text-sm mb-3">Job Filters</h3>
+              <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="saved" 
                     checked={savedOnly} 
                     onCheckedChange={() => setSavedOnly(!savedOnly)} 
                   />
-                  <Label htmlFor="saved">Saved Jobs Only</Label>
+                  <Label htmlFor="saved" className="text-xs md:text-sm">Saved Jobs Only</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox 
@@ -283,7 +284,7 @@ const Jobs = () => {
                     checked={urgentOnly} 
                     onCheckedChange={() => setUrgentOnly(!urgentOnly)} 
                   />
-                  <Label htmlFor="urgent">Urgent Positions</Label>
+                  <Label htmlFor="urgent" className="text-xs md:text-sm">Urgent Positions</Label>
                 </div>
               </div>
             </div>
@@ -291,7 +292,7 @@ const Jobs = () => {
             <Separator />
             
             <div>
-              <h3 className="font-medium mb-3">Salary Range (₱/day)</h3>
+              <h3 className="font-medium text-sm mb-3">Salary Range (₱/day)</h3>
               <div className="space-y-4">
                 <Slider
                   defaultValue={[800, 2000]}
@@ -301,9 +302,9 @@ const Jobs = () => {
                   value={salaryRange}
                   onValueChange={(value) => setSalaryRange(value as [number, number])}
                 />
-                <div className="flex justify-between">
-                  <span className="text-sm">₱{salaryRange[0]}</span>
-                  <span className="text-sm">₱{salaryRange[1]}</span>
+                <div className="flex justify-between text-xs">
+                  <span>₱{salaryRange[0]}</span>
+                  <span>₱{salaryRange[1]}</span>
                 </div>
               </div>
             </div>
@@ -311,7 +312,7 @@ const Jobs = () => {
             <Separator />
             
             <div>
-              <h3 className="font-medium mb-3">Job Type</h3>
+              <h3 className="font-medium text-sm mb-3">Job Type</h3>
               <div className="space-y-2">
                 {['Full-time', 'Part-time', 'Contract', 'On-call'].map((type) => (
                   <div key={type} className="flex items-center space-x-2">
@@ -320,7 +321,7 @@ const Jobs = () => {
                       checked={jobType.includes(type)}
                       onCheckedChange={() => handleJobTypeChange(type)}
                     />
-                    <Label htmlFor={`type-${type}`}>{type}</Label>
+                    <Label htmlFor={`type-${type}`} className="text-xs md:text-sm">{type}</Label>
                   </div>
                 ))}
               </div>
@@ -329,7 +330,7 @@ const Jobs = () => {
             <Separator />
             
             <div>
-              <h3 className="font-medium mb-3">Location</h3>
+              <h3 className="font-medium text-sm mb-3">Location</h3>
               <div className="space-y-2">
                 {['Metro Manila', 'Cebu', 'Davao', 'Laguna', 'Pampanga'].map((location) => (
                   <div key={location} className="flex items-center space-x-2">
@@ -338,7 +339,7 @@ const Jobs = () => {
                       checked={selectedLocations.includes(location)}
                       onCheckedChange={() => handleLocationChange(location)}
                     />
-                    <Label htmlFor={`location-${location}`}>{location}</Label>
+                    <Label htmlFor={`location-${location}`} className="text-xs md:text-sm">{location}</Label>
                   </div>
                 ))}
               </div>
@@ -347,24 +348,24 @@ const Jobs = () => {
             <Separator />
             
             <div>
-              <h3 className="font-medium mb-3">Shift Type</h3>
+              <h3 className="font-medium text-sm mb-3">Shift Type</h3>
               <Select>
-                <SelectTrigger>
+                <SelectTrigger className="text-xs md:text-sm h-8 md:h-9">
                   <SelectValue placeholder="Any Shift Type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="any">Any Shift Type</SelectItem>
-                    <SelectItem value="day">Day Shift</SelectItem>
-                    <SelectItem value="night">Night Shift</SelectItem>
-                    <SelectItem value="weekend">Weekend</SelectItem>
-                    <SelectItem value="rotating">Rotating</SelectItem>
+                    <SelectItem value="any" className="text-xs md:text-sm">Any Shift Type</SelectItem>
+                    <SelectItem value="day" className="text-xs md:text-sm">Day Shift</SelectItem>
+                    <SelectItem value="night" className="text-xs md:text-sm">Night Shift</SelectItem>
+                    <SelectItem value="weekend" className="text-xs md:text-sm">Weekend</SelectItem>
+                    <SelectItem value="rotating" className="text-xs md:text-sm">Rotating</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
             
-            <Button className="w-full">Apply Filters</Button>
+            <Button className="w-full text-xs md:text-sm h-8 md:h-9">Apply Filters</Button>
           </div>
         </div>
         
@@ -372,23 +373,23 @@ const Jobs = () => {
         {mobileSortVisible && (
           <div className="fixed inset-0 bg-background z-40 p-4 md:hidden overflow-auto">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold">Filters</h3>
+              <h3 className="font-semibold text-sm">Filters</h3>
               <Button variant="ghost" size="icon" onClick={toggleMobileSortVisible}>
                 <X className="h-5 w-5" />
               </Button>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div>
-                <h3 className="font-medium mb-3">Job Filters</h3>
-                <div className="space-y-3">
+                <h3 className="font-medium text-xs mb-2">Job Filters</h3>
+                <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id="saved-mobile" 
                       checked={savedOnly} 
                       onCheckedChange={() => setSavedOnly(!savedOnly)} 
                     />
-                    <Label htmlFor="saved-mobile">Saved Jobs Only</Label>
+                    <Label htmlFor="saved-mobile" className="text-xs">Saved Jobs Only</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -396,7 +397,7 @@ const Jobs = () => {
                       checked={urgentOnly} 
                       onCheckedChange={() => setUrgentOnly(!urgentOnly)} 
                     />
-                    <Label htmlFor="urgent-mobile">Urgent Positions</Label>
+                    <Label htmlFor="urgent-mobile" className="text-xs">Urgent Positions</Label>
                   </div>
                 </div>
               </div>
@@ -404,8 +405,8 @@ const Jobs = () => {
               <Separator />
               
               <div>
-                <h3 className="font-medium mb-3">Salary Range (₱/day)</h3>
-                <div className="space-y-4">
+                <h3 className="font-medium text-xs mb-2">Salary Range (₱/day)</h3>
+                <div className="space-y-3">
                   <Slider
                     defaultValue={[800, 2000]}
                     min={500}
@@ -414,9 +415,9 @@ const Jobs = () => {
                     value={salaryRange}
                     onValueChange={(value) => setSalaryRange(value as [number, number])}
                   />
-                  <div className="flex justify-between">
-                    <span className="text-sm">₱{salaryRange[0]}</span>
-                    <span className="text-sm">₱{salaryRange[1]}</span>
+                  <div className="flex justify-between text-[10px]">
+                    <span>₱{salaryRange[0]}</span>
+                    <span>₱{salaryRange[1]}</span>
                   </div>
                 </div>
               </div>
@@ -424,7 +425,7 @@ const Jobs = () => {
               <Separator />
               
               <div>
-                <h3 className="font-medium mb-3">Job Type</h3>
+                <h3 className="font-medium text-xs mb-2">Job Type</h3>
                 <div className="space-y-2">
                   {['Full-time', 'Part-time', 'Contract', 'On-call'].map((type) => (
                     <div key={type} className="flex items-center space-x-2">
@@ -433,7 +434,7 @@ const Jobs = () => {
                         checked={jobType.includes(type)}
                         onCheckedChange={() => handleJobTypeChange(type)}
                       />
-                      <Label htmlFor={`type-${type}-mobile`}>{type}</Label>
+                      <Label htmlFor={`type-${type}-mobile`} className="text-xs">{type}</Label>
                     </div>
                   ))}
                 </div>
@@ -442,7 +443,7 @@ const Jobs = () => {
               <Separator />
               
               <div>
-                <h3 className="font-medium mb-3">Location</h3>
+                <h3 className="font-medium text-xs mb-2">Location</h3>
                 <div className="space-y-2">
                   {['Metro Manila', 'Cebu', 'Davao', 'Laguna', 'Pampanga'].map((location) => (
                     <div key={location} className="flex items-center space-x-2">
@@ -451,7 +452,7 @@ const Jobs = () => {
                         checked={selectedLocations.includes(location)}
                         onCheckedChange={() => handleLocationChange(location)}
                       />
-                      <Label htmlFor={`location-${location}-mobile`}>{location}</Label>
+                      <Label htmlFor={`location-${location}-mobile`} className="text-xs">{location}</Label>
                     </div>
                   ))}
                 </div>
@@ -460,26 +461,27 @@ const Jobs = () => {
               <Separator />
               
               <div>
-                <h3 className="font-medium mb-3">Shift Type</h3>
+                <h3 className="font-medium text-xs mb-2">Shift Type</h3>
                 <Select>
-                  <SelectTrigger>
+                  <SelectTrigger className="text-xs h-8">
                     <SelectValue placeholder="Any Shift Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="any">Any Shift Type</SelectItem>
-                      <SelectItem value="day">Day Shift</SelectItem>
-                      <SelectItem value="night">Night Shift</SelectItem>
-                      <SelectItem value="weekend">Weekend</SelectItem>
-                      <SelectItem value="rotating">Rotating</SelectItem>
+                      <SelectItem value="any" className="text-xs">Any Shift Type</SelectItem>
+                      <SelectItem value="day" className="text-xs">Day Shift</SelectItem>
+                      <SelectItem value="night" className="text-xs">Night Shift</SelectItem>
+                      <SelectItem value="weekend" className="text-xs">Weekend</SelectItem>
+                      <SelectItem value="rotating" className="text-xs">Rotating</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
               
-              <div className="pt-4">
-                <Button className="w-full" onClick={toggleMobileSortVisible}>
-                  Apply Filters
+              <div className="sticky bottom-0 left-0 right-0 pt-4 pb-2 bg-background mt-6 space-y-2">
+                <Button className="w-full text-xs h-8">Apply Filters</Button>
+                <Button variant="outline" className="w-full text-xs h-8" onClick={toggleMobileSortVisible}>
+                  Cancel
                 </Button>
               </div>
             </div>
@@ -487,153 +489,129 @@ const Jobs = () => {
         )}
         
         {/* Job Listings */}
-        <div className="md:col-span-9 lg:col-span-9">
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredJobs.length} jobs
-            </p>
-            <Select defaultValue="relevant">
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="relevant">Most Relevant</SelectItem>
-                <SelectItem value="recent">Most Recent</SelectItem>
-                <SelectItem value="salary-high">Highest Salary</SelectItem>
-                <SelectItem value="salary-low">Lowest Salary</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-4">
-            {filteredJobs.map((job) => (
-              <Card key={job.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-0">
-                  <div className="flex flex-col md:flex-row">
-                    <div className="md:w-1/4 lg:w-1/5 p-6 flex flex-col items-center justify-center bg-accent/30">
-                      <div className="w-16 h-16 rounded-full overflow-hidden border border-border mb-2">
-                        <img 
-                          src={job.logo} 
-                          alt={job.company} 
-                          className="w-full h-full object-cover"
-                        />
+        <div className="md:col-span-9 lg:col-span-9 space-y-4">
+          {filteredJobs.length > 0 ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  Showing {filteredJobs.length} of {jobListings.length} jobs
+                </p>
+                <Select defaultValue="relevance">
+                  <SelectTrigger className="w-[140px] text-xs md:text-sm h-8 md:h-9">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="relevance" className="text-xs md:text-sm">Relevance</SelectItem>
+                    <SelectItem value="recent" className="text-xs md:text-sm">Most Recent</SelectItem>
+                    <SelectItem value="salary-high" className="text-xs md:text-sm">Salary (High to Low)</SelectItem>
+                    <SelectItem value="salary-low" className="text-xs md:text-sm">Salary (Low to High)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {filteredJobs.map((job) => (
+                <Card key={job.id} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6">
+                      <div className="flex-shrink-0">
+                        <div className="h-16 w-16 md:h-20 md:w-20 bg-muted rounded-md overflow-hidden">
+                          <img 
+                            src={job.logo} 
+                            alt={job.company}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                       </div>
-                      <h3 className="text-sm font-medium text-center">{job.company}</h3>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-1">
+                          <div>
+                            <div className="flex items-center flex-wrap gap-2">
+                              <h3 className="font-medium text-base">{job.title}</h3>
+                              {job.urgent && (
+                                <Badge variant="destructive" className="uppercase text-[10px]">Urgent</Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{job.company}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="self-start h-8 w-8"
+                            onClick={() => toggleSaved(job.id)}
+                          >
+                            <Heart 
+                              className={`h-4 w-4 ${job.saved ? 'fill-red-500 text-red-500' : ''}`} 
+                            />
+                            <span className="sr-only">Save job</span>
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1 gap-x-4 mt-2">
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{job.location}</span>
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{job.type}</span>
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <DollarSign className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{job.salary}</span>
+                          </div>
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <User className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span>{job.applicants} applicants</span>
+                          </div>
+                        </div>
+                        
+                        <p className="text-xs md:text-sm mt-3 line-clamp-2">
+                          {job.description}
+                        </p>
+                      </div>
                     </div>
                     
-                    <div className="p-6 md:w-3/4 lg:w-4/5">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="flex items-center flex-wrap gap-2">
-                            <h2 className="text-xl font-semibold">{job.title}</h2>
-                            {job.urgent && (
-                              <Badge variant="destructive">URGENT</Badge>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2">
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <MapPin className="h-4 w-4 mr-1" />
-                              {job.location}
-                            </div>
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Briefcase className="h-4 w-4 mr-1" />
-                              {job.type}
-                            </div>
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <DollarSign className="h-4 w-4 mr-1" />
-                              {job.salary}
-                            </div>
-                          </div>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className={job.saved ? "text-red-500" : "text-muted-foreground"}
-                          onClick={() => toggleSaved(job.id)}
-                        >
-                          <Heart className={job.saved ? "fill-current" : ""} />
-                        </Button>
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {job.description}
+                    <div className="border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 md:p-4 bg-muted/30">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">{job.deadline}</span> to apply
                       </p>
-                      
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {job.requirements.slice(0, 2).map((req, index) => (
-                          <Badge key={index} variant="outline" className="bg-primary/5 font-normal">
-                            {req}
-                          </Badge>
-                        ))}
-                        {job.requirements.length > 2 && (
-                          <Badge variant="outline" className="bg-primary/5 font-normal">
-                            +{job.requirements.length - 2} more
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="text-muted-foreground">
-                            <Clock className="h-4 w-4 inline mr-1" />
-                            {job.deadline}
-                          </div>
-                          <div className="text-muted-foreground">
-                            <User className="h-4 w-4 inline mr-1" />
-                            {job.applicants} applicants
-                          </div>
-                        </div>
-                        <Button>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" className="text-xs h-8 w-full sm:w-auto">
+                          View Details
+                        </Button>
+                        <Button size="sm" className="text-xs h-8 w-full sm:w-auto">
                           Apply Now
                         </Button>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          
-          {filteredJobs.length === 0 && (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                <Briefcase className="h-8 w-8 text-primary" />
+                  </CardContent>
+                </Card>
+              ))}
+              
+              <div className="flex justify-center mt-6">
+                <Button variant="outline" className="text-xs md:text-sm h-8 md:h-9">
+                  Load More Jobs
+                </Button>
               </div>
-              <h3 className="text-xl font-semibold mb-2">No jobs found</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                We couldn't find any jobs matching your current filters. Try adjusting your search or check back later for new opportunities.
+            </>
+          ) : (
+            <Card className="flex flex-col items-center justify-center p-8">
+              <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="font-medium text-lg mb-2">No jobs found</h3>
+              <p className="text-sm text-muted-foreground text-center mb-4">
+                We couldn't find any jobs matching your filters. Try adjusting your search criteria.
               </p>
-              <Button variant="outline" className="mt-4" onClick={() => {
-                setSearchTerm('');
+              <Button onClick={() => {
                 setSavedOnly(false);
                 setUrgentOnly(false);
+                setSearchTerm('');
                 setSalaryRange([800, 2000]);
                 setJobType([]);
                 setSelectedLocations([]);
               }}>
-                Clear Filters
+                Reset Filters
               </Button>
-            </div>
-          )}
-          
-          {filteredJobs.length > 0 && (
-            <div className="flex justify-center mt-8">
-              <Button variant="outline" className="mr-2">
-                Previous
-              </Button>
-              <Button variant="outline" className="bg-primary/10">
-                1
-              </Button>
-              <Button variant="outline">
-                2
-              </Button>
-              <Button variant="outline">
-                3
-              </Button>
-              <Button variant="outline" className="ml-2">
-                Next
-              </Button>
-            </div>
+            </Card>
           )}
         </div>
       </div>
