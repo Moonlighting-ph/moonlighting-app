@@ -3,16 +3,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import ClientLanding from "./pages/ClientLanding";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/platform/Dashboard";
 import Jobs from "./pages/platform/Jobs";
 import JobDetail from "./pages/platform/JobDetail";
 import HospitalProfile from "./pages/platform/HospitalProfile";
 import ProfessionalProfile from "./pages/platform/ProfessionalProfile";
+import Messages from "./pages/platform/Messages";
+import Settings from "./pages/platform/Settings";
 import PlatformLayout from "./components/layouts/PlatformLayout";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -23,9 +23,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Index />} />
-          <Route path="/client" element={<ClientLanding />} />
+          {/* Redirect from root to platform */}
+          <Route path="/" element={<Navigate to="/platform" replace />} />
           
           {/* Platform Routes - wrapped with PlatformLayout */}
           <Route path="/platform" element={<PlatformLayout><Dashboard /></PlatformLayout>} />
@@ -33,6 +32,8 @@ const App = () => (
           <Route path="/platform/job/:id" element={<PlatformLayout><JobDetail /></PlatformLayout>} />
           <Route path="/platform/hospital-profile" element={<PlatformLayout><HospitalProfile /></PlatformLayout>} />
           <Route path="/platform/professional-profile" element={<PlatformLayout><ProfessionalProfile /></PlatformLayout>} />
+          <Route path="/platform/messages" element={<PlatformLayout><Messages /></PlatformLayout>} />
+          <Route path="/platform/settings" element={<PlatformLayout><Settings /></PlatformLayout>} />
           
           {/* Catch-all - must be at bottom */}
           <Route path="*" element={<NotFound />} />

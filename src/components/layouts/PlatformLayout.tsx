@@ -54,7 +54,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
             <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <Link to="/" className="flex items-center group">
+            <Link to="/platform" className="flex items-center group">
               <span className="sr-only">Moonlighting.ph</span>
               <Moon className="h-6 w-6 text-primary" />
               <span className="font-semibold text-lg ml-2 hidden sm:block">moonlighting.ph</span>
@@ -77,9 +77,11 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span>
             </Button>
-            <Button variant="ghost" size="icon">
-              <MessageSquare className="h-5 w-5" />
-            </Button>
+            <Link to="/platform/messages">
+              <Button variant="ghost" size="icon">
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -98,9 +100,11 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
                     <span>Profile</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/platform/settings" className="cursor-pointer w-full">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
@@ -124,7 +128,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
             <h2 className="mb-2 px-4 text-lg font-semibold">Dashboard</h2>
             <div className="space-y-1">
               <Button
-                variant={isActive("/platform") ? "secondary" : "ghost"}
+                variant={isActive("/platform") && !isActive("/platform/jobs") && !isActive("/platform/messages") ? "secondary" : "ghost"}
                 className="w-full justify-start"
                 asChild
               >
@@ -206,7 +210,9 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
 
       {/* Main Content */}
       <main className="pt-16 md:ml-64 min-h-screen">
-        {children}
+        <div className="w-full max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
 
       {/* Overlay for mobile sidebar */}
