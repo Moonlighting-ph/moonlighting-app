@@ -45,7 +45,6 @@ interface PlatformLayoutProps {
   children: ReactNode
 }
 
-// sample notification data
 const notifications = [
   {
     id: '1',
@@ -106,7 +105,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
   const isMobile = useIsMobile()
 
   // number of unread notifications
-  const unreadCount = notificationList.filter((notification) => !notification.read).length
+  const unreadCount = notificationList.filter((n) => !n.read).length
 
   // function to check if a path is active
   const isActive = (path: string) => {
@@ -125,20 +124,13 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
 
   // mark all notifications as read
   const markAllAsRead = () => {
-    setNotificationList(
-      notificationList.map((notification) => ({
-        ...notification,
-        read: true
-      }))
-    )
+    setNotificationList(notificationList.map((n) => ({ ...n, read: true })))
   }
 
   // mark a specific notification as read
   const markAsRead = (id: string) => {
     setNotificationList(
-      notificationList.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
+      notificationList.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
   }
 
@@ -160,7 +152,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
     }
   }
 
-  // use effect to handle mobile layout
+  // collapse sidebar on mobile
   useEffect(() => {
     if (isMobile) {
       setSidebarCollapsed(true)
@@ -208,47 +200,53 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               </PopoverTrigger>
               <PopoverContent
                 align="end"
-                className={cn(
-                  "w-80 md:w-96 p-0",
-                  isMobile ? "h-[80vh]" : "max-h-[600px]"
-                )}
+                className={cn("w-80 md:w-96 p-0", isMobile ? "h-[80vh]" : "max-h-[600px]")}
               >
                 <div className="flex items-center justify-between p-4 border-b">
                   <h3 className="font-semibold">notifications</h3>
                   {unreadCount > 0 && (
-                    <Button variant="ghost" size="sm" className="text-xs h-8 px-2" onClick={markAllAsRead}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-8 px-2"
+                      onClick={markAllAsRead}
+                    >
                       mark all as read
                     </Button>
                   )}
                 </div>
-                <ScrollArea className={cn("p-0", isMobile ? "h-[calc(80vh-56px)]" : "max-h-[544px]")}>
+                <ScrollArea
+                  className={cn("p-0", isMobile ? "h-[calc(80vh-56px)]" : "max-h-[544px]")}
+                >
                   {notificationList.length > 0 ? (
                     <div className="divide-y">
-                      {notificationList.map((notification) => (
+                      {notificationList.map((n) => (
                         <div
-                          key={notification.id}
-                          className={`p-4 hover:bg-muted/50 transition-colors ${notification.read ? '' : 'bg-primary/5'}`}
-                          onClick={() => markAsRead(notification.id)}
+                          key={n.id}
+                          className={`p-4 hover:bg-muted/50 transition-colors ${
+                            n.read ? '' : 'bg-primary/5'
+                          }`}
+                          onClick={() => markAsRead(n.id)}
                         >
                           <Link
-                            to={notification.link}
+                            to={n.link}
                             className="flex gap-3"
                             onClick={() => setNotificationOpen(false)}
                           >
                             <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              {getNotificationIcon(notification.type)}
+                              {getNotificationIcon(n.type)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-start gap-2">
-                                <p className={`font-medium text-sm ${notification.read ? '' : 'text-primary'}`}>
-                                  {notification.title}
+                                <p className={`font-medium text-sm ${n.read ? '' : 'text-primary'}`}>
+                                  {n.title}
                                 </p>
                                 <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                  {notification.time}
+                                  {n.time}
                                 </span>
                               </div>
                               <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                                {notification.description}
+                                {n.description}
                               </p>
                             </div>
                           </Link>
@@ -289,7 +287,10 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://images.unsplash.com/photo-1590086782792-42dd2350140d" alt="user" />
+                    <AvatarImage
+                      src="https://images.unsplash.com/photo-1590086782792-42dd2350140d"
+                      alt="user"
+                    />
                     <AvatarFallback>ms</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -327,6 +328,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
         } ${sidebarCollapsed ? 'md:w-[4.5rem]' : 'md:w-64'}`}
       >
         <div className="flex flex-col h-full py-4 relative">
+          {/* collapse toggle button */}
           <Button
             variant="ghost"
             size="icon"
@@ -339,7 +341,90 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               <ChevronLeft className="h-4 w-4" />
             )}
           </Button>
-          {/* sidebar content */}
+          {/* sidebar menu */}
+          <div className="px-3 py-2">
+            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? 'opacity-0' : ''}`}>
+              dashboard
+            </h2>
+            <div className="space-y-1">
+              <Button
+                variant={isActive('/platform') && !isActive('/platform/jobs') && !isActive('/platform/messages') ? 'secondary' : 'ghost'}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                asChild
+              >
+                <Link to="/platform">
+                  <LayoutDashboard className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  {!sidebarCollapsed && 'dashboard'}
+                </Link>
+              </Button>
+              <Button
+                variant={isActive('/platform/jobs') ? 'secondary' : 'ghost'}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                asChild
+              >
+                <Link to="/platform/jobs">
+                  <Briefcase className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  {!sidebarCollapsed && 'jobs'}
+                </Link>
+              </Button>
+              <Button
+                variant={isActive('/platform/messages') ? 'secondary' : 'ghost'}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                asChild
+              >
+                <Link to="/platform/messages">
+                  <MessageSquare className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  {!sidebarCollapsed && 'messages'}
+                </Link>
+              </Button>
+            </div>
+          </div>
+          <div className="px-3 py-2 mt-1">
+            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? 'opacity-0' : ''}`}>
+              account
+            </h2>
+            <div className="space-y-1">
+              <Button
+                variant={isActive('/platform/professional-profile') ? 'secondary' : 'ghost'}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                asChild
+              >
+                <Link to="/platform/professional-profile">
+                  <User className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  {!sidebarCollapsed && 'my profile'}
+                </Link>
+              </Button>
+              <Button
+                variant={isActive('/platform/hospital-profile') ? 'secondary' : 'ghost'}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                asChild
+              >
+                <Link to="/platform/hospital-profile">
+                  <Building className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  {!sidebarCollapsed && 'hospital profile'}
+                </Link>
+              </Button>
+              <Button
+                variant={isActive('/platform/settings') ? 'secondary' : 'ghost'}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                asChild
+              >
+                <Link to="/platform/settings">
+                  <Settings className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+                  {!sidebarCollapsed && 'settings'}
+                </Link>
+              </Button>
+            </div>
+          </div>
+          <div className="mt-auto px-3 py-2">
+            <Button
+              variant="ghost"
+              className={`w-full ${sidebarCollapsed ? 'justify-center' : 'justify-start'} text-sm h-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20`}
+            >
+              <LogOut className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
+              {!sidebarCollapsed && 'sign out'}
+            </Button>
+          </div>
         </div>
       </aside>
 
