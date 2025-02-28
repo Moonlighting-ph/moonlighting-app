@@ -220,7 +220,7 @@ const Messages = () => {
     setShowConversation(false)
   }
 
-  const groupedMessages = groupMessagesByDate(messageHistory); // <-- note the semicolon here
+  const groupedMessages = groupMessagesByDate(messageHistory)
 
   return (
     <div className="container px-4 py-6 md:py-8 h-[600px] overflow-hidden">
@@ -403,9 +403,9 @@ const Messages = () => {
                   ))}
                   <div ref={messageEndRef} />
                 </div>
-                {/* message input */}
-                <div className="p-3 md:p-4 border-t bg-background">
-                  <div className="flex items-center gap-2">
+                {/* message input (reduced padding and gap) */}
+                <div className="p-2 border-t bg-background">
+                  <div className="flex items-center gap-1">
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
                         <Smile className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
