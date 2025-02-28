@@ -9,6 +9,11 @@ export default {
 		"./app/**/*.{ts,tsx}",
 		"./src/**/*.{ts,tsx}",
 	],
+	safelist: [
+		"h-[600px]",
+		"max-h-[350px]",
+		"overflow-hidden",
+	],
 	prefix: "",
 	theme: {
 		container: {
