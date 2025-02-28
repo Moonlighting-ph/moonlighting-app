@@ -24,7 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { Separator } from '@/components/ui/separator'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 // sample conversation data
@@ -100,14 +99,15 @@ const conversations = [
   }
 ]
 
-// sample messages for the active conversation
+// sample messages for the active conversation, now with a date property
 const messageHistory = [
   {
     id: 'msg1',
     sender: 'them',
     content: "Hello Maria, I hope you're doing well today.",
     time: '10:30 AM',
-    read: true
+    read: true,
+    date: 'yesterday'
   },
   {
     id: 'msg2',
@@ -115,14 +115,16 @@ const messageHistory = [
     content:
       "I wanted to discuss your upcoming shift at the cardiac care unit next week.",
     time: '10:31 AM',
-    read: true
+    read: true,
+    date: 'yesterday'
   },
   {
     id: 'msg3',
     sender: 'me',
     content: "Hi Dr. Reyes, I'm doing great. Thanks for reaching out.",
     time: '10:35 AM',
-    read: true
+    read: true,
+    date: 'yesterday'
   },
   {
     id: 'msg4',
@@ -130,7 +132,8 @@ const messageHistory = [
     content:
       "Yes, I'm available for the shift. Is there anything specific I should prepare for?",
     time: '10:36 AM',
-    read: true
+    read: true,
+    date: 'yesterday'
   },
   {
     id: 'msg5',
@@ -138,7 +141,8 @@ const messageHistory = [
     content:
       "We're expecting a patient transfer from another facility. They have a complex cardiac condition that will require close monitoring.",
     time: '10:40 AM',
-    read: true
+    read: true,
+    date: 'today'
   },
   {
     id: 'msg6',
@@ -146,7 +150,8 @@ const messageHistory = [
     content:
       "I'll share the patient's details with you before your shift starts. Would you be able to come in 30 minutes early for a briefing?",
     time: '10:42 AM',
-    read: true
+    read: true,
+    date: 'today'
   },
   {
     id: 'msg7',
@@ -154,16 +159,29 @@ const messageHistory = [
     content:
       "Absolutely, I can come early. I appreciate the heads up about the patient transfer.",
     time: '10:44 AM',
-    read: true
+    read: true,
+    date: 'today'
   },
   {
     id: 'msg8',
     sender: 'them',
     content: 'Looking forward to our meeting tomorrow at 9 AM.',
     time: '10:45 AM',
-    read: false
+    read: false,
+    date: 'today'
   }
 ]
+
+// helper function to group messages by date
+const groupMessagesByDate = (messages) => {
+  const groups = {}
+  messages.forEach((msg) => {
+    const group = msg.date || 'today'
+    if (!groups[group]) groups[group] = []
+    groups[group].push(msg)
+  })
+  return groups
+}
 
 const Messages = () => {
   const [activeConversation, setActiveConversation] = useState(conversations[0])
@@ -214,6 +232,9 @@ const Messages = () => {
     setShowConversation(false)
   }
 
+  // group messages by date
+  const groupedMessages = groupMessagesByDate(messageHistory)
+
   return (
     <div className="container px-4 py-6 md:py-8">
       <div className="flex flex-col h-[calc(100vh-10rem)] max-h-[800px] border rounded-lg overflow-hidden max-w-6xl mx-auto">
@@ -225,12 +246,12 @@ const Messages = () => {
             }`}
           >
             <div className="p-4 border-b">
-              <h1 className="text-xl font-bold mb-4">Messages</h1>
+              <h1 className="text-xl font-bold mb-4">messages</h1>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search conversations..."
+                  placeholder="search conversations..."
                   className="pl-9 text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -382,60 +403,64 @@ const Messages = () => {
 
                 {/* message history - scrollable area */}
                 <div className="flex-1 min-h-0 overflow-y-auto p-4">
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
-                        today
-                      </span>
-                    </div>
-                    {messageHistory.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${
-                          msg.sender === 'me'
-                            ? 'justify-end'
-                            : 'justify-start'
-                        }`}
-                      >
-                        <div className="flex gap-2 max-w-[80%]">
-                          {msg.sender === 'them' && (
-                            <Avatar className="h-8 w-8 mt-1">
-                              <AvatarImage
-                                src={activeConversation.avatar}
-                                alt={activeConversation.name}
-                              />
-                              <AvatarFallback>
-                                {activeConversation.name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                          <div>
-                            <div
-                              className={`rounded-lg px-3 py-2 text-sm ${
-                                msg.sender === 'me'
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'bg-muted text-foreground'
-                              }`}
-                            >
-                              {msg.content}
-                            </div>
-                            <div className="flex items-center mt-1 gap-1">
-                              <span className="text-[10px] text-muted-foreground">
-                                {msg.time}
-                              </span>
-                              {msg.sender === 'me' &&
-                                (msg.read ? (
-                                  <CheckCheck className="h-3 w-3 text-primary" />
-                                ) : (
-                                  <Check className="h-3 w-3 text-muted-foreground" />
-                                ))}
+                  {Object.entries(groupedMessages).map(([group, msgs]) => (
+                    <div key={group}>
+                      <div className="text-center mb-2">
+                        <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
+                          {group}
+                        </span>
+                      </div>
+                      <div className="space-y-4 mb-4">
+                        {msgs.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={`flex ${
+                              msg.sender === 'me'
+                                ? 'justify-end'
+                                : 'justify-start'
+                            }`}
+                          >
+                            <div className="flex gap-2 max-w-[80%]">
+                              {msg.sender === 'them' && (
+                                <Avatar className="h-8 w-8 mt-1">
+                                  <AvatarImage
+                                    src={activeConversation.avatar}
+                                    alt={activeConversation.name}
+                                  />
+                                  <AvatarFallback>
+                                    {activeConversation.name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div>
+                                <div
+                                  className={`rounded-lg px-3 py-2 text-sm ${
+                                    msg.sender === 'me'
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted text-foreground'
+                                  }`}
+                                >
+                                  {msg.content}
+                                </div>
+                                <div className="flex items-center mt-1 gap-1">
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {msg.time}
+                                  </span>
+                                  {msg.sender === 'me' &&
+                                    (msg.read ? (
+                                      <CheckCheck className="h-3 w-3 text-primary" />
+                                    ) : (
+                                      <Check className="h-3 w-3 text-muted-foreground" />
+                                    ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                    <div ref={messageEndRef} />
-                  </div>
+                    </div>
+                  ))}
+                  <div ref={messageEndRef} />
                 </div>
 
                 {/* message input - fixed at the bottom */}
