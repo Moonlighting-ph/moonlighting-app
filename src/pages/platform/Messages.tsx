@@ -191,11 +191,11 @@ const Messages = () => {
 
   useEffect(() => {
     // scroll to bottom when messages change
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    messageEndRef.current?.scrollIntoView({ behavior: 'auto' })
     if (isMobile) {
       setShowConversation(false)
     }
-  }, [isMobile])
+  }, [isMobile, messageHistory])
 
   const handleSendMessage = () => {
     if (!message.trim()) return
@@ -355,8 +355,8 @@ const Messages = () => {
                     </DropdownMenu>
                   </div>
                 </div>
-                {/* messages scroll area */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-4">
+                {/* messages scroll area with max-height */}
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[500px]">
                   {Object.entries(groupMessagesByDate(messageHistory)).map(([group, msgs]) => (
                     <div key={group}>
                       <div className="text-center mb-2">
