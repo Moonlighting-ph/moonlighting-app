@@ -210,7 +210,7 @@ const Messages = () => {
 
   return (
     <div className="container px-4 py-6 md:py-8">
-      <div className="flex flex-col h-[calc(100vh-10rem)] md:h-[calc(100vh-12rem)] md:border md:rounded-lg overflow-hidden">
+      <div className="flex flex-col h-[calc(100vh-10rem)] max-h-[800px] md:h-[calc(100vh-12rem)] md:border md:rounded-lg overflow-hidden max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 h-full divide-x">
           {/* Conversation List */}
           <div className={`md:col-span-4 lg:col-span-3 flex flex-col 
@@ -334,8 +334,8 @@ const Messages = () => {
                 </div>
                 
                 {/* Message History - Using ScrollArea for inner scroll */}
-                <ScrollArea className="flex-1 px-4">
-                  <div className="py-4 space-y-4">
+                <ScrollArea className="flex-1">
+                  <div className="py-4 px-4 space-y-4">
                     <div className="text-center">
                       <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
                         Today
