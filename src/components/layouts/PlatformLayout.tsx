@@ -433,7 +433,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
       <main
         className={`pt-16 flex flex-col transition-all duration-300 ${
           sidebarCollapsed ? 'md:ml-[4.5rem]' : 'md:ml-64'
-        } min-h-screen`}
+        } min-h-screen overflow-hidden`}
       >
         <div className="flex-1 w-full max-w-7xl mx-auto">{children}</div>
       </main>
