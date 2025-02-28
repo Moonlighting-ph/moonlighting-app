@@ -257,9 +257,9 @@ const Messages = () => {
                         <div className="flex justify-between items-center">
                           <p className="text-xs truncate">{conversation.lastMessage}</p>
                           {conversation.unread > 0 && (
-                            <Badge className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
+                            <span className="ml-2 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium">
                               {conversation.unread}
-                            </Badge>
+                            </span>
                           )}
                         </div>
                       </div>
@@ -333,9 +333,9 @@ const Messages = () => {
                   </div>
                 </div>
                 
-                {/* Message History */}
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
+                {/* Message History - Using ScrollArea for inner scroll */}
+                <ScrollArea className="flex-1 px-4">
+                  <div className="py-4 space-y-4">
                     <div className="text-center">
                       <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
                         Today
