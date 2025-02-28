@@ -342,7 +342,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
           </Button>
           {/* sidebar menu content */}
           <div className="px-3 py-2">
-            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? 'opacity-0' : ''}`}>Dashboard</h2>
+            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? 'opacity-0' : ''}`}>dashboard</h2>
             <div className="space-y-1">
               <Button
                 variant={
@@ -357,7 +357,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               >
                 <Link to="/platform">
                   <LayoutDashboard className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-                  {!sidebarCollapsed && 'Dashboard'}
+                  {!sidebarCollapsed && 'dashboard'}
                 </Link>
               </Button>
               <Button
@@ -367,7 +367,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               >
                 <Link to="/platform/jobs">
                   <Briefcase className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-                  {!sidebarCollapsed && 'Jobs'}
+                  {!sidebarCollapsed && 'jobs'}
                 </Link>
               </Button>
               <Button
@@ -377,13 +377,13 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               >
                 <Link to="/platform/messages">
                   <MessageSquare className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-                  {!sidebarCollapsed && 'Messages'}
+                  {!sidebarCollapsed && 'messages'}
                 </Link>
               </Button>
             </div>
           </div>
           <div className="px-3 py-2 mt-1">
-            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? 'opacity-0' : ''}`}>Account</h2>
+            <h2 className={`mb-2 px-4 text-sm font-semibold ${sidebarCollapsed ? 'opacity-0' : ''}`}>account</h2>
             <div className="space-y-1">
               <Button
                 variant={isActive('/platform/professional-profile') ? 'secondary' : 'ghost'}
@@ -392,7 +392,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               >
                 <Link to="/platform/professional-profile">
                   <User className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-                  {!sidebarCollapsed && 'My Profile'}
+                  {!sidebarCollapsed && 'my profile'}
                 </Link>
               </Button>
               <Button
@@ -402,7 +402,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               >
                 <Link to="/platform/hospital-profile">
                   <Building className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-                  {!sidebarCollapsed && 'Hospital Profile'}
+                  {!sidebarCollapsed && 'hospital profile'}
                 </Link>
               </Button>
               <Button
@@ -412,7 +412,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               >
                 <Link to="/platform/settings">
                   <Settings className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-                  {!sidebarCollapsed && 'Settings'}
+                  {!sidebarCollapsed && 'settings'}
                 </Link>
               </Button>
             </div>
@@ -423,7 +423,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
               className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20`}
             >
               <LogOut className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
-              {!sidebarCollapsed && 'Sign Out'}
+              {!sidebarCollapsed && 'sign out'}
             </Button>
           </div>
         </div>
