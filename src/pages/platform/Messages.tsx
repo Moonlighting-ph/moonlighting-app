@@ -220,7 +220,7 @@ const Messages = () => {
     setShowConversation(false)
   }
 
-  const groupedMessages = groupMessagesByDate(messageHistory)
+  const groupedMessages = groupMessagesByDate(messageHistory); // <-- note the semicolon here
 
   return (
     <div className="container px-4 py-6 md:py-8 h-[600px] overflow-hidden">
@@ -448,4 +448,13 @@ const Messages = () => {
                     choose a conversation from the list to start messaging.
                   </p>
                 </div>
-    
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Messages
