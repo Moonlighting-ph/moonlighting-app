@@ -1,8 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApplicationTabs } from './ApplicationTabs';
+
+// Mock application data for demonstration
+const mockApplications = [];
+const isLoading = false;
 
 const ApplicationTabsWrapper = () => {
   return (
@@ -16,16 +20,16 @@ const ApplicationTabsWrapper = () => {
             <TabsTrigger value="paid">Paid</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
-            <ApplicationTabs status="all" />
+            <ApplicationTabs applications={mockApplications} isLoading={isLoading} />
           </TabsContent>
           <TabsContent value="applied" className="mt-6">
-            <ApplicationTabs status="applied" />
+            <ApplicationTabs applications={mockApplications} isLoading={isLoading} />
           </TabsContent>
           <TabsContent value="upcoming" className="mt-6">
-            <ApplicationTabs status="upcoming" />
+            <ApplicationTabs applications={mockApplications} isLoading={isLoading} />
           </TabsContent>
           <TabsContent value="paid" className="mt-6">
-            <ApplicationTabs status="paid" />
+            <ApplicationTabs applications={mockApplications} isLoading={isLoading} />
           </TabsContent>
         </Tabs>
       </CardContent>
