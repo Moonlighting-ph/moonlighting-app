@@ -1,3 +1,4 @@
+
 import { useState, ReactNode, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -280,7 +281,8 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
                 )}
               </PopoverContent>
             </Popover>
-            <Link to="/platform/messages">
+            {/* Hide Messages button for MVP */}
+            <Link to="/platform/messages" className="hidden">
               <Button variant="ghost" size="icon">
                 <MessageSquare className="h-5 w-5" />
               </Button>
@@ -303,7 +305,8 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
                     <span>profile</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                {/* Hide Settings for MVP */}
+                <DropdownMenuItem asChild className="hidden">
                   <Link to="/platform/settings" className="cursor-pointer w-full">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>settings</span>
@@ -370,9 +373,10 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
                   {!sidebarCollapsed && 'jobs'}
                 </Link>
               </Button>
+              {/* Hide Messages for MVP */}
               <Button
                 variant={isActive('/platform/messages') ? 'secondary' : 'ghost'}
-                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9 hidden`}
                 asChild
               >
                 <Link to="/platform/messages">
@@ -395,9 +399,10 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
                   {!sidebarCollapsed && 'my profile'}
                 </Link>
               </Button>
+              {/* Hide Hospital Profile for MVP */}
               <Button
                 variant={isActive('/platform/hospital-profile') ? 'secondary' : 'ghost'}
-                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9 hidden`}
                 asChild
               >
                 <Link to="/platform/hospital-profile">
@@ -405,9 +410,10 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
                   {!sidebarCollapsed && 'hospital profile'}
                 </Link>
               </Button>
+              {/* Hide Settings for MVP */}
               <Button
                 variant={isActive('/platform/settings') ? 'secondary' : 'ghost'}
-                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9`}
+                className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9 hidden`}
                 asChild
               >
                 <Link to="/platform/settings">

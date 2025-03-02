@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   BarChart, 
@@ -147,7 +148,8 @@ const Dashboard = () => {
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notifications</span>
             </Button>
-            <Button variant="outline" size="sm" className="h-9 gap-1.5">
+            {/* Hide Messages button for MVP */}
+            <Button variant="outline" size="sm" className="h-9 gap-1.5 hidden">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Messages</span>
             </Button>
@@ -205,7 +207,8 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="col-span-1 lg:col-span-2 space-y-6">
-            <Card>
+            {/* Hide Activity Chart for MVP */}
+            <Card className="hidden">
               <CardHeader className="pb-3">
                 <CardTitle className="text-md md:text-lg font-medium flex justify-between items-center">
                   <div className="flex items-center gap-2">
@@ -246,7 +249,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             
-            {/* Recommended Jobs Card */}
+            {/* Recommended Jobs Card - Essential for MVP */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-md md:text-lg font-medium flex justify-between items-center">
@@ -265,7 +268,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y">
-                  {recommendedJobs.slice(0, 3).map((job) => (
+                  {recommendedJobs.map((job) => (
                     <div key={job.id} className="p-4 flex gap-4 hover:bg-muted/50 transition-colors">
                       <div className="w-10 h-10 rounded-md border overflow-hidden flex-shrink-0 flex items-center justify-center bg-white">
                         <img src={job.logo} alt={job.company} className="w-full h-full object-cover object-center" />
@@ -289,7 +292,7 @@ const Dashboard = () => {
           
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Profile Card */}
+            {/* Profile Card - Essential for MVP */}
             <Card>
               <CardContent className="p-5">
                 <div className="flex flex-col items-center text-center">
@@ -315,7 +318,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             
-            {/* Status Card */}
+            {/* Status Card - Essential for MVP */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-md md:text-lg font-medium">Application Status</CardTitle>
@@ -356,7 +359,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             
-            {/* Upcoming Events */}
+            {/* Upcoming Events - Essential for MVP as they relate to job applications */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-md md:text-lg font-medium flex items-center gap-2">
