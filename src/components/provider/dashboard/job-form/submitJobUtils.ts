@@ -27,10 +27,6 @@ export const prepareJobDataForSubmission = (
   // Default placeholder logo
   const logo = "https://placehold.co/600x400/png";
 
-  // The jobs table doesn't have separate columns for compensation details
-  // including base_salary, benefits_value, etc.
-  // Instead we'll include them as part of the salary field in a structured format
-  
   // Format the comprehensive salary information
   const salaryInfo = {
     base: formData.baseSalary,
@@ -55,9 +51,7 @@ export const prepareJobDataForSubmission = (
     benefits,
     urgent: formData.urgent,
     created_by: userID,
-    qualifications
-    // We're no longer trying to add these columns directly
-    // base_salary, benefits_value, bonus_structure, payment_frequency
+    qualifications // Now correctly included as a separate field
   };
 };
 

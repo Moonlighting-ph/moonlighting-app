@@ -66,6 +66,7 @@ export type Database = {
           is_active: boolean
           location: string
           logo: string
+          qualifications: string[] | null
           requirements: string[]
           salary: string
           title: string
@@ -83,6 +84,7 @@ export type Database = {
           is_active?: boolean
           location: string
           logo: string
+          qualifications?: string[] | null
           requirements?: string[]
           salary: string
           title: string
@@ -100,6 +102,7 @@ export type Database = {
           is_active?: boolean
           location?: string
           logo?: string
+          qualifications?: string[] | null
           requirements?: string[]
           salary?: string
           title?: string
