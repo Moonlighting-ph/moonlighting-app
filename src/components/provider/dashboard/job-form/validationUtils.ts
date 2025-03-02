@@ -1,13 +1,14 @@
 
 import { JobFormData } from './types';
-import { useToast } from '@/hooks/use-toast';
+import { type Toast } from "@/hooks/use-toast";
 
 export interface ValidationResult {
   isValid: boolean;
   message: string;
 }
 
-export const validateJobForm = (formData: JobFormData, toast: ReturnType<typeof useToast>): boolean => {
+// Update the function to accept the full toast object from useToast()
+export const validateJobForm = (formData: JobFormData, toast: { toast: (props: Toast) => void }): boolean => {
   // Validate title
   if (!formData.title.trim()) {
     toast.toast({
@@ -33,7 +34,7 @@ export const validateJobForm = (formData: JobFormData, toast: ReturnType<typeof 
 
 export const validateCompanyProfile = (
   profileData: { company?: string } | null,
-  toast: ReturnType<typeof useToast>,
+  toast: { toast: (props: Toast) => void },
   navigate?: (path: string) => void
 ): boolean => {
   // Check if company name is set for hospital/provider users

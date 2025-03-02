@@ -78,8 +78,8 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Validate the form first
-    if (!validateJobForm(formData, toast)) {
+    // Validate the form first - pass the entire toast object
+    if (!validateJobForm(formData, { toast })) {
       return;
     }
     
@@ -90,7 +90,7 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
       const { data: userData } = await supabase.auth.getUser();
       
       if (!userData.user) {
-        toast.toast({
+        toast({
           title: "Authentication Error",
           description: "You must be logged in to post a job",
           variant: "destructive",
@@ -106,7 +106,7 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
         .single();
 
       if (profileError) {
-        toast.toast({
+        toast({
           title: "Profile Error",
           description: "Failed to fetch your profile information",
           variant: "destructive",
@@ -114,8 +114,8 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
         return;
       }
 
-      // Validate company profile
-      if (!validateCompanyProfile(profileData, toast, navigate)) {
+      // Validate company profile - pass the entire toast object
+      if (!validateCompanyProfile(profileData, { toast }, navigate)) {
         return;
       }
 
@@ -141,7 +141,7 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
         throw result.error;
       }
 
-      toast.toast({
+      toast({
         title: isEditing ? "Job Updated" : "Job Posted",
         description: isEditing 
           ? "Your job posting has been updated successfully." 
@@ -155,7 +155,7 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
       }
     } catch (error) {
       console.error('Error posting job:', error);
-      toast.toast({
+      toast({
         title: "Error",
         description: `Failed to ${isEditing ? 'update' : 'post'} job. Please try again.`,
         variant: "destructive",
