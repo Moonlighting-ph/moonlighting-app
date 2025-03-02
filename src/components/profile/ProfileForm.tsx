@@ -66,9 +66,8 @@ export default function ProfileForm() {
 
     setLoading(true);
     try {
-      // We need to cast the table name to any to avoid TypeScript errors until the types are properly generated
       const { error } = await supabase
-        .from('profiles' as any)
+        .from('profiles')
         .upsert({
           id: user.id,
           ...formData,
