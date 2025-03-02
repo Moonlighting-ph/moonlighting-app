@@ -2,9 +2,9 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TabContentWrapper } from "./TabContentWrapper";
-import BasicProfileInfo from "@/components/professional/profile/BasicProfileInfo";
-import ContactInfo from "@/components/professional/profile/ContactInfo";
-import MedicalProfessionalInfo from "@/components/professional/profile/MedicalProfessionalInfo";
+import { BasicProfileInfo } from "@/components/professional/profile/BasicProfileInfo";
+import { ContactInfo } from "@/components/professional/profile/ContactInfo";
+import { MedicalProfessionalInfo } from "@/components/professional/profile/MedicalProfessionalInfo";
 import DocumentVerificationManager from "@/components/professional/profile/DocumentVerificationManager";
 
 interface FormTabsProps {
@@ -57,30 +57,37 @@ export function FormTabs({
 
       <TabsContent value="basic">
         <TabContentWrapper
-          title="Basic Information"
-          description="Fill in your personal details to complete your profile"
-          onSubmit={handleSubmit}
+          handleSubmit={handleSubmit}
           loading={loading}
-          nextTab="contact"
-          setActiveTab={setActiveTab}
-          isComplete={!!formData.first_name && !!formData.last_name}
+          backAction={undefined}
+          submitText="Next"
+          disableSubmit={!formData.first_name || !formData.last_name}
         >
-          <BasicProfileInfo formData={formData} onChange={handleChange} />
+          <BasicProfileInfo 
+            firstName={formData.first_name}
+            lastName={formData.last_name}
+            title={formData.title}
+            bio={formData.bio}
+            avatarUrl={formData.avatar_url}
+            handleChange={handleChange}
+          />
         </TabContentWrapper>
       </TabsContent>
 
       <TabsContent value="contact">
         <TabContentWrapper
-          title="Contact Information"
-          description="How can healthcare providers reach you?"
-          onSubmit={handleSubmit}
+          handleSubmit={handleSubmit}
           loading={loading}
-          previousTab="basic"
-          nextTab={userType === "medical_professional" && showDocumentVerification ? "verification" : "provider"}
-          setActiveTab={setActiveTab}
-          isComplete={!!formData.contact_email}
+          backAction={() => setActiveTab("basic")}
+          submitText={userType === "medical_professional" && showDocumentVerification ? "Next" : "Save"}
+          disableSubmit={!formData.contact_email}
         >
-          <ContactInfo formData={formData} onChange={handleChange} />
+          <ContactInfo 
+            contactEmail={formData.contact_email}
+            phone={formData.phone}
+            company={formData.company}
+            handleChange={handleChange}
+          />
         </TabContentWrapper>
       </TabsContent>
 
@@ -93,19 +100,17 @@ export function FormTabs({
       {userType === "medical_provider" && (
         <TabsContent value="provider">
           <TabContentWrapper
-            title="Healthcare Provider Information"
-            description="Tell us more about your healthcare facility"
-            onSubmit={handleSubmit}
+            handleSubmit={handleSubmit}
             loading={loading}
-            previousTab="contact"
-            setActiveTab={setActiveTab}
-            finalStep={true}
-            isComplete={true}
+            backAction={() => setActiveTab("contact")}
+            submitText="Save"
+            disableSubmit={false}
           >
             <MedicalProfessionalInfo 
-              formData={formData} 
-              onChange={handleChange}
-              isProvider={true}
+              prcLicense={formData.prc_license}
+              workExperience={formData.work_experience}
+              preferredLocation={formData.preferred_location}
+              handleChange={handleChange}
             />
           </TabContentWrapper>
         </TabsContent>

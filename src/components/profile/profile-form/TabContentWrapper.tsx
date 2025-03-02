@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 type TabContentWrapperProps = {
   children: React.ReactNode;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  handleSubmit: (e: React.FormEvent) => void;
   loading: boolean;
   backAction?: () => void;
   submitText: string;
