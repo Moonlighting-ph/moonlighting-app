@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +11,7 @@ import { ContactInfo } from "./ContactInfo";
 import { DocumentVerification } from "./DocumentVerification";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Profile } from "@/types/profile";
 
 type ProfileFormData = {
   first_name: string;
@@ -159,12 +159,10 @@ export default function ProfileForm() {
     }
   };
 
-  // Calculate profile completion percentage
   const calculateCompletionPercentage = () => {
     let filledFields = 0;
     let totalFields = 0;
     
-    // Basic fields
     const basicFields = ['first_name', 'last_name', 'title', 'bio', 'avatar_url'];
     basicFields.forEach(field => {
       totalFields++;
@@ -173,7 +171,6 @@ export default function ProfileForm() {
       }
     });
     
-    // Contact fields
     const contactFields = ['contact_email', 'phone'];
     contactFields.forEach(field => {
       totalFields++;
@@ -182,7 +179,6 @@ export default function ProfileForm() {
       }
     });
     
-    // Professional fields
     if (profile?.user_type === 'medical_professional') {
       const professionalFields = ['prc_license', 'work_experience', 'preferred_location'];
       professionalFields.forEach(field => {
@@ -193,7 +189,6 @@ export default function ProfileForm() {
       });
     }
     
-    // Document fields
     const documentFields = ['prc_license', 'tin_number', 'government_id'];
     documentFields.forEach(field => {
       totalFields++;

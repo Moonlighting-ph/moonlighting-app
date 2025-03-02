@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUserProfile, submitDocumentVerification } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -14,15 +14,17 @@ const DocumentVerificationManager = () => {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
-    queryFn: getUserProfile,
-    onSuccess: (data) => {
-      if (data) {
-        setPrcLicense(data.prc_license || '');
-        setTin(data.tin_number || '');
-        setGovId(data.government_id || '');
-      }
-    }
+    queryFn: getUserProfile
   });
+
+  // Use useEffect instead of onSuccess callback
+  useEffect(() => {
+    if (profile) {
+      setPrcLicense(profile.prc_license || '');
+      setTin(profile.tin_number || '');
+      setGovId(profile.government_id || '');
+    }
+  }, [profile]);
 
   const submitMutation = useMutation({
     mutationFn: submitDocumentVerification,
