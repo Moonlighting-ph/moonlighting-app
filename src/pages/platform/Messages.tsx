@@ -1,33 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react'
-import {
-  Search,
-  Send,
-  Paperclip,
-  MoreVertical,
-  Phone,
-  Video,
-  ArrowLeft,
-  Image as ImageIcon,
-  Check,
-  CheckCheck,
-  Smile
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { useIsMobile } from '@/hooks/use-mobile'
+
+import React, { useState, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import ConversationList from '@/components/messages/ConversationList';
+import ConversationView from '@/components/messages/ConversationView';
+import EmptyConversation from '@/components/messages/EmptyConversation';
+import { MessageType, ConversationType, GroupedMessages } from '@/types/messages';
 
 // sample conversation data
-const conversations = [
+const conversations: ConversationType[] = [
   {
     id: 'conv1',
     name: 'Dr. Maria Reyes',
@@ -94,10 +74,10 @@ const conversations = [
     unread: 1,
     isActive: false
   }
-]
+];
 
 // sample messages with a date property
-const messageHistory = [
+const messageHistory: MessageType[] = [
   {
     id: 'msg1',
     sender: 'them',
@@ -167,25 +147,10 @@ const messageHistory = [
     read: false,
     date: 'today'
   }
-]
-
-// Define interface for messages
-interface Message {
-  id: string
-  sender: 'me' | 'them'
-  content: string
-  time: string
-  read: boolean
-  date: string
-}
-
-// Define type for grouped messages
-interface GroupedMessages {
-  [key: string]: Message[]
-}
+];
 
 // helper function to group messages by date
-const groupMessagesByDate = (messages: Message[]): GroupedMessages => {
+const groupMessagesByDate = (messages: MessageType[]): GroupedMessages => {
   const groups: GroupedMessages = {}
   messages.forEach((msg) => {
     const group = msg.date || 'today'
@@ -196,46 +161,34 @@ const groupMessagesByDate = (messages: Message[]): GroupedMessages => {
 }
 
 const Messages = () => {
-  const [activeConversation, setActiveConversation] = useState(conversations[0])
-  const [message, setMessage] = useState('')
-  const [conversationsList, setConversationsList] = useState(conversations)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showConversation, setShowConversation] = useState(false)
-  const messageEndRef = useRef<HTMLDivElement>(null)
-  const isMobile = useIsMobile()
+  const [activeConversation, setActiveConversation] = useState<ConversationType | null>(conversations[0]);
+  const [conversationsList, setConversationsList] = useState(conversations);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showConversation, setShowConversation] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    // scroll to bottom when messages change
-    messageEndRef.current?.scrollIntoView({ behavior: 'auto' })
     if (isMobile) {
-      setShowConversation(false)
+      setShowConversation(false);
     }
-  }, [isMobile, messageHistory])
+  }, [isMobile]);
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return
-    console.log(`sending message: ${message}`)
-    setMessage('')
-  }
+  const handleSendMessage = (message: string) => {
+    console.log(`sending message: ${message}`);
+  };
 
-  const handleSelectConversation = (conversation) => {
-    setActiveConversation(conversation)
+  const handleSelectConversation = (conversation: ConversationType) => {
+    setActiveConversation(conversation);
     if (isMobile) {
-      setShowConversation(true)
+      setShowConversation(true);
     }
-  }
-
-  const filteredConversations = conversationsList.filter(
-    (conversation) =>
-      conversation.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conversation.company.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  };
 
   const handleBackToList = () => {
-    setShowConversation(false)
-  }
+    setShowConversation(false);
+  };
 
-  const groupedMessages = groupMessagesByDate(messageHistory as Message[]);
+  const groupedMessages = groupMessagesByDate(messageHistory);
 
   return (
     <div className="container px-4 py-6 md:py-8 h-[600px] overflow-hidden">
@@ -247,64 +200,15 @@ const Messages = () => {
               isMobile && showConversation ? 'hidden' : 'block'
             }`}
           >
-            <div className="p-4 border-b">
-              <h1 className="text-xl font-bold mb-4">messages</h1>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="search conversations..."
-                  className="pl-9 text-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {filteredConversations.length > 0 ? (
-                <div className="divide-y">
-                  {filteredConversations.map((conversation) => (
-                    <div
-                      key={conversation.id}
-                      className={`p-3 md:p-4 flex gap-3 hover:bg-muted/50 cursor-pointer transition-colors ${
-                        conversation.id === activeConversation?.id ? 'bg-muted/50' : ''
-                      }`}
-                      onClick={() => handleSelectConversation(conversation)}
-                    >
-                      <div className="relative">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={conversation.avatar} alt={conversation.name} />
-                          <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        {conversation.status === 'online' && (
-                          <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-white dark:border-gray-800"></span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between mb-1">
-                          <p className="font-medium text-sm truncate">{conversation.name}</p>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">{conversation.time}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-1 truncate">{conversation.company}</p>
-                        <div className="flex justify-between items-center">
-                          <p className="text-xs truncate">{conversation.lastMessage}</p>
-                          {conversation.unread > 0 && (
-                            <span className="ml-2 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-medium">
-                              {conversation.unread}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full p-4">
-                  <p className="text-sm text-muted-foreground">no conversations found</p>
-                </div>
-              )}
-            </div>
+            <ConversationList
+              conversations={conversationsList}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              activeConversation={activeConversation}
+              onSelectConversation={handleSelectConversation}
+            />
           </div>
+          
           {/* conversation view */}
           <div
             className={`md:col-span-8 lg:col-span-9 flex flex-col h-full ${
@@ -312,164 +216,21 @@ const Messages = () => {
             }`}
           >
             {activeConversation ? (
-              <div className="flex flex-col h-full">
-                {/* conversation header */}
-                <div className="p-3 md:p-4 border-b flex items-center justify-between bg-background z-10">
-                  <div className="flex items-center gap-3">
-                    {isMobile && (
-                      <Button variant="ghost" size="icon" onClick={handleBackToList} className="md:hidden">
-                        <ArrowLeft className="h-5 w-5" />
-                      </Button>
-                    )}
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={activeConversation.avatar} alt={activeConversation.name} />
-                      <AvatarFallback>{activeConversation.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium text-sm">{activeConversation.name}</p>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <span className="truncate">
-                          {activeConversation.role} • {activeConversation.company}
-                        </span>
-                        {activeConversation.status === 'online' && (
-                          <Badge
-                            variant="outline"
-                            className="ml-2 h-auto py-0 px-1.5 text-[10px] bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-800"
-                          >
-                            online
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="hidden md:flex">
-                      <Phone className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="hidden md:flex">
-                      <Video className="h-4 w-4" />
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem className="text-xs cursor-pointer">
-                          view profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-xs cursor-pointer">
-                          search in conversation
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-xs cursor-pointer text-destructive">
-                          delete conversation
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-                {/* messages scroll area with shorter max-height */}
-                <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[350px]">
-                  {Object.entries(groupedMessages).map(([group, msgs]) => (
-                    <div key={group}>
-                      <div className="text-center mb-2">
-                        <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
-                          {group}
-                        </span>
-                      </div>
-                      <div className="space-y-4 mb-4">
-                        {msgs.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div className="flex gap-2 max-w-[80%]">
-                              {msg.sender === 'them' && (
-                                <Avatar className="h-8 w-8 mt-1">
-                                  <AvatarImage src={activeConversation.avatar} alt={activeConversation.name} />
-                                  <AvatarFallback>{activeConversation.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                              )}
-                              <div>
-                                <div className={`rounded-lg px-3 py-2 text-sm ${
-                                  msg.sender === 'me'
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-muted text-foreground'
-                                }`}>
-                                  {msg.content}
-                                </div>
-                                <div className="flex items-center mt-1 gap-1">
-                                  <span className="text-[10px] text-muted-foreground">{msg.time}</span>
-                                  {msg.sender === 'me' &&
-                                    (msg.read ? (
-                                      <CheckCheck className="h-3 w-3 text-primary" />
-                                    ) : (
-                                      <Check className="h-3 w-3 text-muted-foreground" />
-                                    ))}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={messageEndRef} />
-                </div>
-                {/* message input */}
-                <div className="p-3 md:p-4 border-t bg-background">
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
-                        <Smile className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10">
-                        <Paperclip className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 hidden md:flex">
-                        <ImageIcon className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-                      </Button>
-                    </div>
-                    <Input
-                      placeholder="type a message..."
-                      className="text-sm h-8 md:h-10"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'enter' && !e.shiftKey) {
-                          e.preventDefault()
-                          handleSendMessage()
-                        }
-                      }}
-                    />
-                    <Button
-                      size="icon"
-                      className="h-8 w-8 md:h-10 md:w-10"
-                      onClick={handleSendMessage}
-                      disabled={!message.trim()}
-                    >
-                      <Send className="h-4 w-4 md:h-5 md:w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <ConversationView
+                conversation={activeConversation}
+                groupedMessages={groupedMessages}
+                onSendMessage={handleSendMessage}
+                onBackToList={handleBackToList}
+                isMobile={isMobile}
+              />
             ) : (
-              <div className="flex flex-col items-center justify-center h-full p-4">
-                <div className="max-w-md text-center">
-                  <h3 className="text-lg font-medium mb-2">select a conversation</h3>
-                  <p className="text-sm text-muted-foreground">
-                    choose a conversation from the list to start messaging.
-                  </p>
-                </div>
-              </div>
+              <EmptyConversation />
             )}
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Messages
+export default Messages;
