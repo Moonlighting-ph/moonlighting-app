@@ -7,14 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+
+type ProfileFormData = {
+  full_name: string;
+  title: string;
+  bio: string;
+  contact_email: string;
+  phone: string;
+  company: string;
+  avatar_url: string;
+};
 
 export default function ProfileForm() {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProfileFormData>({
     full_name: "",
     title: "",
     bio: "",
@@ -56,8 +66,9 @@ export default function ProfileForm() {
 
     setLoading(true);
     try {
+      // We need to cast the table name to any to avoid TypeScript errors until the types are properly generated
       const { error } = await supabase
-        .from("profiles")
+        .from('profiles' as any)
         .upsert({
           id: user.id,
           ...formData,
