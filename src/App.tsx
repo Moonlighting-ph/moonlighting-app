@@ -14,6 +14,11 @@ import PlatformLayout from "./components/layouts/PlatformLayout";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/auth/Auth";
 
+// Hospital Job Management Pages
+import HospitalJobs from "./pages/platform/HospitalJobs";
+import NewJobPosting from "./pages/platform/NewJobPosting";
+import EditJobPosting from "./pages/platform/EditJobPosting";
+
 // Non-MVP pages (still imported but will be hidden in navigation)
 import HospitalProfile from "./pages/platform/HospitalProfile";
 import Messages from "./pages/platform/Messages";
@@ -65,6 +70,32 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <PlatformLayout><ProfessionalProfile /></PlatformLayout>
+                </PrivateRoute>
+              } 
+            />
+            
+            {/* Hospital Job Management Routes */}
+            <Route 
+              path="/platform/hospital-jobs" 
+              element={
+                <PrivateRoute>
+                  <PlatformLayout><HospitalJobs /></PlatformLayout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/platform/hospital-jobs/new" 
+              element={
+                <PrivateRoute>
+                  <PlatformLayout><NewJobPosting /></PlatformLayout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/platform/hospital-jobs/edit/:id" 
+              element={
+                <PrivateRoute>
+                  <PlatformLayout><EditJobPosting /></PlatformLayout>
                 </PrivateRoute>
               } 
             />

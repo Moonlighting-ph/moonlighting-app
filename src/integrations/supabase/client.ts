@@ -91,3 +91,140 @@ export const fetchUserApplications = async () => {
   if (error) throw error;
   return data;
 };
+
+// Hospital job management functions
+export const fetchHospitalJobs = async () => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to view your job postings');
+  }
+  
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('created_by', user.user.id)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data;
+};
+
+export const createJobPosting = async (jobData: any) => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to create job postings');
+  }
+  
+  const { data, error } = await supabase
+    .from('jobs')
+    .insert([{ ...jobData, created_by: user.user.id }])
+    .select();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateJobPosting = async (jobId: string, jobData: any) => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to update job postings');
+  }
+  
+  const { data, error } = await supabase
+    .from('jobs')
+    .update(jobData)
+    .eq('id', jobId)
+    .eq('created_by', user.user.id) // Ensure job belongs to this user
+    .select();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const deleteJobPosting = async (jobId: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to delete job postings');
+  }
+  
+  const { error } = await supabase
+    .from('jobs')
+    .delete()
+    .eq('id', jobId)
+    .eq('created_by', user.user.id); // Ensure job belongs to this user
+  
+  if (error) throw error;
+  return { success: true };
+};
+
+export const fetchJobApplications = async (jobId: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to view applications');
+  }
+  
+  // First check if the job belongs to the user
+  const { data: jobData, error: jobError } = await supabase
+    .from('jobs')
+    .select('id')
+    .eq('id', jobId)
+    .eq('created_by', user.user.id)
+    .single();
+  
+  if (jobError || !jobData) {
+    throw new Error('Job not found or you do not have permission to view its applications');
+  }
+  
+  const { data, error } = await supabase
+    .from('job_applications')
+    .select(`
+      *,
+      profiles:applicant_id (id, first_name, last_name, avatar_url, title, contact_email)
+    `)
+    .eq('job_id', jobId)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data;
+};
+
+export const updateApplicationStatus = async (applicationId: string, status: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to update application status');
+  }
+  
+  // First get the application to check if the job belongs to the user
+  const { data: applicationData, error: appError } = await supabase
+    .from('job_applications')
+    .select(`
+      job_id,
+      jobs:job_id (created_by)
+    `)
+    .eq('id', applicationId)
+    .single();
+  
+  if (appError || !applicationData) {
+    throw new Error('Application not found');
+  }
+  
+  // Check if the job belongs to the user
+  if (applicationData.jobs.created_by !== user.user.id) {
+    throw new Error('You do not have permission to update this application');
+  }
+  
+  const { data, error } = await supabase
+    .from('job_applications')
+    .update({ status })
+    .eq('id', applicationId)
+    .select();
+  
+  if (error) throw error;
+  return data;
+};
