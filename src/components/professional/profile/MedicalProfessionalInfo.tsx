@@ -2,7 +2,6 @@
 import React from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 interface MedicalProfessionalInfoProps {
   prcLicense: string;
@@ -19,6 +18,13 @@ export function MedicalProfessionalInfo({
 }: MedicalProfessionalInfoProps) {
   return (
     <div className="space-y-4">
+      <div className="mb-4">
+        <h2 className="text-lg font-medium">Medical Professional Information</h2>
+        <p className="text-sm text-muted-foreground">
+          This information is required for medical professionals to apply for healthcare positions
+        </p>
+      </div>
+      
       <div className="space-y-2">
         <Label htmlFor="prc_license">PRC License Number</Label>
         <Input

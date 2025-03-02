@@ -133,19 +133,31 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
       // Get user profile to get company info
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('company,id')
+        .select('company,id,user_type')
         .eq('id', userData.user.id)
         .single();
 
-      if (profileError || !profileData.company) {
+      if (profileError) {
         toast({
           title: "Profile Error",
-          description: "Please complete your hospital profile first",
+          description: "Failed to fetch your profile information",
           variant: "destructive",
         });
         return;
       }
 
+      // Check if company name is set for hospital/provider users
+      if (!profileData.company) {
+        toast({
+          title: "Profile Incomplete",
+          description: "Please add your hospital or company name to your profile first",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // For hospital/provider users, we don't need to check verification status
+      
       const requirements = formData.requirementsText
         .split('\n')
         .filter(line => line.trim() !== '');

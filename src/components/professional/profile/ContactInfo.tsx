@@ -2,6 +2,7 @@
 import React from 'react';
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/AuthContext";
 
 interface ContactInfoProps {
   contactEmail: string;
@@ -16,6 +17,9 @@ export function ContactInfo({
   company,
   handleChange
 }: ContactInfoProps) {
+  const { profile } = useAuth();
+  const isHospital = profile?.user_type === 'hospital' || profile?.user_type === 'provider';
+  
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -29,7 +33,9 @@ export function ContactInfo({
           placeholder="john.doe@example.com"
         />
         <p className="text-xs text-muted-foreground mt-1">
-          This is the email where employers will contact you
+          {isHospital 
+            ? "This is the email where applicants will contact you" 
+            : "This is the email where employers will contact you"}
         </p>
       </div>
 
@@ -46,14 +52,21 @@ export function ContactInfo({
 
       {company !== undefined && (
         <div className="space-y-2">
-          <Label htmlFor="company">Current/Last Employer</Label>
+          <Label htmlFor="company">
+            {isHospital ? "Hospital/Organization Name" : "Current/Last Employer"}
+          </Label>
           <Input
             id="company"
             name="company"
             value={company}
             onChange={handleChange}
-            placeholder="e.g. Manila Medical Center"
+            placeholder={isHospital ? "e.g. Manila Medical Center" : "e.g. Previous Employer"}
           />
+          {isHospital && (
+            <p className="text-xs text-muted-foreground mt-1">
+              This name will appear on your job postings
+            </p>
+          )}
         </div>
       )}
     </div>

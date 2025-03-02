@@ -30,13 +30,16 @@ export function FormTabs({
   userType,
   isDocumentVerificationComplete
 }: FormTabsProps) {
+  // Only medical professionals need verification
+  const needsVerification = userType === 'medical_professional';
+  
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className={`grid w-full ${needsVerification ? 'grid-cols-4' : 'grid-cols-3'}`}>
         <TabsTrigger value="basic">Basic Info</TabsTrigger>
         <TabsTrigger value="professional">Professional</TabsTrigger>
         <TabsTrigger value="contact">Contact</TabsTrigger>
-        <TabsTrigger value="verification">Verification</TabsTrigger>
+        {needsVerification && <TabsTrigger value="verification">Verification</TabsTrigger>}
       </TabsList>
       
       <TabsContent value="basic">
@@ -79,7 +82,7 @@ export function FormTabs({
           handleSubmit={handleSubmit} 
           loading={loading}
           backAction={() => setActiveTab("professional")}
-          submitText="Save Contact Info"
+          submitText={needsVerification ? "Save Contact Info" : "Save Profile"}
         >
           <ContactInfo
             contactEmail={formData.contact_email}
@@ -90,34 +93,36 @@ export function FormTabs({
         </TabContentWrapper>
       </TabsContent>
       
-      <TabsContent value="verification">
-        <div className="space-y-6 pt-4">
-          <DocumentVerification
-            prcLicense={formData.prc_license}
-            tin={formData.tin_number}
-            govId={formData.government_id}
-            onPrcLicenseChange={(value) => formData.prc_license = value}
-            onTinChange={(value) => formData.tin_number = value}
-            onGovIdChange={(value) => formData.government_id = value}
-            onSubmit={submitDocuments}
-            isComplete={formData.document_verification_status === "verified"}
-            status={formData.document_verification_status as "pending" | "submitted" | "verified" | "rejected"}
-          />
-          
-          <div className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => setActiveTab("contact")}>
-              Back
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleSubmit} 
-              disabled={loading || !isDocumentVerificationComplete}
-            >
-              {loading ? "Saving..." : "Save All Profile"}
-            </Button>
+      {needsVerification && (
+        <TabsContent value="verification">
+          <div className="space-y-6 pt-4">
+            <DocumentVerification
+              prcLicense={formData.prc_license}
+              tin={formData.tin_number}
+              govId={formData.government_id}
+              onPrcLicenseChange={(value) => formData.prc_license = value}
+              onTinChange={(value) => formData.tin_number = value}
+              onGovIdChange={(value) => formData.government_id = value}
+              onSubmit={submitDocuments}
+              isComplete={formData.document_verification_status === "verified"}
+              status={formData.document_verification_status as "pending" | "submitted" | "verified" | "rejected"}
+            />
+            
+            <div className="flex justify-between">
+              <Button type="button" variant="outline" onClick={() => setActiveTab("contact")}>
+                Back
+              </Button>
+              <Button 
+                type="button" 
+                onClick={handleSubmit} 
+                disabled={loading || !isDocumentVerificationComplete}
+              >
+                {loading ? "Saving..." : "Save All Profile"}
+              </Button>
+            </div>
           </div>
-        </div>
-      </TabsContent>
+        </TabsContent>
+      )}
     </Tabs>
   );
 }

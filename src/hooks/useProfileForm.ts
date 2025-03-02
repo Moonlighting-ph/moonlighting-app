@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -121,13 +122,19 @@ export function useProfileForm() {
     }
   };
 
+  // Check if verification is needed based on user type
+  const needsDocumentVerification = profile?.user_type === 'medical_professional';
+  
   const completion = calculateCompletionPercentage(formData, profile?.user_type);
-  const documentVerificationComplete = isDocumentVerificationComplete(
-    formData.document_verification_status,
-    formData.prc_license,
-    formData.tin_number,
-    formData.government_id
-  );
+  
+  // For hospital/providers, we don't need document verification
+  const documentVerificationComplete = !needsDocumentVerification || 
+    isDocumentVerificationComplete(
+      formData.document_verification_status,
+      formData.prc_license,
+      formData.tin_number,
+      formData.government_id
+    );
 
   return {
     formData,
