@@ -70,7 +70,7 @@ export const useBulkActions = ({ jobs, queryClient }: UseBulkActionsProps) => {
       const promises = jobIds.map(jobId => 
         supabase
           .from('jobs')
-          .update({ status: 'archived' })
+          .update({ is_active: false }) // Change 'status' to 'is_active: false' to archive a job
           .eq('id', jobId)
           .eq('created_by', userData.user!.id)
       );

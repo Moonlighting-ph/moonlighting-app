@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useMutation, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +13,7 @@ export const useJobActions = ({ queryClient }: UseJobActionsProps) => {
 
   const deleteJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
+      console.log('Deleting job with ID:', jobId);
       const { data: userData } = await supabase.auth.getUser();
       
       if (!userData.user) {
@@ -26,10 +26,16 @@ export const useJobActions = ({ queryClient }: UseJobActionsProps) => {
         .eq('id', jobId)
         .eq('created_by', userData.user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase deletion error:', error);
+        throw error;
+      }
+      
       return jobId;
     },
-    onSuccess: () => {
+    onSuccess: (jobId) => {
+      console.log('Job deleted successfully:', jobId);
+      // Immediately invalidate the query to refresh the job list
       queryClient.invalidateQueries({ queryKey: ['hospitalJobs'] });
       toast({
         title: "Job Deleted",
@@ -44,6 +50,8 @@ export const useJobActions = ({ queryClient }: UseJobActionsProps) => {
         description: "Failed to delete job. Please try again.",
         variant: "destructive",
       });
+      // Always reset the state even on error
+      setJobToDelete(null);
     }
   });
 
@@ -103,11 +111,13 @@ export const useJobActions = ({ queryClient }: UseJobActionsProps) => {
 
   const handleDelete = () => {
     if (jobToDelete) {
+      console.log('Handling delete for job:', jobToDelete);
       deleteJobMutation.mutate(jobToDelete);
     }
   };
 
   const handleSetJobToDelete = (jobId: string) => {
+    console.log('Setting job to delete:', jobId);
     setJobToDelete(jobId);
   };
 

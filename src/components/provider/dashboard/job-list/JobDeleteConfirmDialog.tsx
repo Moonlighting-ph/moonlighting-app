@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -9,36 +9,31 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 interface JobDeleteConfirmDialogProps {
   jobToDelete: string | null;
-  setJobToDelete: (jobId: string | null) => void;
+  setJobToDelete: (id: string | null) => void;
   handleDelete: () => void;
 }
 
-export const JobDeleteConfirmDialog: React.FC<JobDeleteConfirmDialogProps> = ({
+export const JobDeleteConfirmDialog = ({
   jobToDelete,
   setJobToDelete,
-  handleDelete
-}) => {
+  handleDelete,
+}: JobDeleteConfirmDialogProps) => {
   return (
     <AlertDialog open={!!jobToDelete} onOpenChange={(open) => !open && setJobToDelete(null)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete
-            this job posting and remove it from our servers.
+            Are you sure you want to delete this job posting? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setJobToDelete(null)}>
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>
-            Delete
-          </AlertDialogAction>
+          <AlertDialogCancel onClick={() => setJobToDelete(null)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
