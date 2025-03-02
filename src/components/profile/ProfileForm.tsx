@@ -9,6 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 import { BasicProfileInfo } from "./BasicProfileInfo";
 import { MedicalProfessionalInfo } from "./MedicalProfessionalInfo";
 import { ContactInfo } from "./ContactInfo";
+import { DocumentVerification } from "./DocumentVerification";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type ProfileFormData = {
   first_name: string;
@@ -22,11 +25,15 @@ type ProfileFormData = {
   prc_license: string;
   work_experience: string;
   preferred_location: string;
+  tin_number: string;
+  government_id: string;
+  document_verification_status: string;
 };
 
 export default function ProfileForm() {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("basic");
   const [formData, setFormData] = useState<ProfileFormData>({
     first_name: "",
     last_name: "",
@@ -39,6 +46,9 @@ export default function ProfileForm() {
     prc_license: "",
     work_experience: "",
     preferred_location: "",
+    tin_number: "",
+    government_id: "",
+    document_verification_status: "pending",
   });
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -57,6 +67,9 @@ export default function ProfileForm() {
         prc_license: profile.prc_license || "",
         work_experience: profile.work_experience || "",
         preferred_location: profile.preferred_location || "",
+        tin_number: profile.tin_number || "",
+        government_id: profile.government_id || "",
+        document_verification_status: profile.document_verification_status || "pending",
       });
     } else if (user) {
       setFormData((prev) => ({
@@ -92,6 +105,9 @@ export default function ProfileForm() {
           prc_license: formData.prc_license,
           work_experience: formData.work_experience,
           preferred_location: formData.preferred_location,
+          tin_number: formData.tin_number,
+          government_id: formData.government_id,
+          document_verification_status: formData.document_verification_status,
           user_type: profile?.user_type || 'medical_professional',
           updated_at: new Date().toISOString(),
         });
@@ -115,6 +131,85 @@ export default function ProfileForm() {
     }
   };
 
+  const submitDocuments = async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          prc_license: formData.prc_license,
+          tin_number: formData.tin_number,
+          government_id: formData.government_id,
+          document_verification_status: "submitted",
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      setFormData(prev => ({
+        ...prev,
+        document_verification_status: "submitted"
+      }));
+      
+      return Promise.resolve();
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  };
+
+  // Calculate profile completion percentage
+  const calculateCompletionPercentage = () => {
+    let filledFields = 0;
+    let totalFields = 0;
+    
+    // Basic fields
+    const basicFields = ['first_name', 'last_name', 'title', 'bio', 'avatar_url'];
+    basicFields.forEach(field => {
+      totalFields++;
+      if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
+        filledFields++;
+      }
+    });
+    
+    // Contact fields
+    const contactFields = ['contact_email', 'phone'];
+    contactFields.forEach(field => {
+      totalFields++;
+      if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
+        filledFields++;
+      }
+    });
+    
+    // Professional fields
+    if (profile?.user_type === 'medical_professional') {
+      const professionalFields = ['prc_license', 'work_experience', 'preferred_location'];
+      professionalFields.forEach(field => {
+        totalFields++;
+        if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
+          filledFields++;
+        }
+      });
+    }
+    
+    // Document fields
+    const documentFields = ['prc_license', 'tin_number', 'government_id'];
+    documentFields.forEach(field => {
+      totalFields++;
+      if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
+        filledFields++;
+      }
+    });
+    
+    return Math.round((filledFields / totalFields) * 100);
+  };
+  
+  const completionPercentage = calculateCompletionPercentage();
+  const isDocumentVerificationComplete = 
+    formData.document_verification_status === "verified" ||
+    (formData.prc_license && formData.tin_number && formData.government_id);
+
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
@@ -122,38 +217,120 @@ export default function ProfileForm() {
         <CardDescription>
           Please add some additional information to complete your profile.
         </CardDescription>
+        <div className="mt-4 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Profile Completion</span>
+            <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
+          </div>
+          <Progress value={completionPercentage} className="h-2" />
+          <p className="text-xs text-muted-foreground">
+            {completionPercentage < 100 
+              ? `Complete your profile to apply for jobs (${Math.round(completionPercentage)}% completed)` 
+              : "Your profile is complete. You can now apply for jobs!"}
+          </p>
+        </div>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <BasicProfileInfo 
-            firstName={formData.first_name}
-            lastName={formData.last_name}
-            title={formData.title}
-            bio={formData.bio}
-            avatarUrl={formData.avatar_url}
-            handleChange={handleChange}
-          />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="basic">Basic Info</TabsTrigger>
+            <TabsTrigger value="professional">Professional</TabsTrigger>
+            <TabsTrigger value="contact">Contact</TabsTrigger>
+            <TabsTrigger value="verification">Verification</TabsTrigger>
+          </TabsList>
           
-          {profile?.user_type === 'medical_professional' && (
-            <MedicalProfessionalInfo
-              prcLicense={formData.prc_license}
-              workExperience={formData.work_experience}
-              preferredLocation={formData.preferred_location}
-              handleChange={handleChange}
-            />
-          )}
+          <TabsContent value="basic">
+            <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+              <BasicProfileInfo 
+                firstName={formData.first_name}
+                lastName={formData.last_name}
+                title={formData.title}
+                bio={formData.bio}
+                avatarUrl={formData.avatar_url}
+                handleChange={handleChange}
+              />
+              
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={() => navigate("/platform")}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Saving..." : "Save Basic Info"}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
           
-          <ContactInfo
-            contactEmail={formData.contact_email}
-            phone={formData.phone}
-            company={formData.company}
-            handleChange={handleChange}
-          />
+          <TabsContent value="professional">
+            <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+              {profile?.user_type === 'medical_professional' && (
+                <MedicalProfessionalInfo
+                  prcLicense={formData.prc_license}
+                  workExperience={formData.work_experience}
+                  preferredLocation={formData.preferred_location}
+                  handleChange={handleChange}
+                />
+              )}
+              
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={() => setActiveTab("basic")}>
+                  Back
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Saving..." : "Save Professional Info"}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
           
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Saving..." : "Save Profile"}
-          </Button>
-        </form>
+          <TabsContent value="contact">
+            <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+              <ContactInfo
+                contactEmail={formData.contact_email}
+                phone={formData.phone}
+                company={formData.company}
+                handleChange={handleChange}
+              />
+              
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={() => setActiveTab("professional")}>
+                  Back
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Saving..." : "Save Contact Info"}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+          
+          <TabsContent value="verification">
+            <div className="space-y-6 pt-4">
+              <DocumentVerification
+                prcLicense={formData.prc_license}
+                tin={formData.tin_number}
+                govId={formData.government_id}
+                onPrcLicenseChange={(value) => setFormData(prev => ({ ...prev, prc_license: value }))}
+                onTinChange={(value) => setFormData(prev => ({ ...prev, tin_number: value }))}
+                onGovIdChange={(value) => setFormData(prev => ({ ...prev, government_id: value }))}
+                onSubmit={submitDocuments}
+                isComplete={formData.document_verification_status === "verified"}
+              />
+              
+              <div className="flex justify-between">
+                <Button type="button" variant="outline" onClick={() => setActiveTab("contact")}>
+                  Back
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={handleSubmit} 
+                  disabled={loading || !isDocumentVerificationComplete}
+                >
+                  {loading ? "Saving..." : "Save All Profile"}
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

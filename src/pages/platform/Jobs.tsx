@@ -81,9 +81,7 @@ const Jobs = () => {
                   savedJobs={savedJobs}
                   salaryRange={salaryRange}
                 >
-                  {(filteredJobs) => {
-                    return filteredJobs.length;
-                  }}
+                  {(filteredJobs) => filteredJobs.length}
                 </JobFilterManager>
               }
             />
