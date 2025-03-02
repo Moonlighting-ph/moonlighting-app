@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -81,6 +82,7 @@ const HospitalJobList = () => {
         title: "Job Deleted",
         description: "The job posting has been successfully deleted."
       });
+      setJobToDelete(null); // Reset the job to delete state
     },
     onError: (error) => {
       console.error('Error deleting job:', error);
@@ -227,7 +229,6 @@ const HospitalJobList = () => {
   const handleDelete = () => {
     if (jobToDelete) {
       deleteJobMutation.mutate(jobToDelete);
-      setJobToDelete(null);
     }
   };
 
@@ -358,7 +359,7 @@ const HospitalJobList = () => {
         <EmptyHospitalJobsList />
       )}
 
-      <AlertDialog open={!!jobToDelete} onOpenChange={() => !jobToDelete && setJobToDelete(null)}>
+      <AlertDialog open={!!jobToDelete} onOpenChange={(open) => !open && setJobToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

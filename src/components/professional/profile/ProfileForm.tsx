@@ -18,6 +18,9 @@ export default function ProfileForm() {
     isDocumentVerificationComplete
   } = useProfileForm();
 
+  // Don't show document verification for medical providers
+  const showDocumentVerification = profile?.user_type === 'medical_professional';
+
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
@@ -34,6 +37,7 @@ export default function ProfileForm() {
           submitDocuments={submitDocuments}
           userType={profile?.user_type}
           isDocumentVerificationComplete={isDocumentVerificationComplete}
+          showDocumentVerification={showDocumentVerification}
         />
       </CardContent>
     </Card>

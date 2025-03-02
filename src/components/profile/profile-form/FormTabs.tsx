@@ -1,23 +1,24 @@
 
+import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BasicProfileInfo } from "@/components/professional/profile/BasicProfileInfo";
-import { MedicalProfessionalInfo } from "@/components/professional/profile/MedicalProfessionalInfo";
-import { ContactInfo } from "@/components/professional/profile/ContactInfo";
-import { DocumentVerification } from "../DocumentVerification";
 import { TabContentWrapper } from "./TabContentWrapper";
-import { Button } from "@/components/ui/button";
+import BasicProfileInfo from "@/components/professional/profile/BasicProfileInfo";
+import ContactInfo from "@/components/professional/profile/ContactInfo";
+import MedicalProfessionalInfo from "@/components/professional/profile/MedicalProfessionalInfo";
+import DocumentVerificationManager from "@/components/professional/profile/DocumentVerificationManager";
 
-type FormTabsProps = {
+interface FormTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   formData: any;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  handleSubmit: (e: React.FormEvent) => void;
   loading: boolean;
   submitDocuments: () => Promise<void>;
   userType?: string;
   isDocumentVerificationComplete: boolean;
-};
+  showDocumentVerification?: boolean;
+}
 
 export function FormTabs({
   activeTab,
@@ -28,99 +29,85 @@ export function FormTabs({
   loading,
   submitDocuments,
   userType,
-  isDocumentVerificationComplete
+  isDocumentVerificationComplete,
+  showDocumentVerification = true,
 }: FormTabsProps) {
-  // Only medical professionals need verification
-  const needsVerification = userType === 'medical_professional';
-  
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className={`grid w-full ${needsVerification ? 'grid-cols-4' : 'grid-cols-3'}`}>
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="basic">Basic Info</TabsTrigger>
-        <TabsTrigger value="professional">Professional</TabsTrigger>
         <TabsTrigger value="contact">Contact</TabsTrigger>
-        {needsVerification && <TabsTrigger value="verification">Verification</TabsTrigger>}
+        {showDocumentVerification && userType === "medical_professional" && (
+          <TabsTrigger 
+            value="verification" 
+            disabled={!formData.first_name || !formData.contact_email}
+          >
+            Documents
+          </TabsTrigger>
+        )}
+        {userType === "medical_provider" && (
+          <TabsTrigger 
+            value="provider" 
+            disabled={!formData.first_name || !formData.contact_email}
+          >
+            Provider Info
+          </TabsTrigger>
+        )}
       </TabsList>
-      
+
       <TabsContent value="basic">
-        <TabContentWrapper 
-          handleSubmit={handleSubmit} 
+        <TabContentWrapper
+          title="Basic Information"
+          description="Fill in your personal details to complete your profile"
+          onSubmit={handleSubmit}
           loading={loading}
-          submitText="Save Basic Info"
+          nextTab="contact"
+          setActiveTab={setActiveTab}
+          isComplete={!!formData.first_name && !!formData.last_name}
         >
-          <BasicProfileInfo 
-            firstName={formData.first_name}
-            lastName={formData.last_name}
-            title={formData.title}
-            bio={formData.bio}
-            avatarUrl={formData.avatar_url}
-            handleChange={handleChange}
-          />
+          <BasicProfileInfo formData={formData} onChange={handleChange} />
         </TabContentWrapper>
       </TabsContent>
-      
-      <TabsContent value="professional">
-        <TabContentWrapper 
-          handleSubmit={handleSubmit} 
-          loading={loading}
-          backAction={() => setActiveTab("basic")}
-          submitText="Save Professional Info"
-        >
-          {userType === 'medical_professional' && (
-            <MedicalProfessionalInfo
-              prcLicense={formData.prc_license}
-              workExperience={formData.work_experience}
-              preferredLocation={formData.preferred_location}
-              handleChange={handleChange}
-            />
-          )}
-        </TabContentWrapper>
-      </TabsContent>
-      
+
       <TabsContent value="contact">
-        <TabContentWrapper 
-          handleSubmit={handleSubmit} 
+        <TabContentWrapper
+          title="Contact Information"
+          description="How can healthcare providers reach you?"
+          onSubmit={handleSubmit}
           loading={loading}
-          backAction={() => setActiveTab("professional")}
-          submitText={needsVerification ? "Save Contact Info" : "Save Profile"}
+          previousTab="basic"
+          nextTab={userType === "medical_professional" && showDocumentVerification ? "verification" : "provider"}
+          setActiveTab={setActiveTab}
+          isComplete={!!formData.contact_email}
         >
-          <ContactInfo
-            contactEmail={formData.contact_email}
-            phone={formData.phone}
-            company={formData.company}
-            handleChange={handleChange}
-          />
+          <ContactInfo formData={formData} onChange={handleChange} />
         </TabContentWrapper>
       </TabsContent>
-      
-      {needsVerification && (
+
+      {showDocumentVerification && userType === "medical_professional" && (
         <TabsContent value="verification">
-          <div className="space-y-6 pt-4">
-            <DocumentVerification
-              prcLicense={formData.prc_license}
-              tin={formData.tin_number}
-              govId={formData.government_id}
-              onPrcLicenseChange={(value) => formData.prc_license = value}
-              onTinChange={(value) => formData.tin_number = value}
-              onGovIdChange={(value) => formData.government_id = value}
-              onSubmit={submitDocuments}
-              isComplete={formData.document_verification_status === "verified"}
-              status={formData.document_verification_status as "pending" | "submitted" | "verified" | "rejected"}
+          <DocumentVerificationManager />
+        </TabsContent>
+      )}
+
+      {userType === "medical_provider" && (
+        <TabsContent value="provider">
+          <TabContentWrapper
+            title="Healthcare Provider Information"
+            description="Tell us more about your healthcare facility"
+            onSubmit={handleSubmit}
+            loading={loading}
+            previousTab="contact"
+            setActiveTab={setActiveTab}
+            finalStep={true}
+            isComplete={true}
+          >
+            <MedicalProfessionalInfo 
+              formData={formData} 
+              onChange={handleChange}
+              isProvider={true}
             />
-            
-            <div className="flex justify-between">
-              <Button type="button" variant="outline" onClick={() => setActiveTab("contact")}>
-                Back
-              </Button>
-              <Button 
-                type="button" 
-                onClick={handleSubmit} 
-                disabled={loading || !isDocumentVerificationComplete}
-              >
-                {loading ? "Saving..." : "Save All Profile"}
-              </Button>
-            </div>
-          </div>
+          </TabContentWrapper>
         </TabsContent>
       )}
     </Tabs>
