@@ -120,7 +120,7 @@ const DocumentVerificationManager = () => {
           onGovIdChange={setGovId}
           onSubmit={handleSubmit}
           isComplete={profile?.document_verification_status === 'verified'}
-          status={profile?.document_verification_status || 'pending'}
+          status={profile?.document_verification_status as "pending" | "submitted" | "verified" | "rejected"}
         />
       </CardContent>
     </Card>
