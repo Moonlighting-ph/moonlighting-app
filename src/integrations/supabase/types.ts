@@ -123,12 +123,16 @@ export type Database = {
           company: string | null
           contact_email: string | null
           created_at: string
-          full_name: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           phone: string | null
+          prc_license: string | null
+          preferred_location: string | null
           title: string | null
           updated_at: string
           user_type: string
+          work_experience: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -136,12 +140,16 @@ export type Database = {
           company?: string | null
           contact_email?: string | null
           created_at?: string
-          full_name?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
           phone?: string | null
+          prc_license?: string | null
+          preferred_location?: string | null
           title?: string | null
           updated_at?: string
           user_type: string
+          work_experience?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -149,12 +157,16 @@ export type Database = {
           company?: string | null
           contact_email?: string | null
           created_at?: string
-          full_name?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           phone?: string | null
+          prc_license?: string | null
+          preferred_location?: string | null
           title?: string | null
           updated_at?: string
           user_type?: string
+          work_experience?: string | null
         }
         Relationships: []
       }

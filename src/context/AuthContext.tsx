@@ -6,7 +6,8 @@ import type { Database } from '@/integrations/supabase/types';
 
 type Profile = {
   id: string;
-  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   user_type: 'medical_professional' | 'medical_provider';
   avatar_url: string | null;
   bio: string | null;
@@ -14,6 +15,9 @@ type Profile = {
   contact_email: string | null;
   phone: string | null;
   company: string | null;
+  prc_license: string | null;
+  work_experience: string | null;
+  preferred_location: string | null;
   created_at: string;
   updated_at: string;
 };

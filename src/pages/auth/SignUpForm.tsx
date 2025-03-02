@@ -11,7 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 export default function SignUpForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [userType, setUserType] = useState("medical_professional");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -27,7 +28,8 @@ export default function SignUpForm() {
         password,
         options: {
           data: {
-            full_name: fullName,
+            first_name: firstName,
+            last_name: lastName,
             user_type: userType,
           },
           emailRedirectTo: `${window.location.origin}/auth`,
@@ -58,16 +60,29 @@ export default function SignUpForm() {
 
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="full-name" className="text-gray-700">Full Name</Label>
-        <Input
-          id="full-name"
-          placeholder="John Doe"
-          required
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="first-name" className="text-gray-700">First Name</Label>
+          <Input
+            id="first-name"
+            placeholder="John"
+            required
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="last-name" className="text-gray-700">Last Name</Label>
+          <Input
+            id="last-name"
+            placeholder="Doe"
+            required
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="email" className="text-gray-700">Email</Label>

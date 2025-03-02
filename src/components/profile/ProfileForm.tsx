@@ -12,26 +12,34 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 
 type ProfileFormData = {
-  full_name: string;
+  first_name: string;
+  last_name: string;
   title: string;
   bio: string;
   contact_email: string;
   phone: string;
   company: string;
   avatar_url: string;
+  prc_license: string;
+  work_experience: string;
+  preferred_location: string;
 };
 
 export default function ProfileForm() {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<ProfileFormData>({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     title: "",
     bio: "",
     contact_email: "",
     phone: "",
     company: "",
     avatar_url: "",
+    prc_license: "",
+    work_experience: "",
+    preferred_location: "",
   });
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -39,13 +47,17 @@ export default function ProfileForm() {
   useEffect(() => {
     if (profile) {
       setFormData({
-        full_name: profile.full_name || "",
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
         title: profile.title || "",
         bio: profile.bio || "",
         contact_email: profile.contact_email || user?.email || "",
         phone: profile.phone || "",
         company: profile.company || "",
         avatar_url: profile.avatar_url || "",
+        prc_license: profile.prc_license || "",
+        work_experience: profile.work_experience || "",
+        preferred_location: profile.preferred_location || "",
       });
     } else if (user) {
       setFormData((prev) => ({
@@ -70,14 +82,18 @@ export default function ProfileForm() {
         .from('profiles')
         .upsert({
           id: user.id,
-          full_name: formData.full_name,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
           title: formData.title,
           bio: formData.bio,
           contact_email: formData.contact_email,
           phone: formData.phone,
           company: formData.company,
           avatar_url: formData.avatar_url,
-          user_type: profile?.user_type || 'medical_professional', // Add the user_type field
+          prc_license: formData.prc_license,
+          work_experience: formData.work_experience,
+          preferred_location: formData.preferred_location,
+          user_type: profile?.user_type || 'medical_professional',
           updated_at: new Date().toISOString(),
         });
 
@@ -114,7 +130,7 @@ export default function ProfileForm() {
             <div className="flex flex-col items-center space-y-2">
               <Avatar className="w-24 h-24">
                 <AvatarImage src={formData.avatar_url || undefined} />
-                <AvatarFallback>{formData.full_name?.charAt(0) || "U"}</AvatarFallback>
+                <AvatarFallback>{formData.first_name?.charAt(0) || "U"}</AvatarFallback>
               </Avatar>
               <Button variant="outline" type="button" className="text-xs">
                 Upload Photo
@@ -126,25 +142,35 @@ export default function ProfileForm() {
             <div className="flex-1 space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Full Name</Label>
+                  <Label htmlFor="first_name">First Name</Label>
                   <Input
-                    id="full_name"
-                    name="full_name"
-                    value={formData.full_name}
+                    id="first_name"
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleChange}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="title">Professional Title</Label>
+                  <Label htmlFor="last_name">Last Name</Label>
                   <Input
-                    id="title"
-                    name="title"
-                    placeholder="e.g. Registered Nurse"
-                    value={formData.title}
+                    id="last_name"
+                    name="last_name"
+                    value={formData.last_name}
                     onChange={handleChange}
+                    required
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="title">Professional Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="e.g. Registered Nurse"
+                  value={formData.title}
+                  onChange={handleChange}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
@@ -159,6 +185,46 @@ export default function ProfileForm() {
               </div>
             </div>
           </div>
+          
+          {profile?.user_type === 'medical_professional' && (
+            <div className="space-y-4 p-4 border border-blue-100 bg-blue-50/50 rounded-md">
+              <h3 className="font-medium text-blue-800">Medical Professional Information</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="prc_license">PRC License Number</Label>
+                <Input
+                  id="prc_license"
+                  name="prc_license"
+                  placeholder="Enter your license number"
+                  value={formData.prc_license}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="work_experience">Work Experience</Label>
+                <Textarea
+                  id="work_experience"
+                  name="work_experience"
+                  placeholder="Describe your clinical experience, specialties, and years of practice"
+                  className="min-h-[100px]"
+                  value={formData.work_experience}
+                  onChange={handleChange}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="preferred_location">Preferred Work Location</Label>
+                <Input
+                  id="preferred_location"
+                  name="preferred_location"
+                  placeholder="e.g. Manila, Metro Manila, Philippines"
+                  value={formData.preferred_location}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          )}
           
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
