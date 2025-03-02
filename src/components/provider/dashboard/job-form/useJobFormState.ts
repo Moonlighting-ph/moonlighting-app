@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { JobFormData, JobFormState, JobFormHandlers } from './types';
 import { initializeFormData, initializeTags } from './formDataUtils';
 import { prepareJobDataForSubmission, submitNewJob, updateExistingJob } from './submitJobUtils';
+import { validateJobForm, validateCompanyProfile } from './validationUtils';
 
 interface JobFormProps {
   initialData?: {
@@ -74,34 +75,11 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const validateForm = (): boolean => {
-    // Basic validations - title and description must not be empty
-    if (!formData.title.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Job title is required",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!formData.description.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Job description is required",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Validate the form first
-    if (!validateForm()) {
+    if (!validateJobForm(formData, toast)) {
       return;
     }
     
@@ -136,22 +114,12 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
         return;
       }
 
-      // Check if company name is set for hospital/provider users
-      if (!profileData.company || profileData.company.trim() === '') {
-        toast({
-          title: "Profile Incomplete",
-          description: "Please add your hospital or company name to your profile before posting a job",
-          variant: "destructive",
-        });
-        
-        // Redirect to profile page
-        if (navigate) {
-          navigate('/platform/hospital-profile');
-        }
+      // Validate company profile
+      if (!validateCompanyProfile(profileData, toast, navigate)) {
         return;
       }
 
-      // Prepare job data for submission (flattening the compensation_details)
+      // Prepare job data for submission
       const jobData = prepareJobDataForSubmission(
         formData,
         tags,
