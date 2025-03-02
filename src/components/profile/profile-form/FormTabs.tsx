@@ -1,8 +1,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BasicProfileInfo } from "../BasicProfileInfo";
-import { MedicalProfessionalInfo } from "../MedicalProfessionalInfo";
-import { ContactInfo } from "../ContactInfo";
+import { BasicProfileInfo } from "@/components/professional/profile/BasicProfileInfo";
+import { MedicalProfessionalInfo } from "@/components/professional/profile/MedicalProfessionalInfo";
+import { ContactInfo } from "@/components/professional/profile/ContactInfo";
 import { DocumentVerification } from "../DocumentVerification";
 import { TabContentWrapper } from "./TabContentWrapper";
 import { Button } from "@/components/ui/button";

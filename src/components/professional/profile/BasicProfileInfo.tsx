@@ -1,18 +1,18 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import React from 'react';
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-type BasicProfileInfoProps = {
+interface BasicProfileInfoProps {
   firstName: string;
   lastName: string;
   title: string;
   bio: string;
-  avatarUrl: string;
+  avatarUrl?: string;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-};
+}
 
 export function BasicProfileInfo({
   firstName,
@@ -20,66 +20,67 @@ export function BasicProfileInfo({
   title,
   bio,
   avatarUrl,
-  handleChange,
+  handleChange
 }: BasicProfileInfoProps) {
+  const initials = `${firstName?.[0] || ''}${lastName?.[0] || ''}`;
+
   return (
-    <div className="flex flex-col sm:flex-row gap-6">
-      <div className="flex flex-col items-center space-y-2">
-        <Avatar className="w-24 h-24">
-          <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback>{firstName?.charAt(0) || "U"}</AvatarFallback>
+    <div className="space-y-4">
+      <div className="flex flex-col items-center md:flex-row md:items-start gap-4 md:gap-6 mb-4">
+        <Avatar className="h-20 w-20">
+          <AvatarImage src={avatarUrl} alt={`${firstName} ${lastName}`} />
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
-        <Button variant="outline" type="button" className="text-xs">
-          Upload Photo
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          (Coming soon)
-        </p>
+        <div className="flex-1 text-center md:text-left">
+          <h3 className="text-lg font-medium">{firstName} {lastName}</h3>
+          <p className="text-sm text-muted-foreground">{title || 'Healthcare Professional'}</p>
+        </div>
       </div>
-      <div className="flex-1 space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="first_name">First Name</Label>
-            <Input
-              id="first_name"
-              name="first_name"
-              value={firstName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="last_name">Last Name</Label>
-            <Input
-              id="last_name"
-              name="last_name"
-              value={lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Professional Title</Label>
+          <Label htmlFor="first_name">First Name</Label>
           <Input
-            id="title"
-            name="title"
-            placeholder="e.g. Registered Nurse"
-            value={title}
+            id="first_name"
+            name="first_name"
+            value={firstName}
             onChange={handleChange}
+            placeholder="John"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea
-            id="bio"
-            name="bio"
-            placeholder="Tell us about yourself..."
-            className="min-h-[100px]"
-            value={bio}
+          <Label htmlFor="last_name">Last Name</Label>
+          <Input
+            id="last_name"
+            name="last_name"
+            value={lastName}
             onChange={handleChange}
+            placeholder="Doe"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="title">Professional Title</Label>
+        <Input
+          id="title"
+          name="title"
+          value={title}
+          onChange={handleChange}
+          placeholder="e.g. Registered Nurse, Medical Technologist"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="bio">Bio</Label>
+        <Textarea
+          id="bio"
+          name="bio"
+          value={bio}
+          onChange={handleChange}
+          placeholder="Tell us about yourself and your professional experience..."
+          rows={4}
+        />
       </div>
     </div>
   );
