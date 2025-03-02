@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   MapPin, 
@@ -13,9 +13,10 @@ import {
   Building,
   ChevronDown,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -27,145 +28,31 @@ import {
   SelectContent, 
   SelectGroup, 
   SelectItem, 
-  SelectLabel, 
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { fetchJobs, checkJobApplication } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
-// Sample job data
-const jobListings = [
-  {
-    id: 'job1',
-    title: 'Emergency Room Nurse',
-    company: 'Metro Manila General Hospital',
-    logo: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=200&h=200&fit=crop',
-    location: 'Quezon City, Metro Manila',
-    type: 'Full-time / Night Shift',
-    salary: '₱900/day + ₱6,000–₱11,000 incentives',
-    deadline: '3 days left',
-    applicants: 12,
-    description: 'We are looking for a registered nurse to join our emergency department. The ideal candidate has experience in fast-paced care environments and strong triage skills.',
-    requirements: [
-      'BSN Degree and PRC License',
-      'Min. 2 years ER experience',
-      'BLS and ACLS Certification',
-      'Excellent communication skills'
-    ],
-    benefits: [
-      'Free meals during shift',
-      'Transportation allowance',
-      'SSS, PhilHealth, Pag-IBIG',
-      '13th month pay'
-    ],
-    urgent: true,
-    saved: false
-  },
-  {
-    id: 'job2',
-    title: 'ICU Nurse',
-    company: 'St. Luke\'s Medical Center',
-    logo: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?q=80&w=200&h=200&fit=crop',
-    location: 'Taguig, Metro Manila',
-    type: 'Part-time / Weekend',
-    salary: '₱1,100/day',
-    deadline: '5 days left',
-    applicants: 8,
-    description: 'Join our intensive care unit team providing specialized care for critically ill patients. Seeking compassionate nurses with strong clinical assessment skills.',
-    requirements: [
-      'BSN Degree and PRC License',
-      'Min. 3 years ICU experience',
-      'BLS, ACLS, and CCRN Certification',
-      'Experience with ventilators and critical care equipment'
-    ],
-    benefits: [
-      'Free meals and accommodations',
-      'Hazard pay',
-      'Healthcare coverage',
-      'Professional development allowance'
-    ],
-    urgent: false,
-    saved: true
-  },
-  {
-    id: 'job3',
-    title: 'General Practitioner',
-    company: 'Philippine General Hospital',
-    logo: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b3583?q=80&w=200&h=200&fit=crop',
-    location: 'Manila',
-    type: 'Full-time / Day Shift',
-    salary: '₱1,500/day',
-    deadline: '1 week left',
-    applicants: 5,
-    description: 'Seeking a licensed physician to provide primary care services including routine check-ups, basic medical procedures, and patient education.',
-    requirements: [
-      'MD Degree and PRC License',
-      'Completed residency program',
-      'Min. 2 years clinical experience',
-      'Excellent bedside manner'
-    ],
-    benefits: [
-      'Competitive salary package',
-      'Full healthcare coverage',
-      'Retirement plan',
-      'Continuing education support'
-    ],
-    urgent: true,
-    saved: false
-  },
-  {
-    id: 'job4',
-    title: 'Pediatric Specialist',
-    company: 'Children\'s Medical Center',
-    logo: 'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?q=80&w=200&h=200&fit=crop',
-    location: 'Quezon City',
-    type: 'Part-time / Flexible Hours',
-    salary: '₱2,000/day',
-    deadline: '2 weeks left',
-    applicants: 3,
-    description: 'Pediatric specialist needed to provide comprehensive care for children and adolescents. Focus on developmental assessments, preventive care, and managing childhood illnesses.',
-    requirements: [
-      'MD with Pediatric specialization',
-      'Board certification',
-      'Min. 3 years pediatric practice',
-      'Excellent communication with children and parents'
-    ],
-    benefits: [
-      'Flexible scheduling',
-      'Professional liability insurance',
-      'Continuing education allowance',
-      'Performance bonuses'
-    ],
-    urgent: false,
-    saved: false
-  },
-  {
-    id: 'job5',
-    title: 'Cardiac Nurse',
-    company: 'Philippine Heart Center',
-    logo: 'https://images.unsplash.com/photo-1516549655669-8289983d0f9b?q=80&w=200&h=200&fit=crop',
-    location: 'Quezon City, Metro Manila',
-    type: 'Full-time / Rotating Shifts',
-    salary: '₱950/day + incentives',
-    deadline: '1 week left',
-    applicants: 7,
-    description: 'Seeking a specialized cardiac nurse to provide care for patients with cardiovascular conditions. Responsibilities include monitoring cardiac status, administering medications, and patient education.',
-    requirements: [
-      'BSN Degree and PRC License',
-      'Cardiac care certification preferred',
-      'Experience with cardiac monitoring equipment',
-      'Strong critical thinking skills'
-    ],
-    benefits: [
-      'Specialized training opportunities',
-      'Full benefits package',
-      'Career advancement path',
-      'Competitive compensation'
-    ],
-    urgent: false,
-    saved: true
-  }
-];
+interface Job {
+  id: string;
+  title: string;
+  company: string;
+  logo: string;
+  location: string;
+  type: string;
+  salary: string;
+  deadline: string;
+  description: string;
+  requirements: string[];
+  benefits: string[];
+  urgent: boolean;
+  created_at: string;
+  applicants?: number;
+}
 
 const Jobs = () => {
   const [savedOnly, setSavedOnly] = useState(false);
@@ -175,43 +62,78 @@ const Jobs = () => {
   const [salaryRange, setSalaryRange] = useState([800, 2000]);
   const [jobType, setJobType] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Filter jobs based on selected filters
-  const filteredJobs = jobListings.filter(job => {
-    // Filter by search term
+  const { data: jobListings = [], isLoading, error } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: fetchJobs,
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('savedJobs');
+    if (saved) {
+      setSavedJobs(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('savedJobs', JSON.stringify(savedJobs));
+  }, [savedJobs]);
+
+  const filteredJobs = jobListings.filter((job: Job) => {
     if (searchTerm && !job.title.toLowerCase().includes(searchTerm.toLowerCase()) && 
         !job.company.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     
-    // Filter by saved
-    if (savedOnly && !job.saved) {
+    if (savedOnly && !savedJobs.includes(job.id)) {
       return false;
     }
     
-    // Filter by urgent
     if (urgentOnly && !job.urgent) {
       return false;
     }
     
-    // More filters would be implemented here (salary, job type, location)
+    if (jobType.length > 0) {
+      let matchesType = false;
+      for (const type of jobType) {
+        if (job.type.toLowerCase().includes(type.toLowerCase())) {
+          matchesType = true;
+          break;
+        }
+      }
+      if (!matchesType) return false;
+    }
+    
+    if (selectedLocations.length > 0) {
+      let matchesLocation = false;
+      for (const location of selectedLocations) {
+        if (job.location.toLowerCase().includes(location.toLowerCase())) {
+          matchesLocation = true;
+          break;
+        }
+      }
+      if (!matchesLocation) return false;
+    }
     
     return true;
   });
   
-  // Toggle job saved status
   const toggleSaved = (jobId: string) => {
-    // In a real app, this would update the saved status in the database
-    console.log(`Toggled saved status for job ${jobId}`);
+    if (savedJobs.includes(jobId)) {
+      setSavedJobs(savedJobs.filter(id => id !== jobId));
+    } else {
+      setSavedJobs([...savedJobs, jobId]);
+    }
   };
   
-  // Toggle filter panel visibility on mobile
   const toggleMobileSortVisible = () => {
     setMobileSortVisible(!mobileSortVisible);
   };
   
-  // Handle job type selection
   const handleJobTypeChange = (type: string) => {
     if (jobType.includes(type)) {
       setJobType(jobType.filter(t => t !== type));
@@ -220,7 +142,6 @@ const Jobs = () => {
     }
   };
   
-  // Handle location selection
   const handleLocationChange = (location: string) => {
     if (selectedLocations.includes(location)) {
       setSelectedLocations(selectedLocations.filter(l => l !== location));
@@ -228,6 +149,41 @@ const Jobs = () => {
       setSelectedLocations([...selectedLocations, location]);
     }
   };
+
+  const viewJobDetail = (jobId: string) => {
+    navigate(`/platform/job/${jobId}`);
+  };
+
+  const formatDeadline = (deadline: string) => {
+    const deadlineDate = new Date(deadline);
+    const today = new Date();
+    
+    const diffTime = deadlineDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'Expired';
+    if (diffDays === 0) return 'Last day to apply';
+    if (diffDays === 1) return '1 day left';
+    if (diffDays <= 7) return `${diffDays} days left`;
+    
+    return `Apply by ${deadlineDate.toLocaleDateString()}`;
+  };
+
+  if (error) {
+    return (
+      <div className="container px-4 py-6 md:py-8">
+        <div className="p-8 text-center">
+          <h2 className="text-2xl font-semibold mb-4">Error Loading Jobs</h2>
+          <p className="text-muted-foreground mb-6">
+            We encountered an error while loading job listings. Please try again later.
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container px-4 py-6 md:py-8">
@@ -264,7 +220,6 @@ const Jobs = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
-        {/* Filters - Desktop */}
         <div className="md:col-span-3 lg:col-span-3 hidden md:block">
           <div className="bg-card border rounded-lg p-4 space-y-5 sticky top-20">
             <div>
@@ -369,7 +324,6 @@ const Jobs = () => {
           </div>
         </div>
         
-        {/* Filters - Mobile */}
         {mobileSortVisible && (
           <div className="fixed inset-0 bg-background z-40 p-4 md:hidden overflow-auto">
             <div className="flex justify-between items-center mb-4">
@@ -488,9 +442,13 @@ const Jobs = () => {
           </div>
         )}
         
-        {/* Job Listings */}
         <div className="md:col-span-9 lg:col-span-9 space-y-4">
-          {filteredJobs.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2">Loading jobs...</span>
+            </div>
+          ) : filteredJobs.length > 0 ? (
             <>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs md:text-sm text-muted-foreground">
@@ -509,7 +467,7 @@ const Jobs = () => {
                 </Select>
               </div>
               
-              {filteredJobs.map((job) => (
+              {filteredJobs.map((job: Job) => (
                 <Card key={job.id} className="overflow-hidden">
                   <CardContent className="p-0">
                     <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6">
@@ -537,10 +495,13 @@ const Jobs = () => {
                             variant="ghost"
                             size="icon"
                             className="self-start h-8 w-8"
-                            onClick={() => toggleSaved(job.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSaved(job.id);
+                            }}
                           >
                             <Heart 
-                              className={`h-4 w-4 ${job.saved ? 'fill-red-500 text-red-500' : ''}`} 
+                              className={`h-4 w-4 ${savedJobs.includes(job.id) ? 'fill-red-500 text-red-500' : ''}`} 
                             />
                             <span className="sr-only">Save job</span>
                           </Button>
@@ -561,7 +522,7 @@ const Jobs = () => {
                           </div>
                           <div className="flex items-center text-xs text-muted-foreground">
                             <User className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span>{job.applicants} applicants</span>
+                            <span>{job.applicants || 0} applicants</span>
                           </div>
                         </div>
                         
@@ -573,13 +534,22 @@ const Jobs = () => {
                     
                     <div className="border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 md:p-4 bg-muted/30">
                       <p className="text-xs text-muted-foreground">
-                        <span className="font-medium">{job.deadline}</span> to apply
+                        <span className="font-medium">{formatDeadline(job.deadline)}</span>
                       </p>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="text-xs h-8 w-full sm:w-auto">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-xs h-8 w-full sm:w-auto"
+                          onClick={() => viewJobDetail(job.id)}
+                        >
                           View Details
                         </Button>
-                        <Button size="sm" className="text-xs h-8 w-full sm:w-auto">
+                        <Button 
+                          size="sm" 
+                          className="text-xs h-8 w-full sm:w-auto"
+                          onClick={() => viewJobDetail(job.id)}
+                        >
                           Apply Now
                         </Button>
                       </div>

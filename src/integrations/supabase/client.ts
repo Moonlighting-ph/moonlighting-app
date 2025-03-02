@@ -7,3 +7,87 @@ const SUPABASE_URL = "https://tfyiqedyesexxflbmhou.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmeWlxZWR5ZXNleHhmbGJtaG91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4ODU4NzEsImV4cCI6MjA1NjQ2MTg3MX0.G9NCmOMnB_K97AXxNYWI7dbJReTi6qh84elhHBnyFqQ";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Job-related API functions
+export const fetchJobs = async () => {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchJobById = async (id: string) => {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const applyForJob = async (jobId: string, note?: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to apply for jobs');
+  }
+  
+  const { data, error } = await supabase
+    .from('job_applications')
+    .insert([
+      { job_id: jobId, applicant_id: user.user.id, note }
+    ])
+    .select()
+    .single();
+  
+  if (error) {
+    if (error.code === '23505') { // Unique violation
+      throw new Error('You have already applied for this job');
+    }
+    throw error;
+  }
+  
+  return data;
+};
+
+export const checkJobApplication = async (jobId: string) => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) return null;
+  
+  const { data, error } = await supabase
+    .from('job_applications')
+    .select('*')
+    .eq('job_id', jobId)
+    .eq('applicant_id', user.user.id)
+    .maybeSingle();
+  
+  if (error) throw error;
+  return data;
+};
+
+export const fetchUserApplications = async () => {
+  const { data: user } = await supabase.auth.getUser();
+  
+  if (!user.user) {
+    throw new Error('You must be logged in to view your applications');
+  }
+  
+  const { data, error } = await supabase
+    .from('job_applications')
+    .select(`
+      *,
+      jobs:job_id (*)
+    `)
+    .eq('applicant_id', user.user.id)
+    .order('created_at', { ascending: false });
+  
+  if (error) throw error;
+  return data;
+};

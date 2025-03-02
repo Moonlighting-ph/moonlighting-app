@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { 
   Building, 
   MapPin, 
@@ -16,121 +17,127 @@ import {
   ChevronUp,
   Award,
   Briefcase,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Sample job data
-const jobData = {
-  id: 'job1',
-  title: 'Emergency Room Nurse - Night Shift',
-  company: 'Metro Manila General Hospital',
-  logo: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?q=80&w=200&h=200&fit=crop',
-  coverImage: 'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=800&h=200&fit=crop',
-  location: {
-    address: '123 Health Avenue',
-    city: 'Quezon City',
-    province: 'Metro Manila',
-  },
-  type: 'Full-time',
-  schedule: 'Night Shift (10:00 PM - 6:00 AM)',
-  salary: '₱900/day + ₱6,000–₱11,000 incentives per cutoff',
-  postedDate: '2023-07-15',
-  deadline: '2023-08-15',
-  applicants: 12,
-  status: 'urgent',
-  description: 'Metro Manila General Hospital is seeking a qualified registered nurse to join our emergency department night shift team. The ideal candidate will be responsible for providing high-quality patient care in a fast-paced environment, collaborating with healthcare providers, and ensuring patient safety and satisfaction.',
-  responsibilities: [
-    'Assess patients\' conditions and provide appropriate nursing interventions',
-    'Administer medications and treatments as prescribed by physicians',
-    'Monitor and document patients\' conditions and responses to treatments',
-    'Coordinate with healthcare team members to ensure comprehensive patient care',
-    'Respond promptly to emergency situations',
-    'Provide patient and family education',
-    'Maintain accurate and complete medical records'
-  ],
-  requirements: [
-    'Bachelor of Science in Nursing (BSN)',
-    'Current PRC license as a Registered Nurse',
-    'BLS (Basic Life Support) certification',
-    'ACLS (Advanced Cardiac Life Support) certification preferred',
-    'Minimum of 2 years experience in emergency or acute care setting',
-    'Excellent assessment and critical thinking skills',
-    'Strong communication and interpersonal skills',
-    'Ability to work in a fast-paced environment and handle stressful situations'
-  ],
-  benefits: [
-    'Competitive salary package with incentives',
-    'Free meals during shifts',
-    'Transportation allowance',
-    'Healthcare coverage for employee and dependents',
-    'SSS, PhilHealth, and Pag-IBIG contributions',
-    '13th month pay',
-    'Annual performance bonus',
-    'Continuous professional development opportunities'
-  ],
-  aboutCompany: 'Metro Manila General Hospital is a 300-bed tertiary care facility providing comprehensive healthcare services to the community since 1985. Our emergency department is equipped with state-of-the-art medical technology and staffed by skilled healthcare professionals dedicated to providing the highest quality of care to our patients.',
-  paymentInfo: {
-    method: 'Direct deposit',
-    frequency: 'Bi-monthly',
-    nextDate: 'August 15, 2023'
-  },
-  companyRating: 4.2,
-  reviewCount: 45,
-  similarJobs: [
-    {
-      id: 'job2',
-      title: 'ICU Nurse',
-      company: 'St. Luke\'s Medical Center',
-      location: 'Taguig, Metro Manila',
-      salary: '₱1,100/day',
-      type: 'Part-time / Weekend'
-    },
-    {
-      id: 'job3',
-      title: 'ER Nurse - Day Shift',
-      company: 'Makati Medical Center',
-      location: 'Makati, Metro Manila',
-      salary: '₱950/day',
-      type: 'Full-time / Day Shift'
-    },
-    {
-      id: 'job4',
-      title: 'Trauma Nurse',
-      company: 'The Medical City',
-      location: 'Pasig, Metro Manila',
-      salary: '₱1,000/day',
-      type: 'Full-time / Rotating Shifts'
-    }
-  ]
-};
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { fetchJobById, applyForJob, checkJobApplication } from '@/integrations/supabase/client';
 
 const JobDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [isApplying, setIsApplying] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [applicationNote, setApplicationNote] = useState('');
+  const [showApplyDialog, setShowApplyDialog] = useState(false);
   
-  // For a real app, we would fetch job details based on the id
-  console.log(`Viewing job with id: ${id}`);
+  // Fetch job details
+  const { data: jobData, isLoading, error } = useQuery({
+    queryKey: ['job', id],
+    queryFn: () => id ? fetchJobById(id) : null,
+    enabled: !!id
+  });
+
+  // Check if user has already applied
+  const { data: existingApplication, isLoading: checkingApplication } = useQuery({
+    queryKey: ['application', id],
+    queryFn: () => id ? checkJobApplication(id) : null,
+    enabled: !!id
+  });
+
+  // Apply for job mutation
+  const applyMutation = useMutation({
+    mutationFn: () => applyForJob(id!, applicationNote),
+    onSuccess: () => {
+      setShowApplyDialog(false);
+      toast({
+        title: "Application Submitted",
+        description: "Your application has been successfully submitted.",
+        variant: "default",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Application Failed",
+        description: error.message || "There was an error submitting your application. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  const handleApply = () => {
+    if (!id) return;
+    
+    // If user has already applied, show a message
+    if (existingApplication) {
+      toast({
+        title: "Already Applied",
+        description: "You have already applied for this job.",
+        variant: "default",
+      });
+      return;
+    }
+    
+    setShowApplyDialog(true);
+  };
+  
+  const submitApplication = () => {
+    applyMutation.mutate();
+  };
   
   const toggleSaved = () => {
     setIsSaved(!isSaved);
-  };
-  
-  const handleApply = () => {
-    setIsApplying(true);
-    // In a real app, this would open an application form or modal
+    toast({
+      title: isSaved ? "Job Removed" : "Job Saved",
+      description: isSaved ? "This job has been removed from your saved jobs." : "This job has been added to your saved jobs.",
+      variant: "default",
+    });
   };
   
   const handleShare = () => {
-    // In a real app, this would open a share dialog
-    console.log('Share job');
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Link Copied",
+      description: "Job link has been copied to clipboard.",
+      variant: "default",
+    });
   };
+
+  if (isLoading || checkingApplication) {
+    return (
+      <div className="container px-4 py-8 flex justify-center items-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+        <span>Loading job details...</span>
+      </div>
+    );
+  }
+
+  if (error || !jobData) {
+    return (
+      <div className="container px-4 py-8">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-semibold mb-4">Job Not Found</h2>
+          <p className="text-muted-foreground mb-6">
+            The job you're looking for might have been removed or is no longer available.
+          </p>
+          <Button onClick={() => navigate("/platform/jobs")}>
+            Back to Jobs
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container px-4 py-8">
@@ -146,7 +153,7 @@ const JobDetail = () => {
       <Card className="mb-6 overflow-hidden">
         <div className="h-40 overflow-hidden relative">
           <img 
-            src={jobData.coverImage}
+            src={jobData.logo}
             alt={jobData.company}
             className="w-full h-full object-cover"
           />
@@ -171,15 +178,11 @@ const JobDetail = () => {
             <div className="space-y-4">
               <div className="flex items-center">
                 <MapPin className="h-5 w-5 text-muted-foreground mr-2" />
-                <span>{jobData.location.city}, {jobData.location.province}</span>
+                <span>{jobData.location}</span>
               </div>
               <div className="flex items-center">
                 <Briefcase className="h-5 w-5 text-muted-foreground mr-2" />
                 <span>{jobData.type}</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 text-muted-foreground mr-2" />
-                <span>{jobData.schedule}</span>
               </div>
               <div className="flex items-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mr-2" />
@@ -190,25 +193,32 @@ const JobDetail = () => {
             <div className="space-y-4">
               <div className="flex items-center">
                 <Calendar className="h-5 w-5 text-muted-foreground mr-2" />
-                <span>Posted: {new Date(jobData.postedDate).toLocaleDateString()}</span>
+                <span>Posted: {new Date(jobData.created_at).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center">
                 <CalendarIcon className="h-5 w-5 text-muted-foreground mr-2" />
                 <span>Apply by: {new Date(jobData.deadline).toLocaleDateString()}</span>
               </div>
-              <div className="flex items-center">
-                <Users className="h-5 w-5 text-muted-foreground mr-2" />
-                <span>{jobData.applicants} applicants</span>
-              </div>
-              {jobData.status === 'urgent' && (
+              {jobData.urgent && (
                 <Badge variant="destructive" className="uppercase">Urgent</Badge>
               )}
             </div>
           </div>
           
           <div className="flex flex-wrap gap-3 mt-6">
-            <Button className="flex-1 sm:flex-none" onClick={handleApply}>
-              Apply Now
+            <Button 
+              className="flex-1 sm:flex-none" 
+              onClick={handleApply}
+              disabled={!!existingApplication}
+            >
+              {existingApplication ? (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Applied
+                </>
+              ) : (
+                "Apply Now"
+              )}
             </Button>
             <Button variant="outline" className="flex-1 sm:flex-none" onClick={toggleSaved}>
               <Heart className={`mr-2 h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
@@ -242,21 +252,7 @@ const JobDetail = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Key Responsibilities</h3>
                     <ul className="space-y-2">
-                      {jobData.responsibilities.map((item, index) => (
-                        <li key={index} className="flex items-start">
-                          <CheckCircle2 className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Requirements</h3>
-                    <ul className="space-y-2">
-                      {jobData.requirements.map((item, index) => (
+                      {jobData.requirements.map((item: string, index: number) => (
                         <li key={index} className="flex items-start">
                           <CheckCircle2 className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
                           <span>{item}</span>
@@ -270,7 +266,7 @@ const JobDetail = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Benefits</h3>
                     <ul className="space-y-2">
-                      {jobData.benefits.map((item, index) => (
+                      {jobData.benefits.map((item: string, index: number) => (
                         <li key={index} className="flex items-start">
                           <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
                           <span>{item}</span>
@@ -282,8 +278,19 @@ const JobDetail = () => {
               </Card>
               
               <div className="mt-6 flex justify-center">
-                <Button className="w-full md:w-auto" onClick={handleApply}>
-                  Apply Now
+                <Button 
+                  className="w-full md:w-auto" 
+                  onClick={handleApply}
+                  disabled={!!existingApplication}
+                >
+                  {existingApplication ? (
+                    <>
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Already Applied
+                    </>
+                  ) : (
+                    "Apply Now"
+                  )}
                 </Button>
               </div>
             </TabsContent>
@@ -303,40 +310,19 @@ const JobDetail = () => {
                       />
                     </div>
                     <div>
-                      <div className="flex items-center">
-                        <span className="text-2xl font-semibold mr-2">{jobData.companyRating}</span>
-                        <div className="flex">
-                          {Array(5).fill(0).map((_, i) => (
-                            <svg 
-                              key={i} 
-                              className={`h-5 w-5 ${i < Math.floor(jobData.companyRating) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 fill-gray-300'}`} 
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                            </svg>
-                          ))}
-                        </div>
-                        <span className="text-sm text-muted-foreground ml-2">({jobData.reviewCount} reviews)</span>
-                      </div>
                       <p className="text-sm text-muted-foreground">
-                        Based on employee reviews
+                        Healthcare Institution
                       </p>
                     </div>
                   </div>
                   
-                  <p>{jobData.aboutCompany}</p>
+                  <p>A leading healthcare institution providing quality medical services to patients.</p>
                   
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Location</h3>
                     <p className="text-muted-foreground">
-                      {jobData.location.address}, {jobData.location.city}, {jobData.location.province}
+                      {jobData.location}
                     </p>
-                    <div className="mt-3 h-48 bg-accent rounded-lg">
-                      {/* In a real app, this would be a Google Map */}
-                      <div className="h-full flex items-center justify-center text-muted-foreground">
-                        Map view would appear here
-                      </div>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -351,54 +337,16 @@ const JobDetail = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="bg-accent/30 rounded-lg p-4">
                       <h3 className="text-sm font-medium mb-1">Payment Method</h3>
-                      <p className="text-lg">{jobData.paymentInfo.method}</p>
+                      <p className="text-lg">Direct deposit</p>
                     </div>
                     <div className="bg-accent/30 rounded-lg p-4">
                       <h3 className="text-sm font-medium mb-1">Frequency</h3>
-                      <p className="text-lg">{jobData.paymentInfo.frequency}</p>
+                      <p className="text-lg">Bi-monthly</p>
                     </div>
                     <div className="bg-accent/30 rounded-lg p-4">
-                      <h3 className="text-sm font-medium mb-1">Next Payout</h3>
-                      <p className="text-lg">{jobData.paymentInfo.nextDate}</p>
+                      <h3 className="text-sm font-medium mb-1">Rate</h3>
+                      <p className="text-lg">{jobData.salary}</p>
                     </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">Salary Breakdown</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <span>Base Daily Rate</span>
-                        <span className="font-semibold">₱900</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <span>Night Differential</span>
-                        <span className="font-semibold">+10%</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <span>Performance Incentive</span>
-                        <span className="font-semibold">Up to ₱6,000</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <span>Attendance Bonus</span>
-                        <span className="font-semibold">Up to ₱5,000</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <span>Transportation Allowance</span>
-                        <span className="font-semibold">₱100/day</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <span>Meal Allowance</span>
-                        <span className="font-semibold">Free meals during shift</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-primary/5 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-2">Estimated Monthly Earnings</h3>
-                    <p className="text-3xl font-bold">₱27,000 - ₱40,000</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Based on 20 working days per month plus incentives
-                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -457,8 +405,19 @@ const JobDetail = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <Button className="w-full">
-                  Apply Now
+                <Button 
+                  className="w-full" 
+                  onClick={handleApply}
+                  disabled={!!existingApplication}
+                >
+                  {existingApplication ? (
+                    <>
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Application Submitted
+                    </>
+                  ) : (
+                    "Apply Now"
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -470,71 +429,53 @@ const JobDetail = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-1">
-                {jobData.similarJobs.map((job) => (
-                  <a 
-                    key={job.id} 
-                    href={`/platform/job/${job.id}`}
-                    className="block px-4 py-3 hover:bg-accent transition-colors"
-                  >
-                    <h3 className="font-medium">{job.title}</h3>
-                    <p className="text-sm text-muted-foreground">{job.company}</p>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        <span>{job.location}</span>
-                      </div>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <DollarSign className="h-3 w-3 mr-1" />
-                        <span>{job.salary}</span>
-                      </div>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Meet the Team</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10 mr-3">
-                    <AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&crop=faces" />
-                    <AvatarFallback>AN</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">Anna Navarro, RN</p>
-                    <p className="text-sm text-muted-foreground">ER Department Head</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10 mr-3">
-                    <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&crop=faces" />
-                    <AvatarFallback>JR</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">Dr. Jose Reyes</p>
-                    <p className="text-sm text-muted-foreground">ER Physician</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10 mr-3">
-                    <AvatarImage src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&h=150&crop=faces" />
-                    <AvatarFallback>ML</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">Maria Luna</p>
-                    <p className="text-sm text-muted-foreground">HR Manager</p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground p-4 text-center">
+                  Similar jobs will appear here as you browse more positions.
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Apply Dialog */}
+      <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Apply for {jobData.title}</DialogTitle>
+            <DialogDescription>
+              Submit your application for this position at {jobData.company}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Add a note to your application (optional)</h4>
+              <Textarea
+                placeholder="Introduce yourself and explain why you're a good fit for this position..."
+                value={applicationNote}
+                onChange={(e) => setApplicationNote(e.target.value)}
+                className="min-h-32"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowApplyDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={submitApplication} 
+              disabled={applyMutation.isPending}
+            >
+              {applyMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Application"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
