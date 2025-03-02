@@ -4,7 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { Profile } from "@/types/profile";
+import { 
+  calculateCompletionPercentage, 
+  isDocumentVerificationComplete,
+  initializeFormDataFromProfile
+} from "@/utils/ProfileUtils";
 
 type ProfileFormData = {
   first_name: string;
@@ -27,49 +31,14 @@ export function useProfileForm() {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
-  const [formData, setFormData] = useState<ProfileFormData>({
-    first_name: "",
-    last_name: "",
-    title: "",
-    bio: "",
-    contact_email: "",
-    phone: "",
-    company: "",
-    avatar_url: "",
-    prc_license: "",
-    work_experience: "",
-    preferred_location: "",
-    tin_number: "",
-    government_id: "",
-    document_verification_status: "pending",
-  });
+  const [formData, setFormData] = useState<ProfileFormData>(
+    initializeFormDataFromProfile(profile, user?.email)
+  );
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (profile) {
-      setFormData({
-        first_name: profile.first_name || "",
-        last_name: profile.last_name || "",
-        title: profile.title || "",
-        bio: profile.bio || "",
-        contact_email: profile.contact_email || user?.email || "",
-        phone: profile.phone || "",
-        company: profile.company || "",
-        avatar_url: profile.avatar_url || "",
-        prc_license: profile.prc_license || "",
-        work_experience: profile.work_experience || "",
-        preferred_location: profile.preferred_location || "",
-        tin_number: profile.tin_number || "",
-        government_id: profile.government_id || "",
-        document_verification_status: profile.document_verification_status || "pending",
-      });
-    } else if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        contact_email: user.email || "",
-      }));
-    }
+    setFormData(initializeFormDataFromProfile(profile, user?.email));
   }, [profile, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -152,50 +121,13 @@ export function useProfileForm() {
     }
   };
 
-  const calculateCompletionPercentage = () => {
-    let filledFields = 0;
-    let totalFields = 0;
-    
-    const basicFields = ['first_name', 'last_name', 'title', 'bio', 'avatar_url'];
-    basicFields.forEach(field => {
-      totalFields++;
-      if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
-        filledFields++;
-      }
-    });
-    
-    const contactFields = ['contact_email', 'phone'];
-    contactFields.forEach(field => {
-      totalFields++;
-      if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
-        filledFields++;
-      }
-    });
-    
-    if (profile?.user_type === 'medical_professional') {
-      const professionalFields = ['prc_license', 'work_experience', 'preferred_location'];
-      professionalFields.forEach(field => {
-        totalFields++;
-        if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
-          filledFields++;
-        }
-      });
-    }
-    
-    const documentFields = ['prc_license', 'tin_number', 'government_id'];
-    documentFields.forEach(field => {
-      totalFields++;
-      if (formData[field as keyof ProfileFormData] && String(formData[field as keyof ProfileFormData]).trim() !== '') {
-        filledFields++;
-      }
-    });
-    
-    return Math.round((filledFields / totalFields) * 100);
-  };
-
-  const isDocumentVerificationComplete = 
-    formData.document_verification_status === "verified" ||
-    (formData.prc_license && formData.tin_number && formData.government_id);
+  const completion = calculateCompletionPercentage(formData, profile?.user_type);
+  const documentVerificationComplete = isDocumentVerificationComplete(
+    formData.document_verification_status,
+    formData.prc_license,
+    formData.tin_number,
+    formData.government_id
+  );
 
   return {
     formData,
@@ -206,7 +138,7 @@ export function useProfileForm() {
     handleSubmit,
     submitDocuments,
     setActiveTab,
-    calculateCompletionPercentage: calculateCompletionPercentage(),
-    isDocumentVerificationComplete
+    calculateCompletionPercentage: completion,
+    isDocumentVerificationComplete: documentVerificationComplete
   };
 }
