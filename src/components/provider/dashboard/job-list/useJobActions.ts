@@ -2,16 +2,15 @@
 import { useState } from 'react';
 import { useMutation, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseJobActionsProps {
   queryClient: QueryClient;
-  toast: {
-    toast: (props: { title?: string; description?: string; variant?: "default" | "destructive" }) => void;
-  };
 }
 
-export const useJobActions = ({ queryClient, toast }: UseJobActionsProps) => {
+export const useJobActions = ({ queryClient }: UseJobActionsProps) => {
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const deleteJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
@@ -32,7 +31,7 @@ export const useJobActions = ({ queryClient, toast }: UseJobActionsProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hospitalJobs'] });
-      toast.toast({
+      toast({
         title: "Job Deleted",
         description: "The job posting has been successfully deleted."
       });
@@ -40,7 +39,7 @@ export const useJobActions = ({ queryClient, toast }: UseJobActionsProps) => {
     },
     onError: (error) => {
       console.error('Error deleting job:', error);
-      toast.toast({
+      toast({
         title: "Error",
         description: "Failed to delete job. Please try again.",
         variant: "destructive",
@@ -87,14 +86,14 @@ export const useJobActions = ({ queryClient, toast }: UseJobActionsProps) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hospitalJobs'] });
-      toast.toast({
+      toast({
         title: "Job Duplicated",
         description: "The job posting has been successfully duplicated."
       });
     },
     onError: (error) => {
       console.error('Error duplicating job:', error);
-      toast.toast({
+      toast({
         title: "Error",
         description: "Failed to duplicate job. Please try again.",
         variant: "destructive",
@@ -114,6 +113,7 @@ export const useJobActions = ({ queryClient, toast }: UseJobActionsProps) => {
 
   return {
     jobToDelete,
+    setJobToDelete,
     handleSetJobToDelete,
     deleteJobMutation,
     duplicateJobMutation,

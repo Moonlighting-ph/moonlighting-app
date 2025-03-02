@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
 import EmptyHospitalJobsList from '@/components/hospital/EmptyHospitalJobsList';
 import HospitalJobsLoading from '@/components/hospital/HospitalJobsLoading';
@@ -18,7 +17,6 @@ import { useJobActions } from './job-list/useJobActions';
 
 const HospitalJobList = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Job list data fetching
@@ -45,11 +43,12 @@ const HospitalJobList = () => {
   // Individual job actions (delete, duplicate)
   const { 
     jobToDelete, 
+    setJobToDelete,
     handleSetJobToDelete,
     deleteJobMutation,
     duplicateJobMutation,
     handleDelete 
-  } = useJobActions({ queryClient, toast });
+  } = useJobActions({ queryClient });
 
   // Bulk actions (select, delete, archive multiple jobs)
   const {
@@ -63,7 +62,7 @@ const HospitalJobList = () => {
     bulkArchiveMutation,
     handleBulkAction,
     handleSelectAll
-  } = useBulkActions({ jobs, queryClient, toast });
+  } = useBulkActions({ jobs, queryClient });
 
   if (isLoading) {
     return <HospitalJobsLoading />;

@@ -2,19 +2,18 @@
 import { useState } from 'react';
 import { useMutation, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface UseBulkActionsProps {
   jobs: any[] | undefined;
   queryClient: QueryClient;
-  toast: {
-    toast: (props: { title?: string; description?: string; variant?: "default" | "destructive" }) => void;
-  };
 }
 
-export const useBulkActions = ({ jobs, queryClient, toast }: UseBulkActionsProps) => {
+export const useBulkActions = ({ jobs, queryClient }: UseBulkActionsProps) => {
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [bulkActionDialogOpen, setBulkActionDialogOpen] = useState(false);
-  const [bulkAction, setBulkAction] = useState<'delete' | 'archive' | null>(null);
+  const [bulkAction, setBulkAction] = useState<'delete' | 'archive'>('delete');
+  const { toast } = useToast();
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (jobIds: string[]) => {
@@ -24,30 +23,35 @@ export const useBulkActions = ({ jobs, queryClient, toast }: UseBulkActionsProps
         throw new Error('Not authenticated');
       }
 
-      // Delete each job sequentially
-      for (const jobId of jobIds) {
-        const { error } = await supabase
+      const promises = jobIds.map(jobId => 
+        supabase
           .from('jobs')
           .delete()
           .eq('id', jobId)
-          .eq('created_by', userData.user.id);
-        
-        if (error) throw error;
+          .eq('created_by', userData.user!.id)
+      );
+      
+      const results = await Promise.all(promises);
+      const errors = results.filter(result => result.error).map(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error(`Failed to delete ${errors.length} jobs`);
       }
       
       return jobIds;
     },
-    onSuccess: () => {
+    onSuccess: (jobIds) => {
       queryClient.invalidateQueries({ queryKey: ['hospitalJobs'] });
-      toast.toast({
+      toast({
         title: "Jobs Deleted",
-        description: `${selectedJobs.length} job postings successfully deleted.`
+        description: `Successfully deleted ${jobIds.length} job postings.`
       });
       setSelectedJobs([]);
+      setBulkActionDialogOpen(false);
     },
     onError: (error) => {
       console.error('Error deleting jobs:', error);
-      toast.toast({
+      toast({
         title: "Error",
         description: "Failed to delete jobs. Please try again.",
         variant: "destructive",
@@ -63,30 +67,35 @@ export const useBulkActions = ({ jobs, queryClient, toast }: UseBulkActionsProps
         throw new Error('Not authenticated');
       }
 
-      // Archive each job sequentially
-      for (const jobId of jobIds) {
-        const { error } = await supabase
+      const promises = jobIds.map(jobId => 
+        supabase
           .from('jobs')
-          .update({ is_active: false })
+          .update({ status: 'archived' })
           .eq('id', jobId)
-          .eq('created_by', userData.user.id);
-        
-        if (error) throw error;
+          .eq('created_by', userData.user!.id)
+      );
+      
+      const results = await Promise.all(promises);
+      const errors = results.filter(result => result.error).map(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error(`Failed to archive ${errors.length} jobs`);
       }
       
       return jobIds;
     },
-    onSuccess: () => {
+    onSuccess: (jobIds) => {
       queryClient.invalidateQueries({ queryKey: ['hospitalJobs'] });
-      toast.toast({
+      toast({
         title: "Jobs Archived",
-        description: `${selectedJobs.length} job postings successfully archived.`
+        description: `Successfully archived ${jobIds.length} job postings.`
       });
       setSelectedJobs([]);
+      setBulkActionDialogOpen(false);
     },
     onError: (error) => {
       console.error('Error archiving jobs:', error);
-      toast.toast({
+      toast({
         title: "Error",
         description: "Failed to archive jobs. Please try again.",
         variant: "destructive",
@@ -100,18 +109,15 @@ export const useBulkActions = ({ jobs, queryClient, toast }: UseBulkActionsProps
     } else if (bulkAction === 'archive') {
       bulkArchiveMutation.mutate(selectedJobs);
     }
-    
-    setBulkActionDialogOpen(false);
-    setBulkAction(null);
   };
 
   const handleSelectAll = () => {
-    if (jobs) {
-      if (selectedJobs.length === jobs.length) {
-        setSelectedJobs([]);
-      } else {
-        setSelectedJobs(jobs.map((job: any) => job.id));
-      }
+    if (!jobs) return;
+    
+    if (selectedJobs.length === jobs.length) {
+      setSelectedJobs([]);
+    } else {
+      setSelectedJobs(jobs.map(job => job.id));
     }
   };
 
