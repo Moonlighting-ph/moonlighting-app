@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { 
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { Briefcase, MapPin, Calendar, Edit, Trash2, Eye } from 'lucide-react';
+import { Briefcase, MapPin, Calendar, Edit, Trash2, Eye, Copy } from 'lucide-react';
 
 interface Job {
   id: string;
@@ -22,12 +22,14 @@ interface Job {
 interface HospitalJobCardProps {
   job: Job;
   onDelete: (jobId: string) => void;
+  onDuplicate: (jobId: string) => void;
   formatDate: (dateString: string) => string;
 }
 
 const HospitalJobCard: React.FC<HospitalJobCardProps> = ({ 
   job, 
   onDelete,
+  onDuplicate,
   formatDate 
 }) => {
   const navigate = useNavigate();
@@ -41,7 +43,7 @@ const HospitalJobCard: React.FC<HospitalJobCardProps> = ({
   };
 
   return (
-    <Card key={job.id} className="overflow-hidden">
+    <Card key={job.id} className="overflow-hidden w-full">
       <CardContent className="p-0">
         <div className="p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
@@ -84,6 +86,13 @@ const HospitalJobCard: React.FC<HospitalJobCardProps> = ({
                 onClick={() => handleEditJob(job.id)}
               >
                 <Edit className="h-4 w-4 mr-1" /> Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onDuplicate(job.id)}
+              >
+                <Copy className="h-4 w-4 mr-1" /> Duplicate
               </Button>
               <AlertDialogTrigger asChild>
                 <Button 
