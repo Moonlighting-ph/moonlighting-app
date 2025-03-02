@@ -70,7 +70,14 @@ export default function ProfileForm() {
         .from('profiles')
         .upsert({
           id: user.id,
-          ...formData,
+          full_name: formData.full_name,
+          title: formData.title,
+          bio: formData.bio,
+          contact_email: formData.contact_email,
+          phone: formData.phone,
+          company: formData.company,
+          avatar_url: formData.avatar_url,
+          user_type: profile?.user_type || 'medical_professional', // Add the user_type field
           updated_at: new Date().toISOString(),
         });
 
