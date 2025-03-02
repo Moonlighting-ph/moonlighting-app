@@ -2,30 +2,9 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-interface JobFormData {
-  title: string;
-  location: string;
-  type: string;
-  salary: string;
-  deadline: string;
-  description: string;
-  requirementsText: string;
-  benefitsText: string;
-  urgent: boolean;
-  qualificationsText: string;
-  baseSalary: string;
-  benefitsValue: string;
-  bonusStructure: string;
-  paymentFrequency: string;
-}
-
-interface JobFormState {
-  formData: JobFormData;
-  tags: string[];
-  newTag: string;
-  isSubmitting: boolean;
-}
+import { JobFormData, JobFormState, JobFormHandlers } from './types';
+import { initializeFormData, initializeTags } from './formDataUtils';
+import { prepareJobDataForSubmission, submitNewJob, updateExistingJob } from './submitJobUtils';
 
 interface JobFormProps {
   initialData?: {
@@ -51,30 +30,12 @@ interface JobFormProps {
   navigate?: (path: string) => void;
 }
 
-export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormProps) => {
+export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormProps): JobFormState & JobFormHandlers => {
   const isEditing = !!initialData?.id;
   const { toast } = useToast();
 
-  const [formData, setFormData] = useState<JobFormData>({
-    title: initialData?.title || '',
-    location: initialData?.location || '',
-    type: initialData?.type || 'Full-time',
-    salary: initialData?.salary || '',
-    deadline: initialData?.deadline ? new Date(initialData.deadline).toISOString().split('T')[0] : '',
-    description: initialData?.description || '',
-    requirementsText: initialData?.requirements?.join('\n') || '',
-    benefitsText: initialData?.benefits?.join('\n') || '',
-    urgent: initialData?.urgent || false,
-    qualificationsText: initialData?.qualifications?.filter(q => !q.startsWith('#')).join('\n') || '',
-    baseSalary: initialData?.compensation_details?.base_salary || '',
-    benefitsValue: initialData?.compensation_details?.benefits_value || '',
-    bonusStructure: initialData?.compensation_details?.bonus_structure || '',
-    paymentFrequency: initialData?.compensation_details?.payment_frequency || 'Monthly',
-  });
-
-  const [tags, setTags] = useState<string[]>(
-    initialData?.qualifications?.filter(q => q.startsWith('#')) || []
-  );
+  const [formData, setFormData] = useState<JobFormData>(initializeFormData(initialData));
+  const [tags, setTags] = useState<string[]>(initializeTags(initialData));
   const [newTag, setNewTag] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -113,8 +74,37 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  const validateForm = (): boolean => {
+    // Basic validations - title and description must not be empty
+    if (!formData.title.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Job title is required",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.description.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Job description is required",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate the form first
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -161,63 +151,22 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
         return;
       }
 
-      // For hospital/provider users, we don't need to check verification status
-      
-      const requirements = formData.requirementsText
-        .split('\n')
-        .filter(line => line.trim() !== '');
-      
-      const benefits = formData.benefitsText
-        .split('\n')
-        .filter(line => line.trim() !== '');
-        
-      const qualifications = [
-        ...formData.qualificationsText
-          .split('\n')
-          .filter(line => line.trim() !== ''),
-        ...tags
-      ];
-
-      // Get company logo (placeholder for now)
-      const logo = "https://placehold.co/600x400/png"; // Default placeholder
-
-      const jobData = {
-        title: formData.title,
-        company: profileData.company,
-        logo: logo,
-        location: formData.location,
-        type: formData.type,
-        salary: formData.salary,
-        deadline: new Date(formData.deadline).toISOString(),
-        description: formData.description,
-        requirements,
-        benefits,
-        urgent: formData.urgent,
-        created_by: userData.user.id,
-        qualifications,
-        compensation_details: {
-          base_salary: formData.baseSalary,
-          benefits_value: formData.benefitsValue,
-          bonus_structure: formData.bonusStructure,
-          payment_frequency: formData.paymentFrequency,
-        }
-      };
+      // Prepare job data for submission (flattening the compensation_details)
+      const jobData = prepareJobDataForSubmission(
+        formData,
+        tags,
+        profileData.company,
+        userData.user.id
+      );
 
       let result;
       
       if (isEditing && initialData?.id) {
         // Update existing job
-        result = await supabase
-          .from('jobs')
-          .update(jobData)
-          .eq('id', initialData.id)
-          .eq('created_by', userData.user.id); // Ensure job belongs to this user
+        result = await updateExistingJob(initialData.id, jobData, userData.user.id);
       } else {
         // Create new job
-        result = await supabase
-          .from('jobs')
-          .insert([jobData])
-          .select();
+        result = await submitNewJob(jobData);
       }
 
       if (result.error) {
