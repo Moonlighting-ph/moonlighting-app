@@ -69,7 +69,15 @@ const JobPostingForm: React.FC<JobPostingFormProps> = ({
         <Alert className="mb-4 bg-yellow-50 border-yellow-200">
           <Info className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-600">
-            You haven't set your hospital or organization name yet. You'll need to add this in your profile before your job posting can be submitted.
+            You haven't set your hospital or organization name yet. You'll need to{" "}
+            <Button 
+              variant="link" 
+              className="text-yellow-700 p-0 h-auto font-semibold"
+              onClick={() => navigate('/platform/hospital-profile')}
+            >
+              add this in your profile
+            </Button>{" "}
+            before your job posting can be submitted.
           </AlertDescription>
         </Alert>
       )}
