@@ -1,8 +1,8 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ArrowRight, MapPin, Clock, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase, fetchJobs } from '@/integrations/supabase/client';
+import { fetchJobs } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
 interface JobListing {
