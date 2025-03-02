@@ -5,5 +5,5 @@ import type { Database } from "@/integrations/supabase/types";
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
   tin_number?: string;
   government_id?: string;
-  document_verification_status?: string;
+  document_verification_status?: "pending" | "submitted" | "verified" | "rejected";
 };

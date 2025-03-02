@@ -4,6 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUserProfile, submitDocumentVerification } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentVerification } from './DocumentVerification';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
 
 const DocumentVerificationManager = () => {
   const [prcLicense, setPrcLicense] = useState('');
@@ -53,24 +56,73 @@ const DocumentVerificationManager = () => {
     });
   };
 
-  const isVerificationComplete = profile && 
-    profile.document_verification_status === 'verified';
+  const getVerificationStatusBadge = () => {
+    const status = profile?.document_verification_status;
+    
+    if (!status || status === 'pending') {
+      return (
+        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800">
+          <Clock className="h-3 w-3 mr-1" />
+          Pending Verification
+        </Badge>
+      );
+    } else if (status === 'submitted') {
+      return (
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800">
+          <Clock className="h-3 w-3 mr-1" />
+          Under Review
+        </Badge>
+      );
+    } else if (status === 'verified') {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800">
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          Verified
+        </Badge>
+      );
+    } else if (status === 'rejected') {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Verification Failed
+        </Badge>
+      );
+    }
+    
+    return null;
+  };
 
   if (isLoading) {
     return <div>Loading verification status...</div>;
   }
 
   return (
-    <DocumentVerification
-      prcLicense={prcLicense}
-      tin={tin}
-      govId={govId}
-      onPrcLicenseChange={setPrcLicense}
-      onTinChange={setTin}
-      onGovIdChange={setGovId}
-      onSubmit={handleSubmit}
-      isComplete={isVerificationComplete}
-    />
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle>Document Verification</CardTitle>
+          {getVerificationStatusBadge()}
+        </div>
+        <CardDescription>
+          {profile?.document_verification_status === 'verified' 
+            ? "Your documents have been verified successfully. You can now apply for jobs." 
+            : "Please submit your documents for verification to apply for healthcare jobs."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <DocumentVerification
+          prcLicense={prcLicense}
+          tin={tin}
+          govId={govId}
+          onPrcLicenseChange={setPrcLicense}
+          onTinChange={setTin}
+          onGovIdChange={setGovId}
+          onSubmit={handleSubmit}
+          isComplete={profile?.document_verification_status === 'verified'}
+          status={profile?.document_verification_status || 'pending'}
+        />
+      </CardContent>
+    </Card>
   );
 };
 
