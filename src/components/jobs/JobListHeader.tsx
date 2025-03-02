@@ -19,7 +19,7 @@ interface JobListHeaderProps {
   setSearchTerm: (term: string) => void;
   toggleMobileSortVisible: () => void;
   totalJobs: number;
-  filteredCount: number;
+  filteredCount: React.ReactNode;
 }
 
 const JobListHeader: React.FC<JobListHeaderProps> = ({
@@ -65,7 +65,7 @@ const JobListHeader: React.FC<JobListHeaderProps> = ({
         </div>
       </div>
       
-      {filteredCount > 0 && (
+      {filteredCount && (
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs md:text-sm text-muted-foreground">
             Showing {filteredCount} of {totalJobs} jobs

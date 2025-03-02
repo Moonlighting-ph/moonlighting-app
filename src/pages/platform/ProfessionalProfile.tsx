@@ -1,27 +1,39 @@
 
-import ProfileForm from "@/components/profile/ProfileForm";
-import { useAuth } from "@/context/AuthContext";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import ProfileForm from '@/components/profile/ProfileForm';
+import DocumentVerificationManager from '@/components/profile/DocumentVerificationManager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export default function ProfessionalProfile() {
-  const { profile } = useAuth();
-  
+const ProfessionalProfile = () => {
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
-      {profile?.user_type === 'medical_professional' ? (
-        <div className="mb-4">
-          <span className="inline-block bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
-            Medical Professional
-          </span>
-        </div>
-      ) : profile?.user_type === 'medical_provider' ? (
-        <div className="mb-4">
-          <span className="inline-block bg-green-100 text-green-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">
-            Medical Provider
-          </span>
-        </div>
-      ) : null}
-      <ProfileForm />
+    <div className="container px-4 py-6 md:py-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Professional Profile</CardTitle>
+          <CardDescription>
+            Complete your profile to apply for healthcare jobs
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="profile">
+            <TabsList className="mb-4">
+              <TabsTrigger value="profile">Profile Information</TabsTrigger>
+              <TabsTrigger value="documents">Document Verification</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile">
+              <ProfileForm />
+            </TabsContent>
+            
+            <TabsContent value="documents">
+              <DocumentVerificationManager />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
-}
+};
+
+export default ProfessionalProfile;
