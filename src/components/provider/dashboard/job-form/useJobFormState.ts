@@ -147,12 +147,17 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
       }
 
       // Check if company name is set for hospital/provider users
-      if (!profileData.company) {
+      if (!profileData.company || profileData.company.trim() === '') {
         toast({
           title: "Profile Incomplete",
-          description: "Please add your hospital or company name to your profile first",
+          description: "Please add your hospital or company name to your profile before posting a job",
           variant: "destructive",
         });
+        
+        // Redirect to profile page
+        if (navigate) {
+          navigate('/platform/hospital-profile');
+        }
         return;
       }
 
