@@ -3,9 +3,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { 
   AlertDialog,
@@ -16,9 +14,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Briefcase, MapPin, Calendar, Edit, Trash2, Plus, Eye } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import HospitalJobCard from './HospitalJobCard';
+import EmptyHospitalJobsList from './EmptyHospitalJobsList';
+import HospitalJobsLoading from './HospitalJobsLoading';
 
 const HospitalJobList = () => {
   const navigate = useNavigate();
@@ -89,25 +89,16 @@ const HospitalJobList = () => {
     }
   };
 
-  const handleViewJob = (jobId: string) => {
-    navigate(`/platform/job/${jobId}`);
-  };
-
-  const handleEditJob = (jobId: string) => {
-    navigate(`/platform/hospital-jobs/edit/${jobId}`);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const handleSetJobToDelete = (jobId: string) => {
+    setJobToDelete(jobId);
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading jobs...</span>
-      </div>
-    );
+    return <HospitalJobsLoading />;
   }
 
   if (error) {
@@ -136,97 +127,37 @@ const HospitalJobList = () => {
       {jobs && jobs.length > 0 ? (
         <div className="space-y-4">
           {jobs.map((job: any) => (
-            <Card key={job.id} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium">{job.title}</h3>
-                      <div className="flex items-center text-sm text-muted-foreground mt-1">
-                        <Briefcase className="h-4 w-4 mr-1" />
-                        <span>{job.type}</span>
-                        <span className="mx-2">•</span>
-                        <MapPin className="h-4 w-4 mr-1" />
-                        <span>{job.location}</span>
-                      </div>
-                    </div>
-                    <div className="flex mt-4 md:mt-0">
-                      {job.urgent && (
-                        <Badge variant="destructive" className="ml-2">Urgent</Badge>
-                      )}
-                      <Badge variant={job.is_active ? "default" : "outline"} className="ml-2">
-                        {job.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center text-sm">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>Deadline: {formatDate(job.deadline)}</span>
-                    </div>
-                    <div className="flex space-x-2 mt-4 md:mt-0">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleViewJob(job.id)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" /> View
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleEditJob(job.id)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> Edit
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => setJobToDelete(job.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" /> Delete
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete
-                              this job posting and remove it from our servers.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setJobToDelete(null)}>
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDelete}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <HospitalJobCard 
+              key={job.id}
+              job={job}
+              onDelete={handleSetJobToDelete}
+              formatDate={formatDate}
+            />
           ))}
         </div>
       ) : (
-        <div className="p-12 text-center border rounded-lg">
-          <Briefcase className="h-12 w-12 mx-auto text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-medium">No job postings yet</h3>
-          <p className="text-muted-foreground mt-2">
-            Create your first job posting to start receiving applications
-          </p>
-          <Button onClick={() => navigate('/platform/hospital-jobs/new')} className="mt-6">
-            Create Job Posting
-          </Button>
-        </div>
+        <EmptyHospitalJobsList />
       )}
+
+      <AlertDialog open={!!jobToDelete} onOpenChange={() => !jobToDelete && setJobToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete
+              this job posting and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setJobToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
