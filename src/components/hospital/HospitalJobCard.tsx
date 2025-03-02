@@ -4,9 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  AlertDialogTrigger
-} from "@/components/ui/alert-dialog";
 import { Briefcase, MapPin, Calendar, Edit, Trash2, Eye, Copy } from 'lucide-react';
 
 interface Job {
@@ -94,15 +91,13 @@ const HospitalJobCard: React.FC<HospitalJobCardProps> = ({
               >
                 <Copy className="h-4 w-4 mr-1" /> Duplicate
               </Button>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={() => onDelete(job.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" /> Delete
-                </Button>
-              </AlertDialogTrigger>
+              <Button 
+                size="sm" 
+                variant="destructive"
+                onClick={() => onDelete(job.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" /> Delete
+              </Button>
             </div>
           </div>
         </div>
