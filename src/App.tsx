@@ -14,6 +14,9 @@ import PlatformLayout from "./components/layouts/PlatformLayout";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/auth/Auth";
 
+// Provider Dashboard
+import ProviderDashboard from "./pages/platform/ProviderDashboard";
+
 // Hospital Job Management Pages
 import HospitalJobs from "./pages/platform/HospitalJobs";
 import NewJobPosting from "./pages/platform/NewJobPosting";
@@ -40,15 +43,18 @@ const App = () => (
             {/* Redirect from root to platform or auth page based on authentication */}
             <Route path="/" element={<Navigate to="/platform" replace />} />
             
-            {/* Protected platform routes - wrapped with PlatformLayout */}
+            {/* Protected platform routes with conditional dashboard rendering */}
             <Route 
               path="/platform" 
               element={
                 <PrivateRoute>
-                  <PlatformLayout><Dashboard /></PlatformLayout>
+                  <PlatformLayout>
+                    <DashboardRouter />
+                  </PlatformLayout>
                 </PrivateRoute>
               } 
             />
+            
             <Route 
               path="/platform/jobs" 
               element={
@@ -134,5 +140,22 @@ const App = () => (
     </AuthProvider>
   </QueryClientProvider>
 );
+
+// Component that routes to the appropriate dashboard based on user type
+function DashboardRouter() {
+  const { profile, loading } = useAuth();
+  
+  if (loading) {
+    return <HospitalJobsLoading />;
+  }
+  
+  // Route based on user type
+  if (profile?.user_type === 'medical_provider') {
+    return <ProviderDashboard />;
+  }
+  
+  // Default to professional dashboard
+  return <Dashboard />;
+}
 
 export default App;

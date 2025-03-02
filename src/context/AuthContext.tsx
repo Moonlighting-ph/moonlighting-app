@@ -1,26 +1,7 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
-
-type Profile = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  user_type: 'medical_professional' | 'medical_provider';
-  avatar_url: string | null;
-  bio: string | null;
-  title: string | null;
-  contact_email: string | null;
-  phone: string | null;
-  company: string | null;
-  prc_license: string | null;
-  work_experience: string | null;
-  preferred_location: string | null;
-  created_at: string;
-  updated_at: string;
-};
+import type { Profile } from '@/types/profile';
 
 type AuthContextType = {
   session: Session | null;

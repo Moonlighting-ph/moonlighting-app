@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +8,7 @@ import {
   isDocumentVerificationComplete,
   initializeFormDataFromProfile
 } from "@/utils/ProfileUtils";
+import type { Profile } from "@/types/profile";
 
 type ProfileFormData = {
   first_name: string;
@@ -32,13 +32,13 @@ export function useProfileForm() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
   const [formData, setFormData] = useState<ProfileFormData>(
-    initializeFormDataFromProfile(profile, user?.email)
+    initializeFormDataFromProfile(profile as Profile | null, user?.email)
   );
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    setFormData(initializeFormDataFromProfile(profile, user?.email));
+    setFormData(initializeFormDataFromProfile(profile as Profile | null, user?.email));
   }, [profile, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
