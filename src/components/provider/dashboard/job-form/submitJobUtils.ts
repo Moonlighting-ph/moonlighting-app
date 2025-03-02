@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { JobFormData } from './types';
 
 // This function prepares the job data for submission
@@ -28,27 +27,37 @@ export const prepareJobDataForSubmission = (
   // Default placeholder logo
   const logo = "https://placehold.co/600x400/png";
 
-  // We need to flatten the compensation_details because the database schema 
-  // doesn't appear to have a compensation_details column
+  // The jobs table doesn't have separate columns for compensation details
+  // including base_salary, benefits_value, etc.
+  // Instead we'll include them as part of the salary field in a structured format
+  
+  // Format the comprehensive salary information
+  const salaryInfo = {
+    base: formData.baseSalary,
+    benefits: formData.benefitsValue,
+    bonus: formData.bonusStructure,
+    frequency: formData.paymentFrequency
+  };
+  
+  // Potentially update the salary field to include all compensation details
+  const enhancedSalary = formData.salary || JSON.stringify(salaryInfo);
+
   return {
     title: formData.title,
     company: companyName,
     logo: logo,
     location: formData.location,
     type: formData.type,
-    salary: formData.salary,
+    salary: enhancedSalary,
     deadline: new Date(formData.deadline).toISOString(),
     description: formData.description,
     requirements,
     benefits,
     urgent: formData.urgent,
     created_by: userID,
-    qualifications,
-    // Instead of the nested object, we'll use flattened fields
-    base_salary: formData.baseSalary,
-    benefits_value: formData.benefitsValue,
-    bonus_structure: formData.bonusStructure,
-    payment_frequency: formData.paymentFrequency
+    qualifications
+    // We're no longer trying to add these columns directly
+    // base_salary, benefits_value, bonus_structure, payment_frequency
   };
 };
 
