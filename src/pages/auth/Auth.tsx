@@ -41,17 +41,26 @@ export default function Auth() {
 
   // Social login handlers
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/platform`,
-      },
-    });
-    
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/platform`,
+        },
+      });
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error("Google login error:", err);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Login Error",
+        description: "Could not connect to Google. Please try again.",
         variant: "destructive",
       });
     }

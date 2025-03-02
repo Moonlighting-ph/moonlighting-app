@@ -1,3 +1,6 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -156,9 +159,6 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-primary/50;
   }
-
-  /* Import fonts */
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
 
   /* Animation for auth page */
   @keyframes fade-in-50 {
