@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchHospitalJobs } from '@/integrations/supabase/client';
 import { JobListTable } from './job-list/JobListTable';
@@ -9,8 +9,9 @@ import { JobDeleteConfirmDialog } from './job-list/JobDeleteConfirmDialog';
 import { BulkActionConfirmDialog } from './job-list/BulkActionConfirmDialog';
 import { useJobActions } from './job-list/useJobActions';
 import { useBulkActions } from './job-list/useBulkActions';
-import HospitalJobsLoading from '../hospital/HospitalJobsLoading';
-import EmptyHospitalJobsList from '../hospital/EmptyHospitalJobsList';
+import HospitalJobsLoading from '@/components/hospital/HospitalJobsLoading';
+import EmptyHospitalJobsList from '@/components/hospital/EmptyHospitalJobsList';
+import { formatDate } from '@/utils/formatters';
 
 const HospitalJobList = () => {
   const navigate = useNavigate();
@@ -54,6 +55,18 @@ const HospitalJobList = () => {
     isDeleting: isBulkDeleting,
     isArchiving
   } = useBulkActions();
+
+  // Duplicate job mutation
+  const duplicateJobMutation = useMutation({
+    mutationFn: async (jobId: string) => {
+      // Mock implementation since we don't have the actual function
+      console.log("Duplicating job:", jobId);
+      return jobId;
+    },
+    onSuccess: () => {
+      refetch();
+    }
+  });
   
   // Navigate to edit page when job is set to edit
   React.useEffect(() => {
@@ -101,20 +114,28 @@ const HospitalJobList = () => {
     <div className="space-y-6">
       {/* Bulk Actions Header */}
       <BulkActionsHeader 
-        selectedCount={selectedJobs.length}
-        onArchive={() => setIsArchiveDialogOpen(true)}
-        onDelete={() => setIsDeleteDialogOpen(true)}
+        jobs={jobs}
+        selectedJobs={selectedJobs}
+        handleSelectAll={() => handleSelectAllJobs(jobs.map(job => job.id), selectedJobs.length !== jobs.length)}
+        setBulkAction={(action) => {
+          if (action === 'delete') setIsDeleteDialogOpen(true);
+          if (action === 'archive') setIsArchiveDialogOpen(true);
+        }}
+        setBulkActionDialogOpen={(isOpen) => {
+          setIsDeleteDialogOpen(isOpen);
+          setIsArchiveDialogOpen(isOpen);
+        }}
       />
       
       {/* Jobs Table */}
       <JobListTable 
         jobs={jobs}
         selectedJobs={selectedJobs}
-        onSelectJob={handleSelectJob}
-        onSelectAll={handleSelectAllJobs}
-        onViewApplications={handleViewApplications}
-        onEdit={handleEdit}
-        onDelete={setJobToDelete}
+        toggleJobSelection={handleSelectJob}
+        handleSetJobToDelete={setJobToDelete}
+        duplicateJobMutation={duplicateJobMutation}
+        formatDate={formatDate}
+        navigate={navigate}
       />
       
       {/* Confirmation Dialogs */}
@@ -126,21 +147,21 @@ const HospitalJobList = () => {
       />
       
       <BulkActionConfirmDialog 
-        type="archive"
-        isOpen={isArchiveDialogOpen}
-        setIsOpen={setIsArchiveDialogOpen}
-        selectedCount={selectedJobs.length}
-        onConfirm={handleBulkArchive}
-        isProcessing={isArchiving}
+        bulkActionDialogOpen={isArchiveDialogOpen}
+        setBulkActionDialogOpen={setIsArchiveDialogOpen}
+        bulkAction="archive"
+        setBulkAction={() => {}}
+        selectedJobs={selectedJobs}
+        handleBulkAction={handleBulkArchive}
       />
       
       <BulkActionConfirmDialog 
-        type="delete"
-        isOpen={isDeleteDialogOpen}
-        setIsOpen={setIsDeleteDialogOpen}
-        selectedCount={selectedJobs.length}
-        onConfirm={handleBulkDelete}
-        isProcessing={isBulkDeleting}
+        bulkActionDialogOpen={isDeleteDialogOpen}
+        setBulkActionDialogOpen={setIsDeleteDialogOpen}
+        bulkAction="delete"
+        setBulkAction={() => {}}
+        selectedJobs={selectedJobs}
+        handleBulkAction={handleBulkDelete}
       />
     </div>
   );
