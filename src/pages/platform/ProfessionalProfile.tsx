@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ProfileForm from '@/components/profile/ProfileForm';
-import DocumentVerificationManager from '@/components/profile/DocumentVerificationManager';
+import ProfileForm from '@/components/professional/profile/ProfileForm';
+import DocumentVerificationManager from '@/components/professional/profile/DocumentVerificationManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProfessionalProfile = () => {

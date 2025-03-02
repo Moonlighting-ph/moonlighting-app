@@ -1,6 +1,6 @@
 
 import React from 'react';
-import HospitalJobList from '@/components/hospital/HospitalJobList';
+import HospitalJobList from '@/components/provider/dashboard/HospitalJobList';
 
 const HospitalJobs = () => {
   return (
