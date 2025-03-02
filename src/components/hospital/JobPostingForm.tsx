@@ -1,30 +1,18 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Accordion } from "@/components/ui/accordion";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { X, Plus, StarIcon, Tag, DollarSign, Clock, Briefcase, FileText } from 'lucide-react';
+
+// Import our new components
+import JobBasicInfo from './job-form/JobBasicInfo';
+import JobQualifications from './job-form/JobQualifications';
+import JobRequirements from './job-form/JobRequirements';
+import JobCompensation from './job-form/JobCompensation';
+import JobBenefits from './job-form/JobBenefits';
+import JobUrgencyToggle from './job-form/JobUrgencyToggle';
 
 interface JobPostingFormProps {
   initialData?: {
@@ -235,267 +223,52 @@ const JobPostingForm: React.FC<JobPostingFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="title">Job Title*</Label>
-          <Input
-            id="title"
-            name="title"
-            placeholder="e.g., Registered Nurse, ICU"
-            value={formData.title}
-            onChange={handleChange}
-            required
-          />
-        </div>
+      <JobBasicInfo
+        title={formData.title}
+        location={formData.location}
+        type={formData.type}
+        deadline={formData.deadline}
+        description={formData.description}
+        handleChange={handleChange}
+        handleSelectChange={handleSelectChange}
+      />
 
-        <div className="space-y-2">
-          <Label htmlFor="location">Location*</Label>
-          <Input
-            id="location"
-            name="location"
-            placeholder="e.g., Manila, Philippines"
-            value={formData.location}
-            onChange={handleChange}
-            required
-          />
-        </div>
+      <Accordion type="single" collapsible className="w-full">
+        <JobQualifications
+          qualificationsText={formData.qualificationsText}
+          tags={tags}
+          newTag={newTag}
+          handleChange={handleChange}
+          setNewTag={setNewTag}
+          addTag={addTag}
+          removeTag={removeTag}
+        />
+        
+        <JobRequirements
+          requirementsText={formData.requirementsText}
+          handleChange={handleChange}
+        />
+        
+        <JobCompensation
+          salary={formData.salary}
+          baseSalary={formData.baseSalary}
+          benefitsValue={formData.benefitsValue}
+          paymentFrequency={formData.paymentFrequency}
+          bonusStructure={formData.bonusStructure}
+          handleChange={handleChange}
+          handleSelectChange={handleSelectChange}
+        />
+        
+        <JobBenefits
+          benefitsText={formData.benefitsText}
+          handleChange={handleChange}
+        />
+      </Accordion>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="type">Job Type*</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => handleSelectChange('type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select job type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Full-time">Full-time</SelectItem>
-                <SelectItem value="Part-time">Part-time</SelectItem>
-                <SelectItem value="Contract">Contract</SelectItem>
-                <SelectItem value="Temporary">Temporary</SelectItem>
-                <SelectItem value="Locum">Locum</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="deadline">Application Deadline*</Label>
-            <Input
-              id="deadline"
-              name="deadline"
-              type="date"
-              value={formData.deadline}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Job Description*</Label>
-          <Textarea
-            id="description"
-            name="description"
-            placeholder="Describe the job role and responsibilities..."
-            value={formData.description}
-            onChange={handleChange}
-            rows={5}
-            required
-          />
-        </div>
-
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="qualifications">
-            <AccordionTrigger className="text-base font-medium">
-              <div className="flex items-center">
-                <StarIcon className="h-5 w-5 mr-2" /> Required Qualifications
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="qualificationsText">Qualifications (one per line)</Label>
-                <Textarea
-                  id="qualificationsText"
-                  name="qualificationsText"
-                  placeholder="Enter required qualifications, one per line..."
-                  value={formData.qualificationsText}
-                  onChange={handleChange}
-                  rows={4}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Qualification Tags</Label>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {tag}
-                      <X 
-                        className="h-3 w-3 cursor-pointer ml-1" 
-                        onClick={() => removeTag(tag)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add tag (e.g. RN, LPN)"
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={addTag}
-                    variant="outline"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="requirements">
-            <AccordionTrigger className="text-base font-medium">
-              <div className="flex items-center">
-                <FileText className="h-5 w-5 mr-2" /> Job Requirements
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="requirementsText">Requirements (one per line)</Label>
-                <Textarea
-                  id="requirementsText"
-                  name="requirementsText"
-                  placeholder="Enter job requirements, one per line..."
-                  value={formData.requirementsText}
-                  onChange={handleChange}
-                  rows={4}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="compensation">
-            <AccordionTrigger className="text-base font-medium">
-              <div className="flex items-center">
-                <DollarSign className="h-5 w-5 mr-2" /> Compensation Details
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="space-y-4 pt-4">
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="salary">Salary Range*</Label>
-                    <Input
-                      id="salary"
-                      name="salary"
-                      placeholder="e.g., ₱20,000 - ₱25,000 per month"
-                      value={formData.salary}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="baseSalary">Base Salary</Label>
-                      <Input
-                        id="baseSalary"
-                        name="baseSalary"
-                        placeholder="e.g., ₱20,000"
-                        value={formData.baseSalary}
-                        onChange={handleChange}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="benefitsValue">Benefits Value</Label>
-                      <Input
-                        id="benefitsValue"
-                        name="benefitsValue"
-                        placeholder="e.g., ₱5,000"
-                        value={formData.benefitsValue}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="paymentFrequency">Payment Frequency</Label>
-                      <Select
-                        value={formData.paymentFrequency}
-                        onValueChange={(value) => handleSelectChange('paymentFrequency', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select frequency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Weekly">Weekly</SelectItem>
-                          <SelectItem value="Bi-weekly">Bi-weekly</SelectItem>
-                          <SelectItem value="Monthly">Monthly</SelectItem>
-                          <SelectItem value="Bi-monthly">Bi-monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="bonusStructure">Bonus Structure</Label>
-                      <Input
-                        id="bonusStructure"
-                        name="bonusStructure"
-                        placeholder="e.g., Performance-based bonuses"
-                        value={formData.bonusStructure}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </AccordionContent>
-          </AccordionItem>
-          
-          <AccordionItem value="benefits">
-            <AccordionTrigger className="text-base font-medium">
-              <div className="flex items-center">
-                <Briefcase className="h-5 w-5 mr-2" /> Benefits
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="benefitsText">Benefits (one per line)</Label>
-                <Textarea
-                  id="benefitsText"
-                  name="benefitsText"
-                  placeholder="Enter job benefits, one per line..."
-                  value={formData.benefitsText}
-                  onChange={handleChange}
-                  rows={4}
-                />
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-
-        <div className="flex items-center space-x-2 pt-4">
-          <Tag className="h-5 w-5 text-destructive" />
-          <Label htmlFor="urgent" className="cursor-pointer font-medium">Mark as Urgent</Label>
-          <Switch
-            id="urgent"
-            checked={formData.urgent}
-            onCheckedChange={handleSwitchChange}
-          />
-          {formData.urgent && (
-            <Badge variant="destructive">Urgent</Badge>
-          )}
-        </div>
-      </div>
+      <JobUrgencyToggle
+        urgent={formData.urgent}
+        handleSwitchChange={handleSwitchChange}
+      />
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? 'Submitting...' : isEditing ? 'Update Job Posting' : 'Post Job'}
