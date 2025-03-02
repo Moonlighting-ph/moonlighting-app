@@ -1,17 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { BasicProfileInfo } from "./BasicProfileInfo";
-import { MedicalProfessionalInfo } from "./MedicalProfessionalInfo";
-import { ContactInfo } from "./ContactInfo";
-import { DocumentVerification } from "./DocumentVerification";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileHeader } from "./profile-form/ProfileHeader";
-import { TabContentWrapper } from "./profile-form/TabContentWrapper";
-import { Button } from "@/components/ui/button";
+import { FormTabs } from "./profile-form/FormTabs";
 import { Profile } from "@/types/profile";
 
 type ProfileFormData = {
@@ -28,7 +23,7 @@ type ProfileFormData = {
   preferred_location: string;
   tin_number: string;
   government_id: string;
-  document_verification_status: string;
+  document_verification_status: "pending" | "submitted" | "verified" | "rejected";
 };
 
 export default function ProfileForm() {
@@ -212,94 +207,17 @@ export default function ProfileForm() {
         <ProfileHeader completionPercentage={completionPercentage} />
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basic">Basic Info</TabsTrigger>
-            <TabsTrigger value="professional">Professional</TabsTrigger>
-            <TabsTrigger value="contact">Contact</TabsTrigger>
-            <TabsTrigger value="verification">Verification</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="basic">
-            <TabContentWrapper 
-              handleSubmit={handleSubmit} 
-              loading={loading}
-              submitText="Save Basic Info"
-            >
-              <BasicProfileInfo 
-                firstName={formData.first_name}
-                lastName={formData.last_name}
-                title={formData.title}
-                bio={formData.bio}
-                avatarUrl={formData.avatar_url}
-                handleChange={handleChange}
-              />
-            </TabContentWrapper>
-          </TabsContent>
-          
-          <TabsContent value="professional">
-            <TabContentWrapper 
-              handleSubmit={handleSubmit} 
-              loading={loading}
-              backAction={() => setActiveTab("basic")}
-              submitText="Save Professional Info"
-            >
-              {profile?.user_type === 'medical_professional' && (
-                <MedicalProfessionalInfo
-                  prcLicense={formData.prc_license}
-                  workExperience={formData.work_experience}
-                  preferredLocation={formData.preferred_location}
-                  handleChange={handleChange}
-                />
-              )}
-            </TabContentWrapper>
-          </TabsContent>
-          
-          <TabsContent value="contact">
-            <TabContentWrapper 
-              handleSubmit={handleSubmit} 
-              loading={loading}
-              backAction={() => setActiveTab("professional")}
-              submitText="Save Contact Info"
-            >
-              <ContactInfo
-                contactEmail={formData.contact_email}
-                phone={formData.phone}
-                company={formData.company}
-                handleChange={handleChange}
-              />
-            </TabContentWrapper>
-          </TabsContent>
-          
-          <TabsContent value="verification">
-            <div className="space-y-6 pt-4">
-              <DocumentVerification
-                prcLicense={formData.prc_license}
-                tin={formData.tin_number}
-                govId={formData.government_id}
-                onPrcLicenseChange={(value) => setFormData(prev => ({ ...prev, prc_license: value }))}
-                onTinChange={(value) => setFormData(prev => ({ ...prev, tin_number: value }))}
-                onGovIdChange={(value) => setFormData(prev => ({ ...prev, government_id: value }))}
-                onSubmit={submitDocuments}
-                isComplete={formData.document_verification_status === "verified"}
-                status={formData.document_verification_status as "pending" | "submitted" | "verified" | "rejected"}
-              />
-              
-              <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={() => setActiveTab("contact")}>
-                  Back
-                </Button>
-                <Button 
-                  type="button" 
-                  onClick={handleSubmit} 
-                  disabled={loading || !isDocumentVerificationComplete}
-                >
-                  {loading ? "Saving..." : "Save All Profile"}
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <FormTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          formData={formData}
+          handleChange={handleChange}
+          handleSubmit={handleSubmit}
+          loading={loading}
+          submitDocuments={submitDocuments}
+          userType={profile?.user_type}
+          isDocumentVerificationComplete={isDocumentVerificationComplete}
+        />
       </CardContent>
     </Card>
   );
