@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ProfileHeader } from "./profile-form/ProfileHeader";
-import { FormTabs } from "./profile-form/FormTabs";
+import { ProfileHeader } from "@/components/profile/profile-form/ProfileHeader";
+import { FormTabs } from "@/components/profile/profile-form/FormTabs";
 import { useProfileForm } from "@/hooks/useProfileForm";
 
 export default function ProfileForm() {
