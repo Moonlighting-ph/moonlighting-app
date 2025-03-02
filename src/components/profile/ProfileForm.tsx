@@ -11,6 +11,7 @@ import { DocumentVerification } from "./DocumentVerification";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileHeader } from "./profile-form/ProfileHeader";
 import { TabContentWrapper } from "./profile-form/TabContentWrapper";
+import { Button } from "@/components/ui/button";
 import { Profile } from "@/types/profile";
 
 type ProfileFormData = {
