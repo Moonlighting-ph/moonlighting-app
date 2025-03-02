@@ -1,28 +1,24 @@
 
 import { useState } from 'react';
-import { useMutation, QueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface UseBulkActionsProps {
-  jobs: any[] | undefined;
-  queryClient: QueryClient;
-}
-
-export const useBulkActions = ({ jobs, queryClient }: UseBulkActionsProps) => {
+export const useBulkActions = () => {
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
-  const [bulkActionDialogOpen, setBulkActionDialogOpen] = useState(false);
-  const [bulkAction, setBulkAction] = useState<'delete' | 'archive'>('delete');
+  const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (jobIds: string[]) => {
       const { data: userData } = await supabase.auth.getUser();
       
       if (!userData.user) {
-        throw new Error('Not authenticated');
+        throw new Error('You must be logged in to delete job postings');
       }
-
+      
       const promises = jobIds.map(jobId => 
         supabase
           .from('jobs')
@@ -32,30 +28,30 @@ export const useBulkActions = ({ jobs, queryClient }: UseBulkActionsProps) => {
       );
       
       const results = await Promise.all(promises);
-      const errors = results.filter(result => result.error).map(result => result.error);
+      const errors = results.filter(r => r.error).map(r => r.error);
       
       if (errors.length > 0) {
-        throw new Error(`Failed to delete ${errors.length} jobs`);
+        throw new Error(`Failed to delete some jobs: ${errors.map(e => e.message).join(', ')}`);
       }
       
       return jobIds;
     },
-    onSuccess: (jobIds) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hospitalJobs'] });
       toast({
         title: "Jobs Deleted",
-        description: `Successfully deleted ${jobIds.length} job postings.`
+        description: `${selectedJobs.length} job postings have been successfully deleted.`,
       });
       setSelectedJobs([]);
-      setBulkActionDialogOpen(false);
+      setIsDeleteDialogOpen(false);
     },
-    onError: (error) => {
-      console.error('Error deleting jobs:', error);
+    onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: "Failed to delete jobs. Please try again.",
+        title: "Deletion Failed",
+        description: error.message || "Failed to delete jobs. Please try again.",
         variant: "destructive",
       });
+      setIsDeleteDialogOpen(false);
     }
   });
 
@@ -64,9 +60,9 @@ export const useBulkActions = ({ jobs, queryClient }: UseBulkActionsProps) => {
       const { data: userData } = await supabase.auth.getUser();
       
       if (!userData.user) {
-        throw new Error('Not authenticated');
+        throw new Error('You must be logged in to archive job postings');
       }
-
+      
       const promises = jobIds.map(jobId => 
         supabase
           .from('jobs')
@@ -76,61 +72,68 @@ export const useBulkActions = ({ jobs, queryClient }: UseBulkActionsProps) => {
       );
       
       const results = await Promise.all(promises);
-      const errors = results.filter(result => result.error).map(result => result.error);
+      const errors = results.filter(r => r.error).map(r => r.error);
       
       if (errors.length > 0) {
-        throw new Error(`Failed to archive ${errors.length} jobs`);
+        throw new Error(`Failed to archive some jobs: ${errors.map(e => e.message).join(', ')}`);
       }
       
       return jobIds;
     },
-    onSuccess: (jobIds) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hospitalJobs'] });
       toast({
         title: "Jobs Archived",
-        description: `Successfully archived ${jobIds.length} job postings.`
+        description: `${selectedJobs.length} job postings have been successfully archived.`,
       });
       setSelectedJobs([]);
-      setBulkActionDialogOpen(false);
+      setIsArchiveDialogOpen(false);
     },
-    onError: (error) => {
-      console.error('Error archiving jobs:', error);
+    onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: "Failed to archive jobs. Please try again.",
+        title: "Archive Failed",
+        description: error.message || "Failed to archive jobs. Please try again.",
         variant: "destructive",
       });
+      setIsArchiveDialogOpen(false);
     }
   });
 
-  const handleBulkAction = () => {
-    if (bulkAction === 'delete') {
-      bulkDeleteMutation.mutate(selectedJobs);
-    } else if (bulkAction === 'archive') {
-      bulkArchiveMutation.mutate(selectedJobs);
+  const handleSelectJob = (jobId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedJobs(prev => [...prev, jobId]);
+    } else {
+      setSelectedJobs(prev => prev.filter(id => id !== jobId));
     }
   };
 
-  const handleSelectAll = () => {
-    if (!jobs) return;
-    
-    if (selectedJobs.length === jobs.length) {
-      setSelectedJobs([]);
+  const handleSelectAllJobs = (jobIds: string[], isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedJobs(jobIds);
     } else {
-      setSelectedJobs(jobs.map(job => job.id));
+      setSelectedJobs([]);
     }
+  };
+
+  const handleBulkDelete = () => {
+    bulkDeleteMutation.mutate(selectedJobs);
+  };
+
+  const handleBulkArchive = () => {
+    bulkArchiveMutation.mutate(selectedJobs);
   };
 
   return {
     selectedJobs,
-    setSelectedJobs,
-    bulkActionDialogOpen,
-    setBulkActionDialogOpen,
-    bulkAction,
-    setBulkAction,
-    bulkDeleteMutation,
-    bulkArchiveMutation,
-    handleBulkAction,
-    handleSelectAll
+    isArchiveDialogOpen,
+    isDeleteDialogOpen,
+    setIsArchiveDialogOpen,
+    setIsDeleteDialogOpen,
+    handleSelectJob,
+    handleSelectAllJobs,
+    handleBulkDelete,
+    handleBulkArchive,
+    isDeleting: bulkDeleteMutation.isPending,
+    isArchiving: bulkArchiveMutation.isPending
   };
 };

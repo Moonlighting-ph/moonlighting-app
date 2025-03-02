@@ -19,6 +19,8 @@ type ProfileFormData = {
   contact_email: string;
   phone: string;
   company: string;
+  company_address?: string;
+  facility_type?: string;
   avatar_url: string;
   prc_license: string;
   work_experience: string;
@@ -46,6 +48,10 @@ export function useProfileForm() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +70,8 @@ export function useProfileForm() {
           contact_email: formData.contact_email,
           phone: formData.phone,
           company: formData.company,
+          company_address: formData.company_address,
+          facility_type: formData.facility_type,
           avatar_url: formData.avatar_url,
           prc_license: formData.prc_license,
           work_experience: formData.work_experience,
@@ -142,6 +150,7 @@ export function useProfileForm() {
     loading,
     profile,
     handleChange,
+    handleSelectChange,
     handleSubmit,
     submitDocuments,
     setActiveTab,

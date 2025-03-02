@@ -10,7 +10,8 @@ export default function ProfileForm() {
     activeTab, 
     loading, 
     profile,
-    handleChange, 
+    handleChange,
+    handleSelectChange, 
     handleSubmit, 
     submitDocuments, 
     setActiveTab,
@@ -32,6 +33,7 @@ export default function ProfileForm() {
           setActiveTab={setActiveTab}
           formData={formData}
           handleChange={handleChange}
+          handleSelectChange={handleSelectChange}
           handleSubmit={handleSubmit}
           loading={loading}
           submitDocuments={submitDocuments}

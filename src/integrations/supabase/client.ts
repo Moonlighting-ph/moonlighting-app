@@ -37,6 +37,19 @@ export const applyForJob = async (jobId: string, note?: string) => {
     throw new Error('You must be logged in to apply for jobs');
   }
   
+  // First check if the user has a profile
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', user.user.id)
+    .single();
+    
+  if (profileError || !profileData) {
+    console.error('Profile error:', profileError);
+    throw new Error('You must complete your profile before applying for jobs');
+  }
+  
+  // Now that we confirmed the profile exists, submit the application
   const { data, error } = await supabase
     .from('job_applications')
     .insert([
@@ -46,6 +59,7 @@ export const applyForJob = async (jobId: string, note?: string) => {
     .single();
   
   if (error) {
+    console.error('Application error:', error);
     if (error.code === '23505') { // Unique violation
       throw new Error('You have already applied for this job');
     }
@@ -211,14 +225,21 @@ export const deleteJobPosting = async (jobId: string) => {
     throw new Error('You must be logged in to delete job postings');
   }
   
+  console.log('Attempting to delete job:', jobId, 'by user:', user.user.id);
+  
   const { error } = await supabase
     .from('jobs')
     .delete()
     .eq('id', jobId)
-    .eq('created_by', user.user.id); // Ensure job belongs to this user
+    .eq('created_by', user.user.id);
   
-  if (error) throw error;
-  return { success: true };
+  if (error) {
+    console.error('Job deletion error:', error);
+    throw error;
+  }
+  
+  console.log('Job successfully deleted');
+  return { success: true, jobId };
 };
 
 export const fetchJobApplications = async (jobId: string) => {

@@ -6,4 +6,6 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
   tin_number: string | null;
   government_id: string | null;
   document_verification_status: "pending" | "submitted" | "verified" | "rejected" | null;
+  company_address: string | null;
+  facility_type: string | null;
 };

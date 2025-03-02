@@ -35,15 +35,23 @@ export const calculateCompletionPercentage = (
         filledFields++;
       }
     });
+    
+    const documentFields = ['prc_license', 'tin_number', 'government_id'];
+    documentFields.forEach(field => {
+      totalFields++;
+      if (formData[field] && String(formData[field]).trim() !== '') {
+        filledFields++;
+      }
+    });
+  } else if (userType === 'medical_provider') {
+    const providerFields = ['company', 'company_address', 'facility_type', 'prc_license'];
+    providerFields.forEach(field => {
+      totalFields++;
+      if (formData[field] && String(formData[field]).trim() !== '') {
+        filledFields++;
+      }
+    });
   }
-  
-  const documentFields = ['prc_license', 'tin_number', 'government_id'];
-  documentFields.forEach(field => {
-    totalFields++;
-    if (formData[field] && String(formData[field]).trim() !== '') {
-      filledFields++;
-    }
-  });
   
   return Math.round((filledFields / totalFields) * 100);
 };
@@ -77,6 +85,8 @@ export const initializeFormDataFromProfile = (
   contact_email: string;
   phone: string;
   company: string;
+  company_address: string;
+  facility_type: string;
   avatar_url: string;
   prc_license: string;
   work_experience: string;
@@ -94,6 +104,8 @@ export const initializeFormDataFromProfile = (
       contact_email: profile.contact_email || userEmail || "",
       phone: profile.phone || "",
       company: profile.company || "",
+      company_address: profile.company_address || "",
+      facility_type: profile.facility_type || "",
       avatar_url: profile.avatar_url || "",
       prc_license: profile.prc_license || "",
       work_experience: profile.work_experience || "",
@@ -113,6 +125,8 @@ export const initializeFormDataFromProfile = (
     contact_email: userEmail || "",
     phone: "",
     company: "",
+    company_address: "",
+    facility_type: "",
     avatar_url: "",
     prc_license: "",
     work_experience: "",

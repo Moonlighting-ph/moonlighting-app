@@ -12,6 +12,7 @@ interface FormTabsProps {
   setActiveTab: (tab: string) => void;
   formData: any;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSelectChange?: (name: string, value: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
   loading: boolean;
   submitDocuments: () => Promise<void>;
@@ -25,6 +26,7 @@ export function FormTabs({
   setActiveTab,
   formData,
   handleChange,
+  handleSelectChange,
   handleSubmit,
   loading,
   submitDocuments,
@@ -32,12 +34,15 @@ export function FormTabs({
   isDocumentVerificationComplete,
   showDocumentVerification = true,
 }: FormTabsProps) {
+  const isMedicalProfessional = userType === "medical_professional";
+  const isMedicalProvider = userType === "medical_provider";
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="basic">Basic Info</TabsTrigger>
         <TabsTrigger value="contact">Contact</TabsTrigger>
-        {showDocumentVerification && userType === "medical_professional" && (
+        {showDocumentVerification && isMedicalProfessional && (
           <TabsTrigger 
             value="verification" 
             disabled={!formData.first_name || !formData.contact_email}
@@ -45,12 +50,12 @@ export function FormTabs({
             Documents
           </TabsTrigger>
         )}
-        {userType === "medical_provider" && (
+        {(isMedicalProfessional || isMedicalProvider) && (
           <TabsTrigger 
-            value="provider" 
+            value="professional" 
             disabled={!formData.first_name || !formData.contact_email}
           >
-            Provider Info
+            {isMedicalProfessional ? 'Professional Info' : 'Provider Info'}
           </TabsTrigger>
         )}
       </TabsList>
@@ -79,7 +84,7 @@ export function FormTabs({
           handleSubmit={handleSubmit}
           loading={loading}
           backAction={() => setActiveTab("basic")}
-          submitText={userType === "medical_professional" && showDocumentVerification ? "Next" : "Save"}
+          submitText={(isMedicalProfessional && showDocumentVerification) || isMedicalProvider ? "Next" : "Save"}
           disableSubmit={!formData.contact_email}
         >
           <ContactInfo 
@@ -91,30 +96,33 @@ export function FormTabs({
         </TabContentWrapper>
       </TabsContent>
 
-      {showDocumentVerification && userType === "medical_professional" && (
+      {showDocumentVerification && isMedicalProfessional && (
         <TabsContent value="verification">
           <DocumentVerificationManager />
         </TabsContent>
       )}
 
-      {userType === "medical_provider" && (
-        <TabsContent value="provider">
-          <TabContentWrapper
-            handleSubmit={handleSubmit}
-            loading={loading}
-            backAction={() => setActiveTab("contact")}
-            submitText="Save"
-            disableSubmit={false}
-          >
-            <MedicalProfessionalInfo 
-              prcLicense={formData.prc_license}
-              workExperience={formData.work_experience}
-              preferredLocation={formData.preferred_location}
-              handleChange={handleChange}
-            />
-          </TabContentWrapper>
-        </TabsContent>
-      )}
+      <TabsContent value="professional">
+        <TabContentWrapper
+          handleSubmit={handleSubmit}
+          loading={loading}
+          backAction={() => setActiveTab("contact")}
+          submitText="Save"
+          disableSubmit={false}
+        >
+          <MedicalProfessionalInfo 
+            prcLicense={formData.prc_license}
+            workExperience={formData.work_experience}
+            preferredLocation={formData.preferred_location}
+            companyName={formData.company}
+            companyAddress={formData.company_address}
+            facilityType={formData.facility_type}
+            handleChange={handleChange}
+            handleSelectChange={handleSelectChange}
+            userType={userType}
+          />
+        </TabContentWrapper>
+      </TabsContent>
     </Tabs>
   );
 }
