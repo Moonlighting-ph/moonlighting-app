@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +18,7 @@ import { Plus } from 'lucide-react';
 import HospitalJobCard from './HospitalJobCard';
 import EmptyHospitalJobsList from './EmptyHospitalJobsList';
 import HospitalJobsLoading from './HospitalJobsLoading';
+import { formatDate } from '@/utils/jobUtils';
 
 const HospitalJobList = () => {
   const navigate = useNavigate();
@@ -26,7 +26,6 @@ const HospitalJobList = () => {
   const queryClient = useQueryClient();
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
 
-  // Fetch jobs created by current user
   const { data: jobs, isLoading, error } = useQuery({
     queryKey: ['hospitalJobs'],
     queryFn: async () => {
@@ -47,7 +46,6 @@ const HospitalJobList = () => {
     }
   });
 
-  // Delete job mutation
   const deleteJobMutation = useMutation({
     mutationFn: async (jobId: string) => {
       const { data: userData } = await supabase.auth.getUser();
@@ -87,10 +85,6 @@ const HospitalJobList = () => {
       deleteJobMutation.mutate(jobToDelete);
       setJobToDelete(null);
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
   };
 
   const handleSetJobToDelete = (jobId: string) => {

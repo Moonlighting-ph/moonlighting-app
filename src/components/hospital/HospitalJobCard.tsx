@@ -9,8 +9,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Briefcase, MapPin, Calendar, Edit, Trash2, Eye } from 'lucide-react';
 
+interface Job {
+  id: string;
+  title: string;
+  type: string;
+  location: string;
+  deadline: string;
+  urgent: boolean;
+  is_active: boolean;
+}
+
 interface HospitalJobCardProps {
-  job: any;
+  job: Job;
   onDelete: (jobId: string) => void;
   formatDate: (dateString: string) => string;
 }

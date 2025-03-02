@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { fetchJobs } from '@/integrations/supabase/client';
@@ -11,7 +10,7 @@ import JobFilters from '@/components/jobs/JobFilters';
 import JobsList from '@/components/jobs/JobsList';
 import JobFilterManager from '@/components/jobs/JobFilterManager';
 import JobSaveManager from '@/components/jobs/JobSaveManager';
-import { formatJobDeadline } from '@/utils/formatters';
+import { formatJobDeadline } from '@/utils/jobUtils';
 
 const Jobs = () => {
   const [savedOnly, setSavedOnly] = useState(false);
@@ -81,7 +80,7 @@ const Jobs = () => {
                   savedJobs={savedJobs}
                   salaryRange={salaryRange}
                 >
-                  {filteredJobs => filteredJobs.length}
+                  {(filteredJobs) => filteredJobs.length}
                 </JobFilterManager>
               }
             />
@@ -134,7 +133,7 @@ const Jobs = () => {
                   savedJobs={savedJobs}
                   salaryRange={salaryRange}
                 >
-                  {filteredJobs => (
+                  {(filteredJobs) => (
                     <JobsList
                       isLoading={isLoading}
                       error={error}
