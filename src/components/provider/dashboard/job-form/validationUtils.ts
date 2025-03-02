@@ -7,8 +7,8 @@ export interface ValidationResult {
   message: string;
 }
 
-// Update the function to accept the full toast object from useToast()
-export const validateJobForm = (formData: JobFormData, toast: { toast: (props: ToastProps) => void }): boolean => {
+// The correct type for the toast function that matches the hooks/use-toast implementation
+export const validateJobForm = (formData: JobFormData, toast: { toast: (props: { title?: string; description?: string; variant?: "default" | "destructive" }) => void }): boolean => {
   // Validate title
   if (!formData.title.trim()) {
     toast.toast({
@@ -34,7 +34,7 @@ export const validateJobForm = (formData: JobFormData, toast: { toast: (props: T
 
 export const validateCompanyProfile = (
   profileData: { company?: string } | null,
-  toast: { toast: (props: ToastProps) => void },
+  toast: { toast: (props: { title?: string; description?: string; variant?: "default" | "destructive" }) => void },
   navigate?: (path: string) => void
 ): boolean => {
   // Check if company name is set for hospital/provider users

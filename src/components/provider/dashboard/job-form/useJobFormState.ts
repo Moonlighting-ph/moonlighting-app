@@ -78,7 +78,7 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Validate the form first - pass the entire toast object
+    // Validate the form first - pass the toast object with the right structure
     if (!validateJobForm(formData, { toast })) {
       return;
     }
@@ -114,7 +114,7 @@ export const useJobFormState = ({ initialData, onSuccess, navigate }: JobFormPro
         return;
       }
 
-      // Validate company profile - pass the entire toast object
+      // Validate company profile - pass the toast object with the right structure
       if (!validateCompanyProfile(profileData, { toast }, navigate)) {
         return;
       }
