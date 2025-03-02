@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import JobListItem from '@/components/jobs/JobListItem';
@@ -41,6 +41,12 @@ const JobsList: React.FC<JobsListProps> = ({
   resetFilters,
   formatDeadline 
 }) => {
+  const [visibleJobs, setVisibleJobs] = useState(5);
+
+  const loadMoreJobs = () => {
+    setVisibleJobs(prev => prev + 5);
+  };
+
   if (error) {
     return (
       <div className="container px-4 py-6 md:py-8">
@@ -70,9 +76,12 @@ const JobsList: React.FC<JobsListProps> = ({
     return <EmptyJobsList resetFilters={resetFilters} />;
   }
 
+  const displayedJobs = filteredJobs.slice(0, visibleJobs);
+  const hasMoreJobs = visibleJobs < filteredJobs.length;
+
   return (
     <>
-      {filteredJobs.map((job: Job) => (
+      {displayedJobs.map((job: Job) => (
         <JobListItem 
           key={job.id}
           job={job}
@@ -82,11 +91,17 @@ const JobsList: React.FC<JobsListProps> = ({
         />
       ))}
       
-      <div className="flex justify-center mt-6">
-        <Button variant="outline" className="text-xs md:text-sm h-8 md:h-9">
-          Load More Jobs
-        </Button>
-      </div>
+      {hasMoreJobs && (
+        <div className="flex justify-center mt-6">
+          <Button 
+            variant="outline" 
+            className="text-xs md:text-sm h-8 md:h-9"
+            onClick={loadMoreJobs}
+          >
+            Load More Jobs
+          </Button>
+        </div>
+      )}
     </>
   );
 };

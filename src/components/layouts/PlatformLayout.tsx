@@ -1,6 +1,6 @@
 
 import { useState, ReactNode, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Briefcase,
@@ -41,6 +41,8 @@ import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/integrations/supabase/client'
 
 interface PlatformLayoutProps {
   children: ReactNode
@@ -104,7 +106,9 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
   const [notificationList, setNotificationList] = useState(notifications)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const { toast } = useToast()
 
   // number of unread notifications
   const unreadCount = notificationList.filter((notification) => !notification.read).length
@@ -122,6 +126,25 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
   // toggle sidebar collapse state
   const toggleSidebarCollapse = () => {
     setSidebarCollapsed(!sidebarCollapsed)
+  }
+
+  // Sign out function
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account"
+      })
+      navigate('/auth')
+    } catch (error) {
+      console.error('Error signing out:', error)
+      toast({
+        title: "Sign out failed",
+        description: "There was an error signing out. Please try again.",
+        variant: "destructive"
+      })
+    }
   }
 
   // mark all notifications as read
@@ -313,7 +336,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>log out</span>
                 </DropdownMenuItem>
@@ -427,6 +450,7 @@ const PlatformLayout = ({ children }: PlatformLayoutProps) => {
             <Button
               variant="ghost"
               className={`${sidebarCollapsed ? 'justify-center' : 'justify-start'} w-full text-sm h-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20`}
+              onClick={handleSignOut}
             >
               <LogOut className={`${sidebarCollapsed ? '' : 'mr-3'} h-4 w-4`} />
               {!sidebarCollapsed && 'sign out'}

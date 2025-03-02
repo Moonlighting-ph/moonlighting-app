@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { fetchJobs } from '@/integrations/supabase/client';
@@ -80,7 +81,9 @@ const Jobs = () => {
                   savedJobs={savedJobs}
                   salaryRange={salaryRange}
                 >
-                  {(filteredJobs) => filteredJobs.length}
+                  {(filteredJobs) => {
+                    return filteredJobs.length;
+                  }}
                 </JobFilterManager>
               }
             />
