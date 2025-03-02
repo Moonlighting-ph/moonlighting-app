@@ -7,6 +7,7 @@ import { DocumentVerification } from './DocumentVerification';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Profile } from '@/types/profile';
 
 const DocumentVerificationManager = () => {
   const [prcLicense, setPrcLicense] = useState('');
@@ -57,7 +58,7 @@ const DocumentVerificationManager = () => {
   };
 
   const getVerificationStatusBadge = () => {
-    const status = profile?.document_verification_status;
+    const status = profile?.document_verification_status as "pending" | "submitted" | "verified" | "rejected" | null;
     
     if (!status || status === 'pending') {
       return (

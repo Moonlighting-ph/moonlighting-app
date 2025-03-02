@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Check, AlertCircle, Clock, CheckCircle2, RefreshCw } from "lucide-react";
+import { Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { VerificationTab } from './document-verification/VerificationTab';
+import { StatusAlert } from './document-verification/StatusAlert';
+import { StatusButton } from './document-verification/StatusButton';
+import { NavigationButtons } from './document-verification/NavigationButtons';
 
 type DocumentVerificationProps = {
   prcLicense: string;
@@ -62,42 +61,9 @@ export function DocumentVerification({
   
   const isDisabled = status === 'verified' || status === 'submitted';
 
-  const renderStatusAlert = () => {
-    if (status === 'verified') {
-      return (
-        <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-700 dark:text-green-400">
-            Your documents have been verified successfully. You are now eligible to apply for healthcare jobs.
-          </AlertDescription>
-        </Alert>
-      );
-    } else if (status === 'submitted') {
-      return (
-        <Alert className="mb-6 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
-          <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertDescription className="text-blue-700 dark:text-blue-400">
-            Your documents have been submitted and are currently under review. This process typically takes 1-2 business days.
-          </AlertDescription>
-        </Alert>
-      );
-    } else if (status === 'rejected') {
-      return (
-        <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
-          <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-          <AlertDescription className="text-red-700 dark:text-red-400">
-            Your document verification was not successful. Please review and update your information, then resubmit.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-    
-    return null;
-  };
-
   return (
     <div>
-      {renderStatusAlert()}
+      <StatusAlert status={status} />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -116,134 +82,54 @@ export function DocumentVerification({
         </TabsList>
         
         <TabsContent value="prc" className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="prc-license">PRC License Number</Label>
-            <Input
-              id="prc-license"
-              placeholder="Enter your PRC license number"
-              value={prcLicense}
-              onChange={(e) => onPrcLicenseChange(e.target.value)}
-              readOnly={isDisabled}
-              className={isDisabled ? "bg-muted/50" : ""}
-            />
-            <p className="text-xs text-muted-foreground">
-              This must match the license number on your PRC ID
-            </p>
-          </div>
-          <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2">
-            <Upload className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm font-medium">Upload PRC ID Scan</p>
-            <p className="text-xs text-muted-foreground text-center">
-              Drag and drop your PRC ID scan here, or click to browse files
-            </p>
-            <Button variant="outline" size="sm" className="mt-2" disabled={isDisabled}>
-              Upload File
-            </Button>
-          </div>
+          <VerificationTab
+            label="PRC License Number"
+            placeholder="Enter your PRC license number"
+            description="This must match the license number on your PRC ID"
+            value={prcLicense}
+            onChange={onPrcLicenseChange}
+            uploadTitle="Upload PRC ID Scan"
+            uploadDescription="Drag and drop your PRC ID scan here, or click to browse files"
+            isDisabled={isDisabled}
+          />
         </TabsContent>
         
         <TabsContent value="tin" className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="tin-number">TIN Number</Label>
-            <Input
-              id="tin-number"
-              placeholder="Enter your TIN number"
-              value={tin}
-              onChange={(e) => onTinChange(e.target.value)}
-              readOnly={isDisabled}
-              className={isDisabled ? "bg-muted/50" : ""}
-            />
-            <p className="text-xs text-muted-foreground">
-              Your Taxpayer Identification Number is required for payment processing
-            </p>
-          </div>
-          <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2">
-            <Upload className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm font-medium">Upload TIN Card/Certificate</p>
-            <p className="text-xs text-muted-foreground text-center">
-              Drag and drop your TIN document here, or click to browse files
-            </p>
-            <Button variant="outline" size="sm" className="mt-2" disabled={isDisabled}>
-              Upload File
-            </Button>
-          </div>
+          <VerificationTab
+            label="TIN Number"
+            placeholder="Enter your TIN number"
+            description="Your Taxpayer Identification Number is required for payment processing"
+            value={tin}
+            onChange={onTinChange}
+            uploadTitle="Upload TIN Card/Certificate"
+            uploadDescription="Drag and drop your TIN document here, or click to browse files"
+            isDisabled={isDisabled}
+          />
         </TabsContent>
         
         <TabsContent value="govid" className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="gov-id-type">Government ID Type</Label>
-            <Input
-              id="gov-id-type"
-              placeholder="e.g. Passport, Driver's License, UMID"
-              value={govId}
-              onChange={(e) => onGovIdChange(e.target.value)}
-              readOnly={isDisabled}
-              className={isDisabled ? "bg-muted/50" : ""}
-            />
-            <p className="text-xs text-muted-foreground">
-              Please specify which government ID you are submitting
-            </p>
-          </div>
-          <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2">
-            <Upload className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm font-medium">Upload Government ID</p>
-            <p className="text-xs text-muted-foreground text-center">
-              Drag and drop your government ID here, or click to browse files
-            </p>
-            <Button variant="outline" size="sm" className="mt-2" disabled={isDisabled}>
-              Upload File
-            </Button>
-          </div>
+          <VerificationTab
+            label="Government ID Type"
+            placeholder="e.g. Passport, Driver's License, UMID"
+            description="Please specify which government ID you are submitting"
+            value={govId}
+            onChange={onGovIdChange}
+            uploadTitle="Upload Government ID"
+            uploadDescription="Drag and drop your government ID here, or click to browse files"
+            isDisabled={isDisabled}
+          />
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-between mt-6">
-        <Button 
-          variant="outline" 
-          onClick={() => {
-            const tabs = ["prc", "tin", "govid"];
-            const currentIndex = tabs.indexOf(activeTab);
-            const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-            setActiveTab(tabs[prevIndex]);
-          }}
-          disabled={activeTab === "prc" || isDisabled}
-        >
-          Previous
-        </Button>
-
-        {status === 'verified' ? (
-          <Button variant="outline" className="text-green-600">
-            <CheckCircle2 className="h-4 w-4 mr-2" />
-            Verified
-          </Button>
-        ) : status === 'submitted' ? (
-          <Button variant="outline" className="text-blue-600">
-            <Clock className="h-4 w-4 mr-2" />
-            Under Review
-          </Button>
-        ) : status === 'rejected' ? (
-          <Button onClick={handleSubmit} disabled={!isAllComplete || isSubmitting}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {isSubmitting ? "Resubmitting..." : "Resubmit"}
-          </Button>
-        ) : (
-          <Button 
-            onClick={() => {
-              const tabs = ["prc", "tin", "govid"];
-              const currentIndex = tabs.indexOf(activeTab);
-              if (currentIndex === tabs.length - 1 && isAllComplete) {
-                handleSubmit();
-              } else {
-                const nextIndex = (currentIndex + 1) % tabs.length;
-                setActiveTab(tabs[nextIndex]);
-              }
-            }}
-            disabled={activeTab === "govid" && (!isAllComplete || isSubmitting)}
-          >
-            {activeTab === "govid" ? (isSubmitting ? "Submitting..." : "Submit All") : "Next"}
-          </Button>
-        )}
-      </div>
+      <NavigationButtons
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        handleSubmit={handleSubmit}
+        isDisabled={isDisabled}
+        isAllComplete={isAllComplete}
+        isSubmitting={isSubmitting}
+        status={status}
+      />
     </div>
   );
 }

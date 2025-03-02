@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { BasicProfileInfo } from "./BasicProfileInfo";
 import { MedicalProfessionalInfo } from "./MedicalProfessionalInfo";
 import { ContactInfo } from "./ContactInfo";
 import { DocumentVerification } from "./DocumentVerification";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileHeader } from "./profile-form/ProfileHeader";
+import { TabContentWrapper } from "./profile-form/TabContentWrapper";
 import { Profile } from "@/types/profile";
 
 type ProfileFormData = {
@@ -208,22 +208,7 @@ export default function ProfileForm() {
   return (
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle>Complete Your Profile</CardTitle>
-        <CardDescription>
-          Please add some additional information to complete your profile.
-        </CardDescription>
-        <div className="mt-4 space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Profile Completion</span>
-            <span className="text-sm text-muted-foreground">{completionPercentage}%</span>
-          </div>
-          <Progress value={completionPercentage} className="h-2" />
-          <p className="text-xs text-muted-foreground">
-            {completionPercentage < 100 
-              ? `Complete your profile to apply for jobs (${Math.round(completionPercentage)}% completed)` 
-              : "Your profile is complete. You can now apply for jobs!"}
-          </p>
-        </div>
+        <ProfileHeader completionPercentage={completionPercentage} />
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -235,7 +220,11 @@ export default function ProfileForm() {
           </TabsList>
           
           <TabsContent value="basic">
-            <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+            <TabContentWrapper 
+              handleSubmit={handleSubmit} 
+              loading={loading}
+              submitText="Save Basic Info"
+            >
               <BasicProfileInfo 
                 firstName={formData.first_name}
                 lastName={formData.last_name}
@@ -244,20 +233,16 @@ export default function ProfileForm() {
                 avatarUrl={formData.avatar_url}
                 handleChange={handleChange}
               />
-              
-              <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={() => navigate("/platform")}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save Basic Info"}
-                </Button>
-              </div>
-            </form>
+            </TabContentWrapper>
           </TabsContent>
           
           <TabsContent value="professional">
-            <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+            <TabContentWrapper 
+              handleSubmit={handleSubmit} 
+              loading={loading}
+              backAction={() => setActiveTab("basic")}
+              submitText="Save Professional Info"
+            >
               {profile?.user_type === 'medical_professional' && (
                 <MedicalProfessionalInfo
                   prcLicense={formData.prc_license}
@@ -266,36 +251,23 @@ export default function ProfileForm() {
                   handleChange={handleChange}
                 />
               )}
-              
-              <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={() => setActiveTab("basic")}>
-                  Back
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save Professional Info"}
-                </Button>
-              </div>
-            </form>
+            </TabContentWrapper>
           </TabsContent>
           
           <TabsContent value="contact">
-            <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+            <TabContentWrapper 
+              handleSubmit={handleSubmit} 
+              loading={loading}
+              backAction={() => setActiveTab("professional")}
+              submitText="Save Contact Info"
+            >
               <ContactInfo
                 contactEmail={formData.contact_email}
                 phone={formData.phone}
                 company={formData.company}
                 handleChange={handleChange}
               />
-              
-              <div className="flex justify-between">
-                <Button type="button" variant="outline" onClick={() => setActiveTab("professional")}>
-                  Back
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Saving..." : "Save Contact Info"}
-                </Button>
-              </div>
-            </form>
+            </TabContentWrapper>
           </TabsContent>
           
           <TabsContent value="verification">
@@ -309,6 +281,7 @@ export default function ProfileForm() {
                 onGovIdChange={(value) => setFormData(prev => ({ ...prev, government_id: value }))}
                 onSubmit={submitDocuments}
                 isComplete={formData.document_verification_status === "verified"}
+                status={formData.document_verification_status as "pending" | "submitted" | "verified" | "rejected"}
               />
               
               <div className="flex justify-between">
