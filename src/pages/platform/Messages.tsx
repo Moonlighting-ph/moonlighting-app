@@ -169,9 +169,24 @@ const messageHistory = [
   }
 ]
 
+// Define interface for messages
+interface Message {
+  id: string
+  sender: 'me' | 'them'
+  content: string
+  time: string
+  read: boolean
+  date: string
+}
+
+// Define type for grouped messages
+interface GroupedMessages {
+  [key: string]: Message[]
+}
+
 // helper function to group messages by date
-const groupMessagesByDate = (messages) => {
-  const groups = {}
+const groupMessagesByDate = (messages: Message[]): GroupedMessages => {
+  const groups: GroupedMessages = {}
   messages.forEach((msg) => {
     const group = msg.date || 'today'
     if (!groups[group]) groups[group] = []
@@ -220,7 +235,7 @@ const Messages = () => {
     setShowConversation(false)
   }
 
-  const groupedMessages = groupMessagesByDate(messageHistory); // <-- note the semicolon here
+  const groupedMessages = groupMessagesByDate(messageHistory as Message[]);
 
   return (
     <div className="container px-4 py-6 md:py-8 h-[600px] overflow-hidden">
@@ -357,7 +372,7 @@ const Messages = () => {
                 </div>
                 {/* messages scroll area with shorter max-height */}
                 <div className="flex-1 min-h-0 overflow-y-auto p-4 max-h-[350px]">
-                  {Object.entries(groupMessagesByDate(messageHistory)).map(([group, msgs]) => (
+                  {Object.entries(groupedMessages).map(([group, msgs]) => (
                     <div key={group}>
                       <div className="text-center mb-2">
                         <span className="text-xs bg-muted px-2 py-1 rounded-full text-muted-foreground">
