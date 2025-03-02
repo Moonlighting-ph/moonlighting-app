@@ -10,7 +10,7 @@ import Dashboard from "./pages/platform/Dashboard";
 import Jobs from "./pages/platform/Jobs";
 import JobDetail from "./pages/platform/JobDetail";
 import MoonlighterProfile from "./pages/platform/MoonlighterProfile";
-import HospitalProfile from "./pages/platform/HospitalProfile";
+import ProviderProfile from "./pages/platform/ProviderProfile";
 import PlatformLayout from "./components/layouts/PlatformLayout";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/auth/Auth";
@@ -19,8 +19,8 @@ import HospitalJobsLoading from "./components/hospital/HospitalJobsLoading";
 // Provider Dashboard
 import ProviderDashboard from "./pages/platform/ProviderDashboard";
 
-// Hospital Job Management Pages
-import HospitalJobs from "./pages/platform/HospitalJobs";
+// Provider Job Management Pages
+import ProviderJobs from "./pages/platform/ProviderJobs";
 import NewJobPosting from "./pages/platform/NewJobPosting";
 import EditJobPosting from "./pages/platform/EditJobPosting";
 
@@ -83,10 +83,10 @@ const App = () => (
               } 
             />
             <Route 
-              path="/platform/hospital-profile" 
+              path="/platform/provider-profile" 
               element={
                 <PrivateRoute>
-                  <PlatformLayout><HospitalProfile /></PlatformLayout>
+                  <PlatformLayout><ProviderProfile /></PlatformLayout>
                 </PrivateRoute>
               } 
             />
@@ -103,17 +103,29 @@ const App = () => (
               } 
             />
             
-            {/* Hospital Job Management Routes */}
+            {/* Hospital Profile backward compatibility */}
             <Route 
-              path="/platform/hospital-jobs" 
+              path="/platform/hospital-profile" 
               element={
                 <PrivateRoute>
-                  <PlatformLayout><HospitalJobs /></PlatformLayout>
+                  <PlatformLayout>
+                    <Navigate to="/platform/provider-profile" replace />
+                  </PlatformLayout>
+                </PrivateRoute>
+              } 
+            />
+            
+            {/* Provider Job Management Routes */}
+            <Route 
+              path="/platform/provider-jobs" 
+              element={
+                <PrivateRoute>
+                  <PlatformLayout><ProviderJobs /></PlatformLayout>
                 </PrivateRoute>
               } 
             />
             <Route 
-              path="/platform/hospital-jobs/new" 
+              path="/platform/provider-jobs/new" 
               element={
                 <PrivateRoute>
                   <PlatformLayout><NewJobPosting /></PlatformLayout>
@@ -121,10 +133,44 @@ const App = () => (
               } 
             />
             <Route 
-              path="/platform/hospital-jobs/edit/:id" 
+              path="/platform/provider-jobs/edit/:id" 
               element={
                 <PrivateRoute>
                   <PlatformLayout><EditJobPosting /></PlatformLayout>
+                </PrivateRoute>
+              } 
+            />
+            
+            {/* Hospital Jobs backward compatibility */}
+            <Route 
+              path="/platform/hospital-jobs" 
+              element={
+                <PrivateRoute>
+                  <PlatformLayout>
+                    <Navigate to="/platform/provider-jobs" replace />
+                  </PlatformLayout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/platform/hospital-jobs/new" 
+              element={
+                <PrivateRoute>
+                  <PlatformLayout>
+                    <Navigate to="/platform/provider-jobs/new" replace />
+                  </PlatformLayout>
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/platform/hospital-jobs/edit/:id" 
+              element={
+                <PrivateRoute>
+                  <PlatformLayout>
+                    {({ id }) => (
+                      <Navigate to={`/platform/provider-jobs/edit/${id}`} replace />
+                    )}
+                  </PlatformLayout>
                 </PrivateRoute>
               } 
             />
@@ -182,7 +228,7 @@ function ProfileRedirect() {
   }
   
   if (profile?.user_type === 'medical_provider') {
-    return <Navigate to="/platform/hospital-profile" replace />;
+    return <Navigate to="/platform/provider-profile" replace />;
   }
   
   return <Navigate to="/platform/moonlighter-profile" replace />;

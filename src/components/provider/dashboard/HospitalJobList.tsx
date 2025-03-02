@@ -71,7 +71,7 @@ const HospitalJobList = () => {
   // Navigate to edit page when job is set to edit
   React.useEffect(() => {
     if (jobToEdit) {
-      navigate(`/platform/hospital-jobs/edit/${jobToEdit}`);
+      navigate(`/platform/provider-jobs/edit/${jobToEdit}`);
       setJobToEdit(null);
     }
   }, [jobToEdit, navigate, setJobToEdit]);
@@ -79,7 +79,7 @@ const HospitalJobList = () => {
   // Navigate to applications page when viewing applications
   React.useEffect(() => {
     if (isViewingApplications) {
-      navigate(`/platform/hospital-jobs/${isViewingApplications}/applications`);
+      navigate(`/platform/provider-jobs/${isViewingApplications}/applications`);
       setIsViewingApplications(null);
     }
   }, [isViewingApplications, navigate, setIsViewingApplications]);

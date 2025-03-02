@@ -1,4 +1,3 @@
-
 export const formatJobDeadline = (deadline: string): string => {
   const deadlineDate = new Date(deadline);
   const today = new Date();
@@ -12,4 +11,18 @@ export const formatJobDeadline = (deadline: string): string => {
   if (diffDays <= 7) return `${diffDays} days left`;
   
   return `Apply by ${deadlineDate.toLocaleDateString()}`;
+};
+
+/**
+ * Formats a date string to a more readable format
+ */
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return 'N/A';
+  
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date);
 };

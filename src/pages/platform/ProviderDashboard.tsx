@@ -28,7 +28,7 @@ const ProviderDashboard = () => {
       title: 'Active Job Postings', 
       value: '12', 
       icon: <Briefcase className="h-5 w-5 text-primary" />,
-      action: () => navigate('/platform/hospital-jobs')
+      action: () => navigate('/platform/provider-jobs')
     },
     { 
       title: 'Pending Applications', 
@@ -53,7 +53,7 @@ const ProviderDashboard = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.company || 'Hospital Admin'}</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Welcome back, {profile?.company || 'Provider Admin'}</h2>
         <p className="text-muted-foreground mt-2">
           Here's an overview of your job postings and applications.
         </p>
@@ -84,7 +84,7 @@ const ProviderDashboard = () => {
               <Button 
                 variant="link" 
                 className="mt-2" 
-                onClick={() => navigate('/platform/hospital-jobs')}
+                onClick={() => navigate('/platform/provider-jobs')}
               >
                 Manage your job postings
               </Button>
@@ -99,7 +99,7 @@ const ProviderDashboard = () => {
           <CardContent className="space-y-4">
             <Button 
               className="w-full justify-start"
-              onClick={() => navigate('/platform/hospital-jobs/new')}
+              onClick={() => navigate('/platform/provider-jobs/new')}
             >
               <Briefcase className="mr-2 h-4 w-4" />
               Post New Job
@@ -107,10 +107,10 @@ const ProviderDashboard = () => {
             <Button 
               className="w-full justify-start"
               variant="outline"
-              onClick={() => navigate('/platform/hospital-profile')}
+              onClick={() => navigate('/platform/provider-profile')}
             >
               <Stethoscope className="mr-2 h-4 w-4" />
-              Update Hospital Profile
+              Update Provider Profile
             </Button>
           </CardContent>
         </Card>

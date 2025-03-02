@@ -20,8 +20,8 @@ export type MoonlighterProfile = Profile & {
   preferred_location: string | null;
 };
 
-// Hospital-specific profile type
-export type HospitalProfile = Profile & {
+// Provider-specific profile type
+export type ProviderProfile = Profile & {
   company: string | null;
   company_address: string | null;
   facility_type: string | null;
@@ -32,6 +32,6 @@ export const isMoonlighter = (profile: Profile | null): boolean => {
   return profile?.user_type === 'medical_professional';
 };
 
-export const isHospital = (profile: Profile | null): boolean => {
+export const isProvider = (profile: Profile | null): boolean => {
   return profile?.user_type === 'medical_provider';
 };

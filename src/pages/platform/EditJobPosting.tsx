@@ -52,7 +52,7 @@ const EditJobPosting = () => {
         <Button 
           variant="ghost" 
           className="mb-6" 
-          onClick={() => navigate('/platform/hospital-jobs')}
+          onClick={() => navigate('/platform/provider-jobs')}
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs
         </Button>
@@ -63,7 +63,7 @@ const EditJobPosting = () => {
             <p className="text-muted-foreground mt-2">
               {(error as Error)?.message || "Job not found or you don't have permission to edit it."}
             </p>
-            <Button onClick={() => navigate('/platform/hospital-jobs')} className="mt-4">
+            <Button onClick={() => navigate('/platform/provider-jobs')} className="mt-4">
               Return to Jobs
             </Button>
           </CardContent>
@@ -77,7 +77,7 @@ const EditJobPosting = () => {
       <Button 
         variant="ghost" 
         className="mb-6" 
-        onClick={() => navigate('/platform/hospital-jobs')}
+        onClick={() => navigate('/platform/provider-jobs')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs
       </Button>
@@ -89,7 +89,7 @@ const EditJobPosting = () => {
         <CardContent>
           <JobPostingForm 
             initialData={job} 
-            onSuccess={() => navigate('/platform/hospital-jobs')}
+            onSuccess={() => navigate('/platform/provider-jobs')}
           />
         </CardContent>
       </Card>

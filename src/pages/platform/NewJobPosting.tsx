@@ -19,7 +19,7 @@ const NewJobPosting = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigate('/platform/hospital-jobs')}>Job Postings</BreadcrumbLink>
+            <BreadcrumbLink onClick={() => navigate('/platform/provider-jobs')}>Job Postings</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -31,7 +31,7 @@ const NewJobPosting = () => {
       <Button 
         variant="outline" 
         className="mb-4" 
-        onClick={() => navigate('/platform/hospital-jobs')}
+        onClick={() => navigate('/platform/provider-jobs')}
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs
       </Button>
@@ -44,7 +44,7 @@ const NewJobPosting = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <JobPostingForm onSuccess={() => navigate('/platform/hospital-jobs')} />
+          <JobPostingForm onSuccess={() => navigate('/platform/provider-jobs')} />
         </CardContent>
       </Card>
     </div>
