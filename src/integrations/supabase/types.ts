@@ -101,6 +101,106 @@ export type Database = {
         }
         Relationships: []
       }
+      manual_payments: {
+        Row: {
+          amount: number
+          application_id: string | null
+          created_at: string | null
+          id: string
+          job_id: string | null
+          moonlighter_id: string | null
+          notes: string | null
+          payment_details: string
+          payment_method_id: string | null
+          payment_method_type: string
+          provider_id: string | null
+          reference_number: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          application_id?: string | null
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          moonlighter_id?: string | null
+          notes?: string | null
+          payment_details: string
+          payment_method_id?: string | null
+          payment_method_type: string
+          provider_id?: string | null
+          reference_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          application_id?: string | null
+          created_at?: string | null
+          id?: string
+          job_id?: string | null
+          moonlighter_id?: string | null
+          notes?: string | null
+          payment_details?: string
+          payment_method_id?: string | null
+          payment_method_type?: string
+          provider_id?: string | null
+          reference_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_payments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "job_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_payments_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_payments_payment_method_id_fkey"
+            columns: ["payment_method_id"]
+            isOneToOne: false
+            referencedRelation: "payment_methods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_methods: {
+        Row: {
+          created_at: string | null
+          details: string
+          id: string
+          is_default: boolean | null
+          method: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          details: string
+          id?: string
+          is_default?: boolean | null
+          method: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          details?: string
+          id?: string
+          is_default?: boolean | null
+          method?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
