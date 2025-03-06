@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 type AuthMode = 'signin' | 'signup';
 type UserType = 'provider' | 'moonlighter';
@@ -106,7 +107,17 @@ const AuthForm = () => {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      toast.error(error.message || 'An error occurred during authentication');
+      
+      // Handle specific error cases
+      if (error.message.includes('User already registered')) {
+        toast.error('This email is already registered. Please sign in instead.');
+      } else if (error.message.includes('Invalid login credentials')) {
+        toast.error('Invalid email or password. Please try again.');
+      } else if (error.message.includes('Email not confirmed')) {
+        toast.error('Please verify your email before signing in.');
+      } else {
+        toast.error(error.message || 'An error occurred during authentication');
+      }
     } finally {
       setLoading(false);
     }
@@ -189,7 +200,12 @@ const AuthForm = () => {
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Please wait...
+              </>
+            ) : mode === 'signin' ? 'Sign In' : 'Create Account'}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
