@@ -1,13 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Job } from '@/types/job';
+import { JobFilters } from '@/types/filter';
 
-export const getJobs = async (filters?: {
-  type?: string;
-  location?: string;
-  specialization?: string;
-  searchTerm?: string;
-}) => {
+export const getJobs = async (filters?: JobFilters) => {
   try {
     let query = supabase
       .from('jobs')
@@ -31,6 +27,10 @@ export const getJobs = async (filters?: {
       query = query.or(`title.ilike.%${filters.searchTerm}%,description.ilike.%${filters.searchTerm}%`);
     }
 
+    if (filters?.isUrgent) {
+      query = query.eq('is_urgent', true);
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -41,6 +41,27 @@ export const getJobs = async (filters?: {
     return data as Job[];
   } catch (error) {
     console.error('Unexpected error fetching jobs:', error);
+    throw error;
+  }
+};
+
+// Get a single job by ID
+export const getJobById = async (jobId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('id', jobId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching job:', error);
+      throw error;
+    }
+
+    return data as Job;
+  } catch (error) {
+    console.error('Unexpected error fetching job:', error);
     throw error;
   }
 };
@@ -92,4 +113,108 @@ export const getMockJobs = (): Job[] => {
       responsibilities: ['Sample processing', 'Test performing', 'Result documentation']
     }
   ];
+};
+
+// Apply to a job
+export const applyToJob = async (jobId: string, notes?: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('job_applications')
+      .insert({
+        job_id: jobId,
+        moonlighter_id: supabase.auth.getUser().then(({ data }) => data.user?.id),
+        notes: notes
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error applying to job:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error applying to job:', error);
+    throw error;
+  }
+};
+
+// Get applications for a specific job
+export const getJobApplications = async (jobId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('job_applications')
+      .select(`
+        *,
+        profiles:moonlighter_id (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          specialization,
+          years_of_experience
+        )
+      `)
+      .eq('job_id', jobId);
+
+    if (error) {
+      console.error('Error fetching job applications:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error fetching job applications:', error);
+    throw error;
+  }
+};
+
+// Get applications for a moonlighter
+export const getMoonlighterApplications = async () => {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('job_applications')
+      .select(`
+        *,
+        jobs:job_id (*)
+      `)
+      .eq('moonlighter_id', userData.user.id);
+
+    if (error) {
+      console.error('Error fetching moonlighter applications:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error fetching moonlighter applications:', error);
+    throw error;
+  }
+};
+
+// Update application status
+export const updateApplicationStatus = async (applicationId: string, status: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('job_applications')
+      .update({ status })
+      .eq('id', applicationId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating application status:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error updating application status:', error);
+    throw error;
+  }
 };

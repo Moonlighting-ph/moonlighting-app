@@ -1,18 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SmoothScroll from '../components/SmoothScroll';
 import JobBoard from '../components/JobBoard';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import { JobFilters } from '@/types/filter';
 
 const Jobs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<JobFilters>({});
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // The search term is passed to JobBoard via filters
+    setFilters(prev => ({ ...prev, searchTerm }));
   };
 
   return (
@@ -38,7 +40,7 @@ const Jobs: React.FC = () => {
             </form>
           </div>
           
-          <JobBoard />
+          <JobBoard filters={filters} />
         </div>
         <Footer />
       </div>

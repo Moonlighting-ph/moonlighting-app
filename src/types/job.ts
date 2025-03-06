@@ -14,4 +14,5 @@ export interface Job {
   specialization?: string;
   experience_level?: string;
   is_urgent?: boolean;
+  provider_id?: string;
 }

@@ -9,6 +9,145 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      job_applications: {
+        Row: {
+          ai_match_score: number | null
+          applied_date: string | null
+          id: string
+          job_id: string | null
+          moonlighter_id: string | null
+          notes: string | null
+          status: string
+        }
+        Insert: {
+          ai_match_score?: number | null
+          applied_date?: string | null
+          id?: string
+          job_id?: string | null
+          moonlighter_id?: string | null
+          notes?: string | null
+          status?: string
+        }
+        Update: {
+          ai_match_score?: number | null
+          applied_date?: string | null
+          id?: string
+          job_id?: string | null
+          moonlighter_id?: string | null
+          notes?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          company: string
+          deadline: string | null
+          description: string
+          experience_level: string | null
+          id: string
+          is_urgent: boolean | null
+          location: string | null
+          posted_date: string | null
+          provider_id: string | null
+          requirements: Json | null
+          responsibilities: Json | null
+          salary: string | null
+          specialization: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          company: string
+          deadline?: string | null
+          description: string
+          experience_level?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          location?: string | null
+          posted_date?: string | null
+          provider_id?: string | null
+          requirements?: Json | null
+          responsibilities?: Json | null
+          salary?: string | null
+          specialization?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          company?: string
+          deadline?: string | null
+          description?: string
+          experience_level?: string | null
+          id?: string
+          is_urgent?: boolean | null
+          location?: string | null
+          posted_date?: string | null
+          provider_id?: string | null
+          requirements?: Json | null
+          responsibilities?: Json | null
+          salary?: string | null
+          specialization?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          application_id: string | null
+          created_at: string | null
+          currency: string
+          id: string
+          moonlighter_id: string | null
+          provider_id: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          application_id?: string | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          moonlighter_id?: string | null
+          provider_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          application_id?: string | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          moonlighter_id?: string | null
+          provider_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "job_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prc_licenses: {
         Row: {
           created_at: string
