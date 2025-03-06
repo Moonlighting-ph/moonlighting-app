@@ -29,7 +29,7 @@ const JobBoard: React.FC = () => {
     {
       id: '3',
       title: 'Pediatric Nurse',
-      facility: 'Children's Medical Center',
+      facility: 'Children\'s Medical Center',
       location: 'Makati',
       rate: '₱1,400/hr',
       shift: 'Afternoon Shift (2PM-10PM)',
