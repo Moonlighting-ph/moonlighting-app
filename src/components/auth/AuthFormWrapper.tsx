@@ -29,6 +29,7 @@ const AuthFormWrapper = () => {
           updateField={updateFormField}
           loading={loading}
           onToggleMode={toggleMode}
+          onSubmit={handleSubmit} // Added the onSubmit prop
         />
       ) : (
         <SignUpForm
@@ -39,6 +40,7 @@ const AuthFormWrapper = () => {
           userType={userType}
           onUserTypeChange={setUserType}
           onToggleMode={toggleMode}
+          onSubmit={handleSubmit} // Added the onSubmit prop
         />
       )}
     </div>
