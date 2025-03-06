@@ -19,6 +19,7 @@ export const useAuthForm = () => {
   const [mode, setMode] = useState<AuthMode>('signin');
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState<UserType>('moonlighter');
+  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   
   const [formData, setFormData] = useState<AuthFormData>({
     email: '',
@@ -29,39 +30,63 @@ export const useAuthForm = () => {
 
   const updateFormField = (field: keyof AuthFormData, value: string) => {
     setFormData({ ...formData, [field]: value });
+    
+    // Clear error for this field when user types
+    if (formErrors[field]) {
+      const updatedErrors = {...formErrors};
+      delete updatedErrors[field];
+      setFormErrors(updatedErrors);
+    }
   };
 
-  const validateSignupForm = (): { valid: boolean; error?: string } => {
+  const validateSignupForm = (): { valid: boolean; errors: {[key: string]: string} } => {
+    const errors: {[key: string]: string} = {};
+    
     // Check for required fields
-    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
-      return { valid: false, error: 'Please fill in all required fields' };
+    if (!formData.email) errors.email = 'Email is required';
+    if (!formData.password) errors.password = 'Password is required';
+    if (!formData.firstName) errors.firstName = 'First name is required';
+    if (!formData.lastName) errors.lastName = 'Last name is required';
+
+    // If any required field is missing, return early
+    if (Object.keys(errors).length > 0) {
+      return { valid: false, errors };
     }
 
     // Ensure valid email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      return { valid: false, error: 'Please enter a valid email address' };
+      errors.email = 'Please enter a valid email address';
     }
 
     // Check password length
     if (formData.password.length < 6) {
-      return { valid: false, error: 'Password must be at least 6 characters long' };
+      errors.password = 'Password must be at least 6 characters long';
     }
 
-    return { valid: true };
+    return { valid: Object.keys(errors).length === 0, errors };
+  };
+
+  const validateSignInForm = (): { valid: boolean; errors: {[key: string]: string} } => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!formData.email) errors.email = 'Email is required';
+    if (!formData.password) errors.password = 'Password is required';
+    
+    return { valid: Object.keys(errors).length === 0, errors };
   };
 
   const handleSignUp = async (): Promise<boolean> => {
     const validation = validateSignupForm();
     if (!validation.valid) {
-      toast.error(validation.error);
+      setFormErrors(validation.errors);
       return false;
     }
 
     try {
       console.log('Signing up with user type:', userType);
       
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError, data } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -100,6 +125,12 @@ export const useAuthForm = () => {
   };
 
   const handleSignIn = async (): Promise<boolean> => {
+    const validation = validateSignInForm();
+    if (!validation.valid) {
+      setFormErrors(validation.errors);
+      return false;
+    }
+
     try {
       const { error: signInError, data } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -137,10 +168,16 @@ export const useAuthForm = () => {
     // Handle specific error cases
     if (error.message.includes('User already registered')) {
       toast.error('This email is already registered. Please sign in instead.');
+      setFormErrors({email: 'This email is already registered'});
     } else if (error.message.includes('Invalid login credentials')) {
       toast.error('Invalid email or password. Please try again.');
+      setFormErrors({
+        email: 'Invalid login credentials',
+        password: 'Invalid login credentials'
+      });
     } else if (error.message.includes('Email not confirmed')) {
       toast.error('Please verify your email before signing in.');
+      setFormErrors({email: 'Email not verified'});
     } else {
       toast.error(error.message || 'An error occurred during authentication');
     }
@@ -168,6 +205,7 @@ export const useAuthForm = () => {
     userType,
     setUserType,
     formData,
+    formErrors,
     updateFormField,
     handleSubmit,
   };
