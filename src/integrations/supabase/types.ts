@@ -9,6 +9,72 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      prc_licenses: {
+        Row: {
+          created_at: string
+          id: string
+          license_number: string
+          profession: string
+          status: string
+          updated_at: string
+          user_id: string
+          verification_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          license_number: string
+          profession: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verification_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          license_number?: string
+          profession?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verification_date?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          updated_at: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone?: string | null
+          updated_at?: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           created_at: string
@@ -39,6 +105,53 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_appeals: {
+        Row: {
+          appeal_reason: string
+          created_at: string
+          id: string
+          license_id: string
+          reviewed_by: string | null
+          reviewer_notes: string | null
+          status: string
+          supporting_documents: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appeal_reason: string
+          created_at?: string
+          id?: string
+          license_id: string
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          supporting_documents?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appeal_reason?: string
+          created_at?: string
+          id?: string
+          license_id?: string
+          reviewed_by?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          supporting_documents?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_appeals_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "prc_licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -47,7 +160,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_type: "provider" | "moonlighter" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
