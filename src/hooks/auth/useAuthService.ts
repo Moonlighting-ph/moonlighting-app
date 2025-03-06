@@ -54,16 +54,24 @@ export const useAuthService = () => {
 
       if (error) throw error;
 
-      // Get user profile to check user type
+      // Get user profile to check user type - using maybeSingle instead of single
+      // to prevent errors when no profile is found
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('user_type')
         .eq('id', data.user.id)
-        .maybeSingle(); // Using maybeSingle instead of single to avoid errors when no data is found
+        .maybeSingle();
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
         throw new Error('Error retrieving user profile');
+      }
+
+      // If no profile was found, create a default redirect
+      if (!profileData) {
+        console.warn('No profile found for user:', data.user.id);
+        toast.success('Sign in successful!');
+        return { success: true, data, redirectPath: '/' };
       }
 
       let redirectPath = '/';

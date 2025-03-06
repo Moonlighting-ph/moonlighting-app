@@ -13,24 +13,35 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, Settings } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Navbar: React.FC = () => {
   const { session, signOut } = useAuth();
   const navigate = useNavigate();
   const [userType, setUserType] = React.useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     const getUserType = async () => {
       if (!session?.user) return;
       
-      const { data } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (data) {
-        setUserType(data.user_type);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Error fetching user type:', error);
+          return;
+        }
+        
+        if (data) {
+          setUserType(data.user_type);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching user type:', err);
       }
     };
     
@@ -38,8 +49,16 @@ const Navbar: React.FC = () => {
   }, [session]);
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    try {
+      setIsSigningOut(true);
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out error in Navbar:', error);
+      toast.error('Failed to sign out. Please try again.');
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   const getDashboardLink = () => {
@@ -83,9 +102,12 @@ const Navbar: React.FC = () => {
                   <span>Profile Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

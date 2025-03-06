@@ -22,6 +22,12 @@ export const useAuthErrors = () => {
     } else if (errorMessage.includes('Email not confirmed')) {
       toast.error('Please verify your email before signing in.');
       setFormErrors({email: 'Email not verified'});
+    } else if (errorMessage.includes('infinite recursion detected')) {
+      toast.error('Database access error. Please try again later.');
+      setFormErrors({general: 'Database access error'});
+    } else if (errorMessage.includes('Error retrieving user profile')) {
+      toast.error('Unable to retrieve your profile. Please try again later.');
+      setFormErrors({general: 'Unable to retrieve profile'});
     } else {
       toast.error(errorMessage);
     }

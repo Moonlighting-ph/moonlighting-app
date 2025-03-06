@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   session: Session | null;
@@ -44,10 +45,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      setSession(null);
-    } catch (error) {
-      console.error('Error signing out:', error);
+      // First refresh the session to ensure we have valid tokens
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        console.log('No active session found');
+        setSession(null);
+        return;
+      }
+
+      // Now attempt to sign out
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error signing out:', error);
+        toast.error(`Logout failed: ${error.message}`);
+      } else {
+        setSession(null);
+        toast.success('You have been signed out successfully');
+      }
+    } catch (error: any) {
+      console.error('Unexpected error signing out:', error);
+      toast.error('An unexpected error occurred during logout');
     }
   };
 
