@@ -1,40 +1,44 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SmoothScroll from '../components/SmoothScroll';
 import JobBoard from '../components/JobBoard';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { Job } from '@/types/job';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 const Jobs: React.FC = () => {
-  const { session, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // If we want to eventually restrict the jobs page to only authenticated users
-  // Currently this is commented out since the PRD mentions a public job board
-  /*
-  useEffect(() => {
-    if (!loading && !session) {
-      navigate('/auth/login');
-    }
-  }, [session, loading, navigate]);
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-  */
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // The search term is passed to JobBoard via filters
+  };
 
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="container mx-auto py-8">
-          <h1 className="text-3xl font-bold mb-8 text-center">Available Opportunities</h1>
-          <JobBoard jobs={jobs} loading={loading} />
+        <div className="container mx-auto py-8 px-4">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-4">Find Your Next Medical Opportunity</h1>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Browse through available positions at hospitals, clinics, and healthcare facilities across the Philippines.
+            </p>
+            
+            <form onSubmit={handleSearch} className="mt-6 max-w-md mx-auto relative">
+              <Input
+                type="text"
+                placeholder="Search for jobs, specializations, or locations..."
+                className="pl-10 h-12 bg-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Search className="absolute left-3 top-4 h-4 w-4 text-gray-400" />
+            </form>
+          </div>
+          
+          <JobBoard />
         </div>
         <Footer />
       </div>
