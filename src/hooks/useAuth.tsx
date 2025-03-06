@@ -6,14 +6,14 @@ import { supabase } from '@/integrations/supabase/client';
 interface AuthContextType {
   session: Session | null;
   loading: boolean;
-  checkSession: () => Promise<void>;
+  checkSession: () => Promise<Session | null>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
-  checkSession: async () => {},
+  checkSession: async () => null,
   signOut: async () => {},
 });
 
