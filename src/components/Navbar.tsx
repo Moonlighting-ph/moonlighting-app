@@ -1,110 +1,98 @@
 
-import React, { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { User, LogOut, Settings } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { session, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [userType, setUserType] = React.useState<string | null>(null);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+  React.useEffect(() => {
+    const getUserType = async () => {
+      if (!session?.user) return;
+      
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (data) {
+        setUserType(data.user_type);
+      }
     };
+    
+    getUserType();
+  }, [session]);
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const getDashboardLink = () => {
+    if (userType === 'provider') return '/provider';
+    if (userType === 'moonlighter') return '/moonlighter';
+    return '/';
+  };
 
   return (
-    <nav
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out px-6 py-4 md:px-12',
-        isScrolled 
-          ? 'glass-effect border-b border-gray-200/30 shadow-sm backdrop-blur-lg' 
-          : 'bg-transparent'
-      )}
-    >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <a 
-          href="#" 
-          className="text-xl font-medium tracking-tight transition-opacity duration-300 hover:opacity-70"
-        >
-          Minimalist
-        </a>
-
-        {/* Desktop Menu */}
-        <div className="hidden md:flex space-x-8">
-          <a 
-            href="#features" 
-            className="text-sm font-medium opacity-80 hover:opacity-100 transition-opacity duration-300"
-          >
-            Features
-          </a>
-          <a 
-            href="#about" 
-            className="text-sm font-medium opacity-80 hover:opacity-100 transition-opacity duration-300"
-          >
-            Philosophy
-          </a>
-          <a 
-            href="#contact" 
-            className="text-sm font-medium opacity-80 hover:opacity-100 transition-opacity duration-300"
-          >
-            Contact
-          </a>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden flex flex-col space-y-1.5 p-2"
-          aria-label="Toggle Menu"
-        >
-          <span className={cn(
-            "block w-6 h-0.5 bg-current transition-all duration-300 ease-in-out",
-            isMobileMenuOpen && "rotate-45 translate-y-2"
-          )} />
-          <span className={cn(
-            "block w-6 h-0.5 bg-current transition-all duration-300 ease-in-out",
-            isMobileMenuOpen && "opacity-0"
-          )} />
-          <span className={cn(
-            "block w-6 h-0.5 bg-current transition-all duration-300 ease-in-out",
-            isMobileMenuOpen && "-rotate-45 -translate-y-2"
-          )} />
-        </button>
+    <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="text-xl font-bold text-primary">
+          Moonlighting.ph
+        </Link>
+        
+        <nav className="flex items-center space-x-4">
+          <Link to="/jobs" className="text-gray-700 hover:text-primary">
+            Find Jobs
+          </Link>
+          
+          {!session ? (
+            <Link to="/auth/login">
+              <Button variant="default" size="sm">Sign In</Button>
+            </Link>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <User size={16} />
+                  Account
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate(getDashboardLink())}>
+                  Dashboard
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </nav>
       </div>
-
-      {/* Mobile Menu */}
-      <div className={cn(
-        "absolute top-full left-0 right-0 bg-white/90 backdrop-blur-lg transition-all duration-300 ease-in-out overflow-hidden md:hidden",
-        isMobileMenuOpen ? "max-h-56 border-b border-gray-200/30" : "max-h-0"
-      )}>
-        <div className="flex flex-col space-y-4 px-6 py-6">
-          <a 
-            href="#features" 
-            className="text-sm font-medium py-2 opacity-80 hover:opacity-100 transition-opacity duration-300"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Features
-          </a>
-          <a 
-            href="#about" 
-            className="text-sm font-medium py-2 opacity-80 hover:opacity-100 transition-opacity duration-300"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Philosophy
-          </a>
-          <a 
-            href="#contact" 
-            className="text-sm font-medium py-2 opacity-80 hover:opacity-100 transition-opacity duration-300"
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Contact
-          </a>
-        </div>
-      </div>
-    </nav>
+    </header>
   );
 };
 

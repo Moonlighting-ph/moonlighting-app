@@ -47,25 +47,32 @@ const AuthForm = () => {
         
         toast.success('Registration successful! Please check your email to verify your account.');
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
+        const { error: signInError, data } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         });
 
         if (signInError) throw signInError;
 
+        // Get user profile to check user type
         const { data: profileData } = await supabase
           .from('profiles')
           .select('user_type')
+          .eq('id', data.user.id)
           .single();
 
         if (profileData?.user_type === 'provider') {
           navigate('/provider');
-        } else {
+        } else if (profileData?.user_type === 'moonlighter') {
           navigate('/moonlighter');
+        } else {
+          navigate('/');
         }
+        
+        toast.success('Sign in successful!');
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast.error(error.message || 'An error occurred during authentication');
     } finally {
       setLoading(false);
