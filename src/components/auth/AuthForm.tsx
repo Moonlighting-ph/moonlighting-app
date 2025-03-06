@@ -24,29 +24,27 @@ const AuthForm = () => {
 
   return (
     <Card className="w-full max-w-md mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {mode === 'signin' ? (
-          <SignInForm 
-            formData={formData}
-            formErrors={formErrors}
-            updateField={updateFormField}
-            loading={loading}
-            onToggleMode={handleToggleMode}
-            onSubmit={handleSubmit}
-          />
-        ) : (
-          <SignUpForm 
-            formData={formData}
-            formErrors={formErrors}
-            updateField={updateFormField}
-            userType={userType}
-            onUserTypeChange={setUserType}
-            loading={loading}
-            onToggleMode={handleToggleMode}
-            onSubmit={handleSubmit}
-          />
-        )}
-      </form>
+      {mode === 'signin' ? (
+        <SignInForm 
+          formData={formData}
+          formErrors={formErrors}
+          updateField={updateFormField}
+          loading={loading}
+          onToggleMode={handleToggleMode}
+          onSubmit={handleSubmit}
+        />
+      ) : (
+        <SignUpForm 
+          formData={formData}
+          formErrors={formErrors}
+          updateField={updateFormField}
+          userType={userType}
+          onUserTypeChange={setUserType}
+          loading={loading}
+          onToggleMode={handleToggleMode}
+          onSubmit={handleSubmit}
+        />
+      )}
     </Card>
   );
 };

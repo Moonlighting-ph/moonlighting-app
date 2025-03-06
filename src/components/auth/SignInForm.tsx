@@ -1,6 +1,6 @@
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import AuthFormField from './AuthFormField';
 import AuthModeToggle from './AuthModeToggle';
@@ -59,6 +59,7 @@ const SignInForm = ({
           type="submit"
           className="w-full"
           disabled={loading}
+          onClick={onSubmit}
         >
           {loading ? (
             <>

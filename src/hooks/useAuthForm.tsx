@@ -127,19 +127,26 @@ const useAuthService = () => {
       if (error) throw error;
 
       // Get user profile to check user type
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('user_type')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle(); // Using maybeSingle instead of single to avoid errors when no data is found
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        throw new Error('Error retrieving user profile');
+      }
 
       let redirectPath = '/';
+      
       if (profileData?.user_type === 'provider') {
         redirectPath = '/provider';
       } else if (profileData?.user_type === 'moonlighter') {
         redirectPath = '/moonlighter';
       }
       
+      console.log('Redirecting to:', redirectPath);
       toast.success('Sign in successful!');
       return { success: true, data, redirectPath };
     } catch (error: any) {
@@ -263,16 +270,21 @@ export const useAuthForm = () => {
   }, [formData, validateSignInForm, handleDirectSignIn]);
 
   // Main submit handler
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault(); // Ensure this is called to prevent page refresh
     setLoading(true);
+
+    console.log('Form submitted in mode:', mode);
 
     try {
       if (mode === 'signup') {
-        await handleSignUp();
+        handleSignUp();
       } else {
-        await handleSignIn();
+        handleSignIn();
       }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
