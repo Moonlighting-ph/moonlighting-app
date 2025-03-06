@@ -8,48 +8,67 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProfileForm from '@/components/auth/ProfileForm';
 import PrcLicenseForm from '@/components/auth/PrcLicenseForm';
+import PrcVerificationStatus from '@/components/auth/PrcVerificationStatus';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
-  const [userType, setUserType] = useState<string | null>(null);
-  const [hasPrcLicense, setHasPrcLicense] = useState<boolean>(false);
+  const [showVerificationForm, setShowVerificationForm] = useState(false);
+  const [showAppealForm, setShowAppealForm] = useState(false);
+  const [licenseId, setLicenseId] = useState<string | null>(null);
   
-  useEffect(() => {
-    const getUserDetails = async () => {
-      if (!session?.user) {
-        return;
-      }
+  // Fetch profile data using Tanstack Query
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
       
-      // Get user profile
-      const { data: profile } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('user_type')
+        .select('*')
         .eq('id', session.user.id)
         .single();
       
-      if (profile) {
-        setUserType(profile.user_type);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        throw error;
       }
       
-      // Check if user has a PRC license (for moonlighters)
-      if (profile?.user_type === 'moonlighter') {
-        const { data: license } = await supabase
-          .from('prc_licenses')
-          .select('id')
-          .eq('user_id', session.user.id)
-          .single();
-        
-        setHasPrcLicense(!!license);
+      return data;
+    },
+    enabled: !!session?.user?.id
+  });
+  
+  // Fetch license data
+  const { data: license, isLoading: licenseLoading } = useQuery({
+    queryKey: ['license', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('prc_licenses')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching license:', error);
+        throw error;
       }
-    };
-    
-    if (session) {
-      getUserDetails();
-    }
-  }, [session]);
+      
+      if (data) {
+        setLicenseId(data.id);
+      }
+      
+      return data;
+    },
+    enabled: !!session?.user?.id && profile?.user_type === 'moonlighter'
+  });
   
   // Redirect if not logged in
   useEffect(() => {
@@ -58,13 +77,27 @@ const Profile: React.FC = () => {
     }
   }, [session, loading, navigate]);
   
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+        <div className="space-y-4 w-full max-w-md">
+          <Skeleton className="h-12 w-3/4 mx-auto" />
+          <Skeleton className="h-4 w-1/2 mx-auto" />
+          <Skeleton className="h-[300px] w-full" />
+        </div>
       </div>
     );
   }
+  
+  const handleVerificationComplete = () => {
+    setShowVerificationForm(false);
+    setShowAppealForm(false);
+    toast.success('Information submitted successfully');
+    // Refetch license data after submission
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  };
   
   return (
     <SmoothScroll>
@@ -77,7 +110,7 @@ const Profile: React.FC = () => {
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="mb-8">
                 <TabsTrigger value="profile">Profile Information</TabsTrigger>
-                {userType === 'moonlighter' && (
+                {profile?.user_type === 'moonlighter' && (
                   <TabsTrigger value="license">PRC License</TabsTrigger>
                 )}
               </TabsList>
@@ -86,25 +119,48 @@ const Profile: React.FC = () => {
                 <ProfileForm userId={session?.user?.id} />
               </TabsContent>
               
-              {userType === 'moonlighter' && (
+              {profile?.user_type === 'moonlighter' && (
                 <TabsContent value="license">
-                  {!hasPrcLicense ? (
-                    <PrcLicenseForm />
-                  ) : (
+                  {showVerificationForm ? (
+                    <PrcLicenseForm onComplete={handleVerificationComplete} />
+                  ) : showAppealForm ? (
+                    <PrcLicenseForm 
+                      isAppeal 
+                      licenseId={licenseId || undefined} 
+                      onComplete={handleVerificationComplete} 
+                    />
+                  ) : licenseLoading ? (
                     <Card className="w-full max-w-md mx-auto">
-                      <CardHeader>
-                        <CardTitle>PRC License Status</CardTitle>
-                        <CardDescription>
-                          Your PRC license has been submitted for verification
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-center text-amber-600 font-medium py-4">
-                          Your license is currently being verified. 
-                          This process may take 24-48 hours.
-                        </p>
+                      <CardContent className="pt-6">
+                        <div className="space-y-3">
+                          <Skeleton className="h-8 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-32 w-full" />
+                        </div>
                       </CardContent>
                     </Card>
+                  ) : license ? (
+                    <div className="space-y-4">
+                      <PrcVerificationStatus 
+                        userId={session?.user?.id || ''} 
+                      />
+                      
+                      {license.status === 'rejected' && (
+                        <div className="flex justify-center mt-4">
+                          <button 
+                            onClick={() => setShowAppealForm(true)}
+                            className="text-primary hover:underline text-sm"
+                          >
+                            Submit an appeal
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <PrcVerificationStatus 
+                      userId={session?.user?.id || ''} 
+                      onStartVerification={() => setShowVerificationForm(true)}
+                    />
                   )}
                 </TabsContent>
               )}
