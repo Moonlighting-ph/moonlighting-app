@@ -31,6 +31,24 @@ const AuthForm = () => {
 
     try {
       if (mode === 'signup') {
+        // Check for required fields
+        if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+          throw new Error('Please fill in all required fields');
+        }
+
+        // Ensure valid email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          throw new Error('Please enter a valid email address');
+        }
+
+        // Check password length
+        if (formData.password.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+
+        console.log('Signing up with user type:', userType);
+        
         const { error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -46,6 +64,21 @@ const AuthForm = () => {
         if (signUpError) throw signUpError;
         
         toast.success('Registration successful! Please check your email to verify your account.');
+        
+        // For demo purposes, auto sign in after registration
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        if (signInError) throw signInError;
+        
+        // Redirect based on user type
+        if (userType === 'provider') {
+          navigate('/provider');
+        } else {
+          navigate('/moonlighter');
+        }
       } else {
         const { error: signInError, data } = await supabase.auth.signInWithPassword({
           email: formData.email,
