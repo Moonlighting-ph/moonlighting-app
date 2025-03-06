@@ -26,8 +26,7 @@ const AuthFormWrapper = () => {
         <SignInForm
           formData={formData}
           formErrors={formErrors}
-          updateFormField={updateFormField}
-          handleSubmit={handleSubmit}
+          updateField={updateFormField}
           loading={loading}
           onToggleMode={toggleMode}
         />
@@ -35,8 +34,7 @@ const AuthFormWrapper = () => {
         <SignUpForm
           formData={formData}
           formErrors={formErrors}
-          updateFormField={updateFormField}
-          handleSubmit={handleSubmit}
+          updateField={updateFormField}
           loading={loading}
           userType={userType}
           onUserTypeChange={setUserType}
