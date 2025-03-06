@@ -1,138 +1,162 @@
-
-import { useState, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export type ProfessionType = 
-  'Registered Nurse' | 
-  'Licensed Physician' | 
-  'Medical Technologist' | 
-  'Physical Therapist' | 
-  'Radiologic Technologist' | 
-  'Pharmacist' | 
-  'Midwife' | 
-  'Occupational Therapist' | 
-  'Dentist';
-
-export type VerificationStatus = 'pending' | 'verified' | 'rejected';
-
-export type LicenseData = {
-  id?: string;
+// Define types for license and form data
+interface License {
+  id: string;
+  user_id: string;
   license_number: string;
   profession: string;
-  full_name?: string;
-  supporting_documents?: File[];
-  appeal_reason?: string;
-};
+  expiry_date: string;
+  document_url: string;
+  status: 'pending' | 'verified' | 'rejected';
+  rejection_reason: string | null;
+  appeal_message: string | null;
+}
 
-export const usePrcVerification = () => {
-  const { session } = useAuth();
-  const [loadingStatus, setLoadingStatus] = useState(false);
-  const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus | null>(null);
-  const [licenseData, setLicenseData] = useState<any>(null);
+interface FormData {
+  licenseNumber: string;
+  profession: string;
+  expiryDate: Date | null;
+  document: File | null;
+}
 
-  // Get verification status
-  const getVerificationStatus = useCallback(async (userId: string) => {
-    if (!userId) return null;
-    
-    try {
-      setLoadingStatus(true);
+export const usePrcVerification = (userId?: string) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Fetch license data
+  const { data: license, isLoading, isError, refetch } = useQuery({
+    queryKey: ['prc-license', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+
       const { data, error } = await supabase
         .from('prc_licenses')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching verification status:', error);
-        return null;
-      }
-      
-      if (data) {
-        setVerificationStatus(data.status as VerificationStatus);
-        setLicenseData(data);
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Error in verification status check:', error);
-      return null;
-    } finally {
-      setLoadingStatus(false);
-    }
-  }, []);
 
-  // Submit PRC license for verification
-  const submitLicenseForVerification = useCallback(async (
-    licenseData: LicenseData,
-    isAppeal: boolean = false,
-    existingLicenseId?: string
-  ) => {
-    if (!session?.user?.id) {
-      toast.error("You must be logged in to submit verification");
-      return { success: false };
-    }
-    
-    try {
-      setLoadingSubmit(true);
-      
-      if (isAppeal && existingLicenseId) {
-        // Submit appeal for existing license
-        const { error: appealError } = await supabase
-          .from('verification_appeals')
-          .insert({
-            user_id: session.user.id,
-            license_id: existingLicenseId,
-            appeal_reason: licenseData.appeal_reason || 'No reason provided',
-          });
-        
-        if (appealError) {
-          console.error('Error submitting appeal:', appealError);
-          toast.error("Failed to submit appeal. Please try again.");
-          return { success: false };
-        }
-        
-        toast.success("Your appeal has been submitted for review");
-        return { success: true };
+      if (error) throw error;
+      return data as License;
+    },
+    enabled: !!userId,
+  });
+
+  // Mutation for submitting the license application
+  const submitLicense = useMutation(
+    async (formData: FormData) => {
+      if (!userId) throw new Error('User ID is required');
+      if (!formData.document) throw new Error('Document is required');
+
+      setIsSubmitting(true);
+      setFormError(null);
+
+      // Upload the document to Supabase storage
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('prc_documents')
+        .upload(`${userId}/${formData.document.name}`, formData.document, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (storageError) {
+        console.error('Storage error:', storageError);
+        throw storageError;
       }
-      
-      // Submit new license for verification
+
+      const document_url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${storageData?.fullPath}`;
+
+      // Insert the license data into the database
       const { error } = await supabase
         .from('prc_licenses')
-        .insert({
-          user_id: session.user.id,
-          license_number: licenseData.license_number,
-          profession: licenseData.profession,
-        });
-      
+        .insert([
+          {
+            user_id: userId,
+            license_number: formData.licenseNumber,
+            profession: formData.profession,
+            expiry_date: formData.expiryDate?.toISOString(),
+            document_url: document_url,
+            status: 'pending',
+          },
+        ]);
+
       if (error) {
-        console.error('Error submitting license:', error);
-        toast.error("Failed to submit license. Please try again.");
-        return { success: false };
+        console.error('Database error:', error);
+        throw error;
       }
-      
-      toast({
-        description: "Your license has been submitted for verification."
-      });
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Unexpected error in license submission:', error);
-      toast.error("An unexpected error occurred. Please try again.");
-      return { success: false };
-    } finally {
-      setLoadingSubmit(false);
+    },
+    {
+      onSuccess: () => {
+        setIsSubmitting(false);
+        toast('Verification request submitted successfully!');
+        refetch(); // Refetch license data to update the UI
+      },
+      onError: (error: any) => {
+        setIsSubmitting(false);
+        setFormError(error.message || 'An error occurred while submitting the form.');
+        toast.error(formError);
+      },
     }
-  }, [session]);
+  );
+
+  // Mutation for submitting an appeal
+  const submitAppeal = useMutation(
+    async ({ licenseId, appealMessage }: { licenseId: string, appealMessage: string }) => {
+      if (!licenseId) throw new Error('License ID is required');
+      if (!appealMessage) throw new Error('Appeal message is required');
+
+      setIsSubmitting(true);
+      setFormError(null);
+
+      const { error } = await supabase
+        .from('prc_licenses')
+        .update({
+          status: 'pending',
+          appeal_message: appealMessage,
+          rejection_reason: null,
+        })
+        .eq('id', licenseId);
+
+      if (error) {
+        console.error('Appeal submission error:', error);
+        throw error;
+      }
+    },
+    {
+      onSuccess: () => {
+        setIsSubmitting(false);
+        toast('Appeal submitted successfully!');
+        refetch(); // Refetch license data to update the UI
+      },
+      onError: (error: any) => {
+        setIsSubmitting(false);
+        setFormError(error.message || 'An error occurred while submitting the appeal.');
+        toast.error(formError);
+      },
+    }
+  );
+
+  const verificationStatus = () => {
+    if (isLoading) {
+      toast('Checking verification status...');
+    }
+
+    if (isSubmitting) {
+      toast('Submitting verification request...');
+    }
+  };
 
   return {
-    loadingStatus,
-    loadingSubmit,
+    license,
+    isLoading,
+    isError,
+    formError,
+    submitLicense,
+    submitAppeal,
+    isSubmitting,
     verificationStatus,
-    licenseData,
-    getVerificationStatus,
-    submitLicenseForVerification
   };
 };

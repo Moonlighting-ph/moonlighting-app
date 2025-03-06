@@ -33,9 +33,7 @@ export const useAuthService = () => {
 
       if (error) throw error;
       
-      toast({
-        description: 'Registration successful! Please check your email to verify your account.'
-      });
+      toast('Registration successful! Please check your email to verify your account.');
       return { success: true, data };
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -70,8 +68,7 @@ export const useAuthService = () => {
       if (profileError) {
         console.error('Error fetching profile:', profileError);
         // Use toast instead of throwing an error to improve user experience
-        toast({
-          description: 'Error retrieving user profile. Redirecting to home page.',
+        toast('Error retrieving user profile. Redirecting to home page.', {
           variant: "destructive"
         });
         return { success: true, data, redirectPath: '/' };
@@ -80,9 +77,7 @@ export const useAuthService = () => {
       // If no profile was found, create a default redirect
       if (!profileData) {
         console.warn('No profile found for user:', data.user.id);
-        toast({
-          description: 'Sign in successful!'
-        });
+        toast('Sign in successful!');
         return { success: true, data, redirectPath: '/' };
       }
 
@@ -95,9 +90,7 @@ export const useAuthService = () => {
       }
       
       console.log('Sign in complete, redirecting to:', redirectPath);
-      toast({
-        description: 'Sign in successful!'
-      });
+      toast('Sign in successful!');
       return { success: true, data, redirectPath };
     } catch (error: any) {
       console.error('Signin error:', error);
