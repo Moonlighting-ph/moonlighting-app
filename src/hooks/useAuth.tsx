@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,8 +62,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error('Error signing out:', error);
-        toast(`Logout failed: ${error.message}`, {
-          variant: "destructive"
+        toast('Logout failed: ' + error.message, {
+          description: 'Please try again'
         });
       } else {
         setSession(null);
@@ -71,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error: any) {
       console.error('Unexpected error signing out:', error);
       toast('An unexpected error occurred during logout', {
-        variant: "destructive"
+        description: 'Please try again or contact support'
       });
     }
   };

@@ -69,7 +69,7 @@ export const useAuthService = () => {
         console.error('Error fetching profile:', profileError);
         // Use toast instead of throwing an error to improve user experience
         toast('Error retrieving user profile. Redirecting to home page.', {
-          variant: "destructive"
+          description: 'This may be due to a temporary database issue'
         });
         return { success: true, data, redirectPath: '/' };
       }

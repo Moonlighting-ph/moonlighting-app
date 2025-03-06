@@ -12,12 +12,12 @@ export const useAuthErrors = () => {
     // Handle specific error cases
     if (errorMessage.includes('User already registered')) {
       toast('This email is already registered. Please sign in instead.', {
-        variant: "destructive"
+        description: 'If you forgot your password, please use the password reset option.'
       });
       setFormErrors({email: 'This email is already registered'});
     } else if (errorMessage.includes('Invalid login credentials')) {
       toast('Invalid email or password. Please try again.', {
-        variant: "destructive"
+        description: 'Check your credentials and try again'
       });
       setFormErrors({
         email: 'Invalid login credentials',
@@ -25,22 +25,22 @@ export const useAuthErrors = () => {
       });
     } else if (errorMessage.includes('Email not confirmed')) {
       toast('Please verify your email before signing in.', {
-        variant: "destructive"
+        description: 'Check your inbox for a verification email'
       });
       setFormErrors({email: 'Email not verified'});
     } else if (errorMessage.includes('infinite recursion detected')) {
       toast('Database Policy Error: There is an issue with the database access policy. Please contact support.', {
-        variant: "destructive"
+        description: 'Our team has been notified of this issue'
       });
       setFormErrors({general: 'Database access policy error'});
     } else if (errorMessage.includes('Error retrieving user profile')) {
       toast('Unable to retrieve your profile. Please try again later.', {
-        variant: "destructive"
+        description: 'This may be due to a temporary service interruption'
       });
       setFormErrors({general: 'Unable to retrieve profile'});
     } else {
       toast(errorMessage, {
-        variant: "destructive"
+        description: 'Please try again or contact support if the issue persists'
       });
     }
   }, []);
