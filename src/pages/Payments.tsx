@@ -1,162 +1,125 @@
 
-import React, { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import SmoothScroll from '../components/SmoothScroll';
-import PaymentCard from '../components/PaymentCard';
-import { getProviderPayments, getMoonlighterPayments } from '../services/paymentService';
-import { useAuth } from '../hooks/useAuth';
-import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tab, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
+import { getManualPayments } from '@/services/manualPaymentService';
+import PaymentCard from '@/components/PaymentCard';
+import { ManualPayment } from '@/types/payment';
 
-const Payments: React.FC = () => {
-  const [payments, setPayments] = useState<any[]>([]);
+const Payments = () => {
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const [payments, setPayments] = useState<ManualPayment[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, userProfile } = useAuth();
-  const isProvider = userProfile?.user_type === 'provider';
-
+  
   useEffect(() => {
     const fetchPayments = async () => {
-      if (!user || !userProfile) return;
-
+      if (!auth.session?.user?.id) return;
+      
       try {
-        let data;
-        if (isProvider) {
-          data = await getProviderPayments();
-        } else {
-          data = await getMoonlighterPayments();
-        }
-        setPayments(data || []);
+        setLoading(true);
+        const data = await getManualPayments();
+        setPayments(data);
       } catch (error) {
         console.error('Error fetching payments:', error);
-        toast('Failed to load your payments');
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchPayments();
-  }, [user, userProfile, isProvider]);
-
-  const handleProcessPayment = (paymentId: string) => {
-    // In a real implementation, this would open a Stripe payment modal
-    toast('Payment processing is not fully implemented in this demo', {
-      description: 'This would normally open a Stripe payment flow'
-    });
+  }, [auth.session?.user?.id]);
+  
+  const handleMakePayment = () => {
+    navigate('/provider/make-payment');
   };
-
-  const pendingPayments = payments.filter(p => p.status === 'pending');
-  const completedPayments = payments.filter(p => p.status === 'completed');
-  const failedPayments = payments.filter(p => p.status === 'failed');
-
-  return (
-    <SmoothScroll>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="container mx-auto py-8 px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-4">
-              {isProvider ? 'Provider Payments' : 'Moonlighter Earnings'}
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              {isProvider 
-                ? 'Manage your payments to moonlighters for completed shifts.' 
-                : 'Track your earnings from completed shifts.'}
-            </p>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-10">
-              <p>Loading your payments...</p>
-            </div>
-          ) : payments.length === 0 ? (
-            <div className="text-center py-10">
-              <p>No payments found.</p>
-            </div>
-          ) : (
-            <Tabs defaultValue="pending" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8">
-                <TabsTrigger value="pending">
-                  Pending ({pendingPayments.length})
-                </TabsTrigger>
-                <TabsTrigger value="completed">
-                  Completed ({completedPayments.length})
-                </TabsTrigger>
-                <TabsTrigger value="failed">
-                  Failed ({failedPayments.length})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="pending">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {pendingPayments.map(payment => (
-                    <PaymentCard
-                      key={payment.id}
-                      amount={payment.amount}
-                      currency={payment.currency}
-                      status={payment.status}
-                      jobTitle={payment.job_applications.job.title}
-                      company={payment.job_applications.job.company}
-                      counterpartyName={isProvider 
-                        ? `${payment.job_applications.moonlighter.first_name} ${payment.job_applications.moonlighter.last_name}`
-                        : `${payment.job_applications.provider.first_name} ${payment.job_applications.provider.last_name}`
-                      }
-                      date={payment.created_at}
-                      onProcessPayment={() => handleProcessPayment(payment.id)}
-                      isProvider={isProvider}
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="completed">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {completedPayments.map(payment => (
-                    <PaymentCard
-                      key={payment.id}
-                      amount={payment.amount}
-                      currency={payment.currency}
-                      status={payment.status}
-                      jobTitle={payment.job_applications.job.title}
-                      company={payment.job_applications.job.company}
-                      counterpartyName={isProvider 
-                        ? `${payment.job_applications.moonlighter.first_name} ${payment.job_applications.moonlighter.last_name}`
-                        : `${payment.job_applications.provider.first_name} ${payment.job_applications.provider.last_name}`
-                      }
-                      date={payment.updated_at}
-                      isProvider={isProvider}
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="failed">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {failedPayments.map(payment => (
-                    <PaymentCard
-                      key={payment.id}
-                      amount={payment.amount}
-                      currency={payment.currency}
-                      status={payment.status}
-                      jobTitle={payment.job_applications.job.title}
-                      company={payment.job_applications.job.company}
-                      counterpartyName={isProvider 
-                        ? `${payment.job_applications.moonlighter.first_name} ${payment.job_applications.moonlighter.last_name}`
-                        : `${payment.job_applications.provider.first_name} ${payment.job_applications.provider.last_name}`
-                      }
-                      date={payment.updated_at}
-                      onProcessPayment={() => handleProcessPayment(payment.id)}
-                      isProvider={isProvider}
-                    />
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-        </div>
-        <Footer />
+  
+  if (!auth.session) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <p>Please sign in to view your payments.</p>
+            <Button onClick={() => navigate('/auth/login')} className="mt-4">Sign In</Button>
+          </CardContent>
+        </Card>
       </div>
-    </SmoothScroll>
+    );
+  }
+  
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Payments</h1>
+        {auth.userType === 'provider' && (
+          <Button onClick={handleMakePayment}>Make Payment</Button>
+        )}
+      </div>
+      
+      <Tabs defaultValue="all">
+        <TabsList className="mb-6">
+          <TabsTrigger value="all">All Payments</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all">
+          <PaymentsList payments={payments} loading={loading} />
+        </TabsContent>
+        
+        <TabsContent value="completed">
+          <PaymentsList 
+            payments={payments.filter(p => p.status === 'completed')} 
+            loading={loading} 
+          />
+        </TabsContent>
+        
+        <TabsContent value="pending">
+          <PaymentsList 
+            payments={payments.filter(p => p.status === 'pending')} 
+            loading={loading} 
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+interface PaymentsListProps {
+  payments: ManualPayment[];
+  loading: boolean;
+}
+
+const PaymentsList: React.FC<PaymentsListProps> = ({ payments, loading }) => {
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p>Loading payments...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (!payments || payments.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p>No payments found.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <div className="grid gap-4">
+      {payments.map((payment) => (
+        <PaymentCard key={payment.id} payment={payment} />
+      ))}
+    </div>
   );
 };
 

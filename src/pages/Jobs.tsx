@@ -40,7 +40,7 @@ const Jobs: React.FC = () => {
             </form>
           </div>
           
-          <JobBoard filters={filters} />
+          <JobBoard initialFilters={filters} />
         </div>
         <Footer />
       </div>

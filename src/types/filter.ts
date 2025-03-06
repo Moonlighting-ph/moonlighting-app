@@ -5,4 +5,5 @@ export interface JobFilters {
   specialization?: string;
   searchTerm?: string;
   isUrgent?: boolean;
+  experience_level?: string;
 }

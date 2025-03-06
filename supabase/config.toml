@@ -1,5 +1,4 @@
 
-
 project_id = "tfyiqedyesexxflbmhou"
 
 [api]
@@ -36,4 +35,3 @@ verify_jwt = false
 [functions.payment]
 verify_jwt = false
 cors = ["*"]
-

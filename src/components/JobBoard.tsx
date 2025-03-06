@@ -7,18 +7,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import JobFilterForm from './JobFilterForm';
-import { getMockJobs, getJobs } from '@/services/jobService';
+import { fetchJobsWithFallback, getJobsMock } from '@/services/jobService';
 
 interface JobBoardProps {
   jobs?: Job[];
   loading?: boolean;
+  initialFilters?: JobFilters;
 }
 
-const JobBoard = ({ jobs: propJobs, loading: propLoading }: JobBoardProps) => {
+const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobBoardProps) => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(propLoading || true);
-  const [filters, setFilters] = useState<JobFilters>({});
+  const [loading, setLoading] = useState<boolean>(propLoading || true);
+  const [filters, setFilters] = useState<JobFilters>(initialFilters || {});
 
   // Initialize with either provided jobs or fetch them
   useEffect(() => {
@@ -31,18 +32,10 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading }: JobBoardProps) => {
 
     const fetchJobs = async () => {
       try {
-        // Try to fetch from Supabase first
-        try {
-          const data = await getJobs();
-          setJobs(data);
-          setFilteredJobs(data);
-        } catch (error) {
-          // If table doesn't exist or other Supabase error, use mock data
-          console.log('Using mock jobs data instead:', error);
-          const mockData = getMockJobs();
-          setJobs(mockData);
-          setFilteredJobs(mockData);
-        }
+        // Try to fetch from Supabase first with fallback to mock data
+        const data = await fetchJobsWithFallback(filters);
+        setJobs(data);
+        setFilteredJobs(data);
       } catch (error) {
         console.error('Error fetching jobs:', error);
         toast('Failed to load job listings', {
@@ -54,7 +47,7 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading }: JobBoardProps) => {
     };
 
     fetchJobs();
-  }, [propJobs]);
+  }, [propJobs, filters]);
 
   // Apply filters when they change
   useEffect(() => {

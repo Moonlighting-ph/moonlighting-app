@@ -1,114 +1,106 @@
 
-import React, { useEffect, useState } from 'react';
-import { fetchMoonlighterPaymentMethods } from '@/services/paymentMethodService';
+import React from 'react';
 import { PaymentMethod } from '@/types/payment';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { CreditCard, Bank, Wallet, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Banknote, Card as CardIcon, CreditCard, Building, PlusCircle } from 'lucide-react';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface MoonlighterPaymentMethodsProps {
-  moonlighterId: string;
-  onSelect?: (method: PaymentMethod) => void;
+  paymentMethods: PaymentMethod[];
+  showAddButton?: boolean;
+  onSelectMethod?: (method: PaymentMethod) => void;
+  selectedMethodId?: string;
 }
 
-const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ 
-  moonlighterId,
-  onSelect
+const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({
+  paymentMethods,
+  showAddButton = true,
+  onSelectMethod,
+  selectedMethodId
 }) => {
-  const [methods, setMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  const handleAddMethod = () => {
+    navigate('/moonlighter/payment-methods');
+  };
 
-  useEffect(() => {
-    const fetchMethods = async () => {
-      if (!moonlighterId) return;
-      
-      setLoading(true);
-      const data = await fetchMoonlighterPaymentMethods(moonlighterId);
-      setMethods(data);
-      setLoading(false);
-    };
-
-    fetchMethods();
-  }, [moonlighterId]);
-
-  const getMethodIcon = (method: string) => {
-    switch (method) {
+  // Get icon based on payment method type
+  const getPaymentIcon = (type: string) => {
+    switch (type) {
       case 'gcash':
-        return <Wallet className="h-5 w-5" />;
+        return <CreditCard className="h-5 w-5 text-blue-500" />;
       case 'paymaya':
-        return <CreditCard className="h-5 w-5" />;
+        return <CardIcon className="h-5 w-5 text-purple-500" />;
       case 'bank':
-        return <Bank className="h-5 w-5" />;
+        return <Building className="h-5 w-5 text-gray-500" />;
       default:
-        return <CreditCard className="h-5 w-5" />;
+        return <Banknote className="h-5 w-5 text-green-500" />;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-4">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (methods.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-6">
-          <p className="text-center text-gray-500">
-            The moonlighter has not added any payment methods yet.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Format account details for display
+  const formatAccountDetails = (details: string, type: string) => {
+    if (type === 'bank') {
+      // Simple formatting for bank account numbers (if needed)
+      return details;
+    } else if (details.length > 4) {
+      // Format phone numbers for GCash/PayMaya with last 4 digits visible
+      return `•••• •••• ${details.slice(-4)}`;
+    }
+    return details;
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Moonlighter Payment Methods</CardTitle>
-        <CardDescription>
-          Available payment methods for this moonlighter
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {methods.map((method) => (
-            <div 
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Payment Methods</h3>
+        {showAddButton && (
+          <Button variant="outline" size="sm" onClick={handleAddMethod}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Method
+          </Button>
+        )}
+      </div>
+      
+      {paymentMethods.length === 0 ? (
+        <div className="text-center py-6 border rounded-md bg-gray-50">
+          <p className="text-gray-500">No payment methods added</p>
+          {showAddButton && (
+            <Button variant="link" onClick={handleAddMethod}>
+              Add a payment method
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {paymentMethods.map((method) => (
+            <Card 
               key={method.id}
-              className={`flex items-center p-4 rounded-lg border ${
-                method.is_default ? 'border-primary/50 bg-primary/5' : 'border-border'
-              } ${onSelect ? 'cursor-pointer hover:bg-accent' : ''}`}
-              onClick={() => onSelect && onSelect(method)}
+              className={cn(
+                "cursor-pointer hover:border-primary transition-colors",
+                selectedMethodId === method.id && "border-primary bg-primary/5"
+              )}
+              onClick={() => onSelectMethod && onSelectMethod(method)}
             >
-              <div className="flex items-center space-x-3 flex-1">
-                <div className={`p-2 rounded-full ${method.is_default ? 'bg-primary/20' : 'bg-secondary'}`}>
-                  {getMethodIcon(method.method)}
+              <CardHeader className="p-4 pb-2 flex flex-row items-center space-y-0 gap-2">
+                <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                  {getPaymentIcon(method.method)}
                 </div>
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <h4 className="font-medium capitalize">{method.method}</h4>
-                    {method.is_default && (
-                      <Badge variant="outline" className="border-primary/50 text-primary">
-                        Default
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500">{method.details}</p>
+                  <p className="font-medium capitalize">{method.method}</p>
+                  {method.is_default && <span className="text-xs text-primary">Default</span>}
                 </div>
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <p className="text-sm text-muted-foreground">{formatAccountDetails(method.details, method.method)}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
 
