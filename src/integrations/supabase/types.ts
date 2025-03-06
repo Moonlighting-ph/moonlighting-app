@@ -44,34 +44,61 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          bio: string | null
+          city: string | null
           created_at: string
           email: string
+          emergency_contact: string | null
+          emergency_phone: string | null
           first_name: string
           id: string
           last_name: string
           phone: string | null
+          postal_code: string | null
+          region: string | null
+          specialization: string | null
           updated_at: string
           user_type: Database["public"]["Enums"]["user_type"]
+          years_of_experience: number | null
         }
         Insert: {
+          address?: string | null
+          bio?: string | null
+          city?: string | null
           created_at?: string
           email: string
+          emergency_contact?: string | null
+          emergency_phone?: string | null
           first_name: string
           id: string
           last_name: string
           phone?: string | null
+          postal_code?: string | null
+          region?: string | null
+          specialization?: string | null
           updated_at?: string
           user_type: Database["public"]["Enums"]["user_type"]
+          years_of_experience?: number | null
         }
         Update: {
+          address?: string | null
+          bio?: string | null
+          city?: string | null
           created_at?: string
           email?: string
+          emergency_contact?: string | null
+          emergency_phone?: string | null
           first_name?: string
           id?: string
           last_name?: string
           phone?: string | null
+          postal_code?: string | null
+          region?: string | null
+          specialization?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
+          years_of_experience?: number | null
         }
         Relationships: []
       }

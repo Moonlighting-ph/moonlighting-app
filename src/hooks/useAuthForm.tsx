@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -13,8 +14,30 @@ export type AuthFormData = {
 export type AuthMode = 'signin' | 'signup';
 export type UserType = 'provider' | 'moonlighter';
 
+// Form validation utilities
+const validateEmail = (email: string): string | null => {
+  if (!email) return 'Email is required';
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return 'Please enter a valid email address';
+  }
+  
+  return null;
+};
+
+const validatePassword = (password: string): string | null => {
+  if (!password) return 'Password is required';
+  if (password.length < 6) return 'Password must be at least 6 characters long';
+  return null;
+};
+
+const validateName = (name: string, fieldName: string): string | null => {
+  if (!name) return `${fieldName} is required`;
+  return null;
+};
+
 export const useAuthForm = () => {
-  // ... keep existing code (navigate, mode, loading, userType state definitions)
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('signin');
   const [loading, setLoading] = useState(false);
@@ -39,32 +62,23 @@ export const useAuthForm = () => {
     }
   };
 
-  // ... keep existing code (validateSignupForm, validateSignInForm, handleSignUp, handleSignIn, handleAuthError functions)
-
   const validateSignupForm = (): { valid: boolean; errors: {[key: string]: string} } => {
     const errors: {[key: string]: string} = {};
     
-    // Check for required fields
-    if (!formData.email) errors.email = 'Email is required';
-    if (!formData.password) errors.password = 'Password is required';
-    if (!formData.firstName) errors.firstName = 'First name is required';
-    if (!formData.lastName) errors.lastName = 'Last name is required';
-
-    // If any required field is missing, return early
-    if (Object.keys(errors).length > 0) {
-      return { valid: false, errors };
-    }
-
-    // Ensure valid email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    // Check password length
-    if (formData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters long';
-    }
+    // Check email
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+    
+    // Check password
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
+    
+    // Check names
+    const firstNameError = validateName(formData.firstName, 'First name');
+    if (firstNameError) errors.firstName = firstNameError;
+    
+    const lastNameError = validateName(formData.lastName, 'Last name');
+    if (lastNameError) errors.lastName = lastNameError;
 
     return { valid: Object.keys(errors).length === 0, errors };
   };
@@ -72,10 +86,36 @@ export const useAuthForm = () => {
   const validateSignInForm = (): { valid: boolean; errors: {[key: string]: string} } => {
     const errors: {[key: string]: string} = {};
     
-    if (!formData.email) errors.email = 'Email is required';
-    if (!formData.password) errors.password = 'Password is required';
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+    
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
     
     return { valid: Object.keys(errors).length === 0, errors };
+  };
+
+  const handleAuthError = (error: any) => {
+    console.error('Auth error:', error);
+    
+    const errorMessage = error.message || 'An error occurred during authentication';
+    
+    // Handle specific error cases
+    if (errorMessage.includes('User already registered')) {
+      toast.error('This email is already registered. Please sign in instead.');
+      setFormErrors({email: 'This email is already registered'});
+    } else if (errorMessage.includes('Invalid login credentials')) {
+      toast.error('Invalid email or password. Please try again.');
+      setFormErrors({
+        email: 'Invalid login credentials',
+        password: 'Invalid login credentials'
+      });
+    } else if (errorMessage.includes('Email not confirmed')) {
+      toast.error('Please verify your email before signing in.');
+      setFormErrors({email: 'Email not verified'});
+    } else {
+      toast.error(errorMessage);
+    }
   };
 
   const handleSignUp = async (): Promise<boolean> => {
@@ -88,7 +128,7 @@ export const useAuthForm = () => {
     try {
       console.log('Signing up with user type:', userType);
       
-      const { error: signUpError, data } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -105,19 +145,7 @@ export const useAuthForm = () => {
       toast.success('Registration successful! Please check your email to verify your account.');
       
       // For demo purposes, auto sign in after registration
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-      
-      if (signInError) throw signInError;
-      
-      // Redirect based on user type
-      if (userType === 'provider') {
-        navigate('/provider');
-      } else {
-        navigate('/moonlighter');
-      }
+      await handleDirectSignIn();
       
       return true;
     } catch (error: any) {
@@ -126,13 +154,7 @@ export const useAuthForm = () => {
     }
   };
 
-  const handleSignIn = async (): Promise<boolean> => {
-    const validation = validateSignInForm();
-    if (!validation.valid) {
-      setFormErrors(validation.errors);
-      return false;
-    }
-
+  const handleDirectSignIn = async (): Promise<boolean> => {
     try {
       const { error: signInError, data } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -164,25 +186,14 @@ export const useAuthForm = () => {
     }
   };
 
-  const handleAuthError = (error: any) => {
-    console.error('Auth error:', error);
-    
-    // Handle specific error cases
-    if (error.message.includes('User already registered')) {
-      toast.error('This email is already registered. Please sign in instead.');
-      setFormErrors({email: 'This email is already registered'});
-    } else if (error.message.includes('Invalid login credentials')) {
-      toast.error('Invalid email or password. Please try again.');
-      setFormErrors({
-        email: 'Invalid login credentials',
-        password: 'Invalid login credentials'
-      });
-    } else if (error.message.includes('Email not confirmed')) {
-      toast.error('Please verify your email before signing in.');
-      setFormErrors({email: 'Email not verified'});
-    } else {
-      toast.error(error.message || 'An error occurred during authentication');
+  const handleSignIn = async (): Promise<boolean> => {
+    const validation = validateSignInForm();
+    if (!validation.valid) {
+      setFormErrors(validation.errors);
+      return false;
     }
+
+    return handleDirectSignIn();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
