@@ -15,6 +15,7 @@ type SignUpFormProps = {
   userType: UserType;
   onUserTypeChange: (type: UserType) => void;
   onToggleMode: () => void;
+  onSubmit: (e: React.FormEvent) => void;
 };
 
 const SignUpForm = ({
@@ -24,93 +25,87 @@ const SignUpForm = ({
   loading,
   userType,
   onUserTypeChange,
-  onToggleMode
+  onToggleMode,
+  onSubmit
 }: SignUpFormProps) => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // The actual submission logic is handled in the parent component
-  };
-
   return (
-    <Card className="w-full">
+    <>
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
         <CardDescription className="text-center">
           Enter your information to create your account
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <AuthFormField
-              id="firstName"
-              label="First Name"
-              value={formData.firstName}
-              onChange={(value) => updateField('firstName', value)}
-              required
-              autoComplete="given-name"
-              error={formErrors.firstName}
-            />
-            
-            <AuthFormField
-              id="lastName"
-              label="Last Name"
-              value={formData.lastName}
-              onChange={(value) => updateField('lastName', value)}
-              required
-              autoComplete="family-name"
-              error={formErrors.lastName}
-            />
-          </div>
-          
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <AuthFormField
-            id="email"
-            label="Email"
-            type="email"
-            value={formData.email}
-            onChange={(value) => updateField('email', value)}
+            id="firstName"
+            label="First Name"
+            value={formData.firstName}
+            onChange={(value) => updateField('firstName', value)}
             required
-            autoComplete="email"
-            error={formErrors.email}
+            autoComplete="given-name"
+            error={formErrors.firstName}
           />
           
           <AuthFormField
-            id="password"
-            label="Password"
-            type="password"
-            value={formData.password}
-            onChange={(value) => updateField('password', value)}
+            id="lastName"
+            label="Last Name"
+            value={formData.lastName}
+            onChange={(value) => updateField('lastName', value)}
             required
-            autoComplete="new-password"
-            error={formErrors.password}
+            autoComplete="family-name"
+            error={formErrors.lastName}
           />
-          
-          <UserTypeSelector 
-            userType={userType} 
-            onUserTypeChange={onUserTypeChange}
-            disabled={loading}
-          />
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-3">
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              'Create account'
-            )}
-          </Button>
-          
-          <AuthModeToggle mode="signup" onToggle={onToggleMode} isLoading={loading} />
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+        
+        <AuthFormField
+          id="email"
+          label="Email"
+          type="email"
+          value={formData.email}
+          onChange={(value) => updateField('email', value)}
+          required
+          autoComplete="email"
+          error={formErrors.email}
+        />
+        
+        <AuthFormField
+          id="password"
+          label="Password"
+          type="password"
+          value={formData.password}
+          onChange={(value) => updateField('password', value)}
+          required
+          autoComplete="new-password"
+          error={formErrors.password}
+        />
+        
+        <UserTypeSelector 
+          userType={userType} 
+          onUserTypeChange={onUserTypeChange}
+          disabled={loading}
+        />
+      </CardContent>
+      <CardFooter className="flex flex-col space-y-3">
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating account...
+            </>
+          ) : (
+            'Create account'
+          )}
+        </Button>
+        
+        <AuthModeToggle mode="signup" onToggle={onToggleMode} isLoading={loading} />
+      </CardFooter>
+    </>
   );
 };
 

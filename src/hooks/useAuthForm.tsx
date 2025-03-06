@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,29 +14,150 @@ export type AuthFormData = {
 export type AuthMode = 'signin' | 'signup';
 export type UserType = 'provider' | 'moonlighter';
 
-// Form validation utilities
-const validateEmail = (email: string): string | null => {
-  if (!email) return 'Email is required';
-  
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return 'Please enter a valid email address';
-  }
-  
-  return null;
+// Separate validation functions for better maintainability
+const useFormValidation = () => {
+  const validateEmail = useCallback((email: string): string | null => {
+    if (!email) return 'Email is required';
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    
+    return null;
+  }, []);
+
+  const validatePassword = useCallback((password: string): string | null => {
+    if (!password) return 'Password is required';
+    if (password.length < 6) return 'Password must be at least 6 characters long';
+    return null;
+  }, []);
+
+  const validateName = useCallback((name: string, fieldName: string): string | null => {
+    if (!name) return `${fieldName} is required`;
+    return null;
+  }, []);
+
+  // Form validation for signup
+  const validateSignupForm = useCallback((formData: AuthFormData): { valid: boolean; errors: {[key: string]: string} } => {
+    const errors: {[key: string]: string} = {};
+    
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+    
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
+    
+    const firstNameError = validateName(formData.firstName, 'First name');
+    if (firstNameError) errors.firstName = firstNameError;
+    
+    const lastNameError = validateName(formData.lastName, 'Last name');
+    if (lastNameError) errors.lastName = lastNameError;
+
+    return { valid: Object.keys(errors).length === 0, errors };
+  }, [validateEmail, validatePassword, validateName]);
+
+  // Form validation for signin
+  const validateSignInForm = useCallback((formData: AuthFormData): { valid: boolean; errors: {[key: string]: string} } => {
+    const errors: {[key: string]: string} = {};
+    
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+    
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
+    
+    return { valid: Object.keys(errors).length === 0, errors };
+  }, [validateEmail, validatePassword]);
+
+  return {
+    validateSignupForm,
+    validateSignInForm
+  };
 };
 
-const validatePassword = (password: string): string | null => {
-  if (!password) return 'Password is required';
-  if (password.length < 6) return 'Password must be at least 6 characters long';
-  return null;
+// Separate authentication functions
+const useAuthService = () => {
+  const navigate = useNavigate();
+
+  // Handle signup process
+  const signUp = useCallback(async (
+    email: string, 
+    password: string, 
+    firstName: string, 
+    lastName: string, 
+    userType: UserType
+  ) => {
+    try {
+      console.log('Signing up with user type:', userType);
+      
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            user_type: userType,
+          },
+        },
+      });
+
+      if (error) throw error;
+      
+      toast.success('Registration successful! Please check your email to verify your account.');
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      return { 
+        success: false, 
+        error: error.message || 'An error occurred during signup'
+      };
+    }
+  }, []);
+
+  // Handle signin process
+  const signIn = useCallback(async (email: string, password: string) => {
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      // Get user profile to check user type
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', data.user.id)
+        .single();
+
+      let redirectPath = '/';
+      if (profileData?.user_type === 'provider') {
+        redirectPath = '/provider';
+      } else if (profileData?.user_type === 'moonlighter') {
+        redirectPath = '/moonlighter';
+      }
+      
+      toast.success('Sign in successful!');
+      return { success: true, data, redirectPath };
+    } catch (error: any) {
+      console.error('Signin error:', error);
+      return { 
+        success: false, 
+        error: error.message || 'An error occurred during sign in'
+      };
+    }
+  }, []);
+
+  return {
+    signUp,
+    signIn
+  };
 };
 
-const validateName = (name: string, fieldName: string): string | null => {
-  if (!name) return `${fieldName} is required`;
-  return null;
-};
-
+// Main auth form hook
 export const useAuthForm = () => {
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('signin');
@@ -51,51 +172,25 @@ export const useAuthForm = () => {
     lastName: '',
   });
 
-  const updateFormField = (field: keyof AuthFormData, value: string) => {
-    setFormData({ ...formData, [field]: value });
+  const { validateSignupForm, validateSignInForm } = useFormValidation();
+  const { signUp, signIn } = useAuthService();
+
+  // Update form field with error clearing
+  const updateFormField = useCallback((field: keyof AuthFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error for this field when user types
     if (formErrors[field]) {
-      const updatedErrors = {...formErrors};
-      delete updatedErrors[field];
-      setFormErrors(updatedErrors);
+      setFormErrors(prev => {
+        const updated = {...prev};
+        delete updated[field];
+        return updated;
+      });
     }
-  };
+  }, [formErrors]);
 
-  const validateSignupForm = (): { valid: boolean; errors: {[key: string]: string} } => {
-    const errors: {[key: string]: string} = {};
-    
-    // Check email
-    const emailError = validateEmail(formData.email);
-    if (emailError) errors.email = emailError;
-    
-    // Check password
-    const passwordError = validatePassword(formData.password);
-    if (passwordError) errors.password = passwordError;
-    
-    // Check names
-    const firstNameError = validateName(formData.firstName, 'First name');
-    if (firstNameError) errors.firstName = firstNameError;
-    
-    const lastNameError = validateName(formData.lastName, 'Last name');
-    if (lastNameError) errors.lastName = lastNameError;
-
-    return { valid: Object.keys(errors).length === 0, errors };
-  };
-
-  const validateSignInForm = (): { valid: boolean; errors: {[key: string]: string} } => {
-    const errors: {[key: string]: string} = {};
-    
-    const emailError = validateEmail(formData.email);
-    if (emailError) errors.email = emailError;
-    
-    const passwordError = validatePassword(formData.password);
-    if (passwordError) errors.password = passwordError;
-    
-    return { valid: Object.keys(errors).length === 0, errors };
-  };
-
-  const handleAuthError = (error: any) => {
+  // Handle specific authentication errors
+  const handleAuthError = useCallback((error: any) => {
     console.error('Auth error:', error);
     
     const errorMessage = error.message || 'An error occurred during authentication';
@@ -116,87 +211,59 @@ export const useAuthForm = () => {
     } else {
       toast.error(errorMessage);
     }
-  };
+  }, []);
 
-  const handleSignUp = async (): Promise<boolean> => {
-    const validation = validateSignupForm();
+  // Handle the signup process
+  const handleSignUp = useCallback(async () => {
+    const validation = validateSignupForm(formData);
     if (!validation.valid) {
       setFormErrors(validation.errors);
       return false;
     }
 
-    try {
-      console.log('Signing up with user type:', userType);
-      
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            user_type: userType,
-          },
-        },
-      });
+    const result = await signUp(
+      formData.email, 
+      formData.password, 
+      formData.firstName, 
+      formData.lastName, 
+      userType
+    );
 
-      if (signUpError) throw signUpError;
-      
-      toast.success('Registration successful! Please check your email to verify your account.');
-      
-      // For demo purposes, auto sign in after registration
-      await handleDirectSignIn();
-      
-      return true;
-    } catch (error: any) {
-      handleAuthError(error);
+    if (!result.success) {
+      handleAuthError(result.error);
       return false;
     }
-  };
+    
+    // For demo purposes, auto sign in after registration
+    return await handleDirectSignIn();
+  }, [formData, userType, validateSignupForm, signUp, handleAuthError]);
 
-  const handleDirectSignIn = async (): Promise<boolean> => {
-    try {
-      const { error: signInError, data } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (signInError) throw signInError;
-
-      // Get user profile to check user type
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('user_type')
-        .eq('id', data.user.id)
-        .single();
-
-      if (profileData?.user_type === 'provider') {
-        navigate('/provider');
-      } else if (profileData?.user_type === 'moonlighter') {
-        navigate('/moonlighter');
-      } else {
-        navigate('/');
-      }
-      
-      toast.success('Sign in successful!');
-      return true;
-    } catch (error: any) {
-      handleAuthError(error);
+  // Direct sign in without validation (used after registration)
+  const handleDirectSignIn = useCallback(async () => {
+    const result = await signIn(formData.email, formData.password);
+    
+    if (!result.success) {
+      handleAuthError(result.error);
       return false;
     }
-  };
 
-  const handleSignIn = async (): Promise<boolean> => {
-    const validation = validateSignInForm();
+    navigate(result.redirectPath);
+    return true;
+  }, [formData.email, formData.password, signIn, handleAuthError, navigate]);
+
+  // Handle the sign in process
+  const handleSignIn = useCallback(async () => {
+    const validation = validateSignInForm(formData);
     if (!validation.valid) {
       setFormErrors(validation.errors);
       return false;
     }
 
     return handleDirectSignIn();
-  };
+  }, [formData, validateSignInForm, handleDirectSignIn]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Main submit handler
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -209,9 +276,10 @@ export const useAuthForm = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [mode, handleSignUp, handleSignIn]);
 
-  return {
+  // Memoize returned values to prevent unnecessary re-renders
+  return useMemo(() => ({
     mode,
     setMode,
     loading,
@@ -221,5 +289,13 @@ export const useAuthForm = () => {
     formErrors,
     updateFormField,
     handleSubmit,
-  };
+  }), [
+    mode, 
+    loading, 
+    userType, 
+    formData, 
+    formErrors, 
+    updateFormField, 
+    handleSubmit
+  ]);
 };
