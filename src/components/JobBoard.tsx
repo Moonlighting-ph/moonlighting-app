@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -118,8 +119,7 @@ const JobBoard: React.FC = () => {
   const handleApply = (jobId: string) => {
     if (!session) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to apply for this job",
+        description: "Please sign in to apply for this job"
       });
       navigate('/auth/login');
       return true; // Return true to indicate the action was handled

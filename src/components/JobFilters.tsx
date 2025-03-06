@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { JobFilters } from '@/hooks/useJobFilters';
+import type { JobFilters as JobFiltersType } from '@/hooks/useJobFilters';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Slider } from './ui/slider';
@@ -27,8 +27,8 @@ const SPECIALIZATIONS = [
 ];
 
 interface JobFiltersProps {
-  filters: JobFilters;
-  onUpdateFilter: <K extends keyof JobFilters>(key: K, value: JobFilters[K]) => void;
+  filters: JobFiltersType;
+  onUpdateFilter: <K extends keyof JobFiltersType>(key: K, value: JobFiltersType[K]) => void;
   onResetFilters: () => void;
   totalJobs: number;
   filteredCount: number;

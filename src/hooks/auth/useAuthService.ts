@@ -33,7 +33,9 @@ export const useAuthService = () => {
 
       if (error) throw error;
       
-      toast.success('Registration successful! Please check your email to verify your account.');
+      toast({
+        description: 'Registration successful! Please check your email to verify your account.'
+      });
       return { success: true, data };
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -47,15 +49,18 @@ export const useAuthService = () => {
   // Handle signin process
   const signIn = useCallback(async (email: string, password: string) => {
     try {
+      console.log('Attempting to sign in with email:', email);
+      
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+      
+      console.log('Sign in successful, fetching user profile...');
 
-      // Get user profile to check user type - using maybeSingle instead of single
-      // to prevent errors when no profile is found
+      // Get user profile to check user type - using maybeSingle to avoid errors
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('user_type')
@@ -64,13 +69,20 @@ export const useAuthService = () => {
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
-        throw new Error('Error retrieving user profile');
+        // Use toast instead of throwing an error to improve user experience
+        toast({
+          description: 'Error retrieving user profile. Redirecting to home page.',
+          variant: "destructive"
+        });
+        return { success: true, data, redirectPath: '/' };
       }
 
       // If no profile was found, create a default redirect
       if (!profileData) {
         console.warn('No profile found for user:', data.user.id);
-        toast.success('Sign in successful!');
+        toast({
+          description: 'Sign in successful!'
+        });
         return { success: true, data, redirectPath: '/' };
       }
 
@@ -82,8 +94,10 @@ export const useAuthService = () => {
         redirectPath = '/moonlighter';
       }
       
-      console.log('Redirecting to:', redirectPath);
-      toast.success('Sign in successful!');
+      console.log('Sign in complete, redirecting to:', redirectPath);
+      toast({
+        description: 'Sign in successful!'
+      });
       return { success: true, data, redirectPath };
     } catch (error: any) {
       console.error('Signin error:', error);

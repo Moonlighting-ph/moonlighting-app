@@ -45,28 +45,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      // First refresh the session to ensure we have valid tokens
+      console.log('Attempting to sign out...');
+      
+      // First check if there's an active session before trying to sign out
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session) {
-        console.log('No active session found');
+        console.log('No active session found, no need to sign out');
         setSession(null);
+        toast.success('You have been signed out successfully');
         return;
       }
-
-      // Now attempt to sign out
+      
+      // Perform the sign out
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Error signing out:', error);
-        toast.error(`Logout failed: ${error.message}`);
+        toast({
+          description: `Logout failed: ${error.message}`,
+          variant: "destructive"
+        });
       } else {
         setSession(null);
-        toast.success('You have been signed out successfully');
+        toast({
+          description: 'You have been signed out successfully'
+        });
       }
     } catch (error: any) {
       console.error('Unexpected error signing out:', error);
-      toast.error('An unexpected error occurred during logout');
+      toast({
+        description: 'An unexpected error occurred during logout',
+        variant: "destructive"
+      });
     }
   };
 
@@ -77,6 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (_event, session) => {
+          console.log('Auth state changed:', _event, session ? 'User authenticated' : 'No session');
           setSession(session);
           setLoading(false);
         }

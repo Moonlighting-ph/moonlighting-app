@@ -1,145 +1,138 @@
 
 import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+export type ProfessionType = 
+  'Registered Nurse' | 
+  'Licensed Physician' | 
+  'Medical Technologist' | 
+  'Physical Therapist' | 
+  'Radiologic Technologist' | 
+  'Pharmacist' | 
+  'Midwife' | 
+  'Occupational Therapist' | 
+  'Dentist';
+
+export type VerificationStatus = 'pending' | 'verified' | 'rejected';
+
+export type LicenseData = {
+  id?: string;
+  license_number: string;
+  profession: string;
+  full_name?: string;
+  supporting_documents?: File[];
+  appeal_reason?: string;
+};
 
 export const usePrcVerification = () => {
-  const [verifying, setVerifying] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'rejected' | null>(null);
+  const { session } = useAuth();
+  const [loadingStatus, setLoadingStatus] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus | null>(null);
+  const [licenseData, setLicenseData] = useState<any>(null);
 
-  const verifyLicense = useCallback(async (userId: string, licenseNumber: string, profession: string) => {
-    if (!userId || !licenseNumber || !profession) {
-      toast.error('Missing verification information');
-      return { success: false, error: 'Missing verification information' };
-    }
-
-    setVerifying(true);
-    setVerificationStatus('pending');
-
+  // Get verification status
+  const getVerificationStatus = useCallback(async (userId: string) => {
+    if (!userId) return null;
+    
     try {
-      console.log('Verifying license:', licenseNumber, 'for profession:', profession);
-      
-      // First check if a license record already exists
-      const { data: existingLicense, error: fetchError } = await supabase
+      setLoadingStatus(true);
+      const { data, error } = await supabase
         .from('prc_licenses')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
-
-      if (fetchError) {
-        console.error('Error checking license:', fetchError);
-        toast.error('Error checking license status');
-        setVerifying(false);
-        return { success: false, error: fetchError.message };
-      }
-
-      // If license record exists, update it
-      if (existingLicense) {
-        const { error: updateError } = await supabase
-          .from('prc_licenses')
-          .update({
-            license_number: licenseNumber,
-            profession: profession,
-            status: 'pending',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingLicense.id);
-
-        if (updateError) {
-          console.error('Error updating license:', updateError);
-          toast.error('Error updating license information');
-          setVerifying(false);
-          return { success: false, error: updateError.message };
-        }
-      } else {
-        // If no license record exists, create one
-        const { error: insertError } = await supabase
-          .from('prc_licenses')
-          .insert({
-            user_id: userId,
-            license_number: licenseNumber,
-            profession: profession,
-            status: 'pending'
-          });
-
-        if (insertError) {
-          console.error('Error saving license:', insertError);
-          toast.error('Error saving license information');
-          setVerifying(false);
-          return { success: false, error: insertError.message };
-        }
-      }
-
-      // In a real-world implementation, we would call an external API to verify the license
-      // For demo purposes, we'll simulate a verification process that completes after a short delay
-      
-      // Simulate license verification - in a real app, this would call the PRC API
-      setTimeout(async () => {
-        // Auto-verify most licenses for demo purposes (80% success rate)
-        const isVerified = Math.random() > 0.2;
-        
-        const { error: statusUpdateError } = await supabase
-          .from('prc_licenses')
-          .update({
-            status: isVerified ? 'verified' : 'rejected',
-            verification_date: new Date().toISOString()
-          })
-          .eq('user_id', userId);
-        
-        if (statusUpdateError) {
-          console.error('Error updating verification status:', statusUpdateError);
-        }
-        
-        setVerificationStatus(isVerified ? 'verified' : 'rejected');
-        toast(isVerified ? 
-          { title: 'License Verified', description: 'Your PRC license has been successfully verified.' } : 
-          { title: 'Verification Failed', description: 'Your license could not be verified. Please check the information or submit an appeal.', icon: '⚠️' }
-        );
-        
-        setVerifying(false);
-      }, 3000);
-      
-      toast.success('License submitted for verification');
-      return { success: true };
-    } catch (error: any) {
-      console.error('License verification error:', error);
-      toast.error('An unexpected error occurred during verification');
-      setVerifying(false);
-      return { success: false, error: error.message || 'Unexpected error' };
-    }
-  }, []);
-
-  const checkVerificationStatus = useCallback(async (userId: string) => {
-    if (!userId) return null;
-    
-    try {
-      const { data, error } = await supabase
-        .from('prc_licenses')
-        .select('status, verification_date')
-        .eq('user_id', userId)
-        .maybeSingle();
       
       if (error) {
-        console.error('Error checking verification status:', error);
+        console.error('Error fetching verification status:', error);
         return null;
       }
       
       if (data) {
-        setVerificationStatus(data.status as 'pending' | 'verified' | 'rejected');
-        return data.status;
+        setVerificationStatus(data.status as VerificationStatus);
+        setLicenseData(data);
       }
       
-      return null;
+      return data;
     } catch (error) {
-      console.error('Error fetching verification status:', error);
+      console.error('Error in verification status check:', error);
       return null;
+    } finally {
+      setLoadingStatus(false);
     }
   }, []);
 
+  // Submit PRC license for verification
+  const submitLicenseForVerification = useCallback(async (
+    licenseData: LicenseData,
+    isAppeal: boolean = false,
+    existingLicenseId?: string
+  ) => {
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to submit verification");
+      return { success: false };
+    }
+    
+    try {
+      setLoadingSubmit(true);
+      
+      if (isAppeal && existingLicenseId) {
+        // Submit appeal for existing license
+        const { error: appealError } = await supabase
+          .from('verification_appeals')
+          .insert({
+            user_id: session.user.id,
+            license_id: existingLicenseId,
+            appeal_reason: licenseData.appeal_reason || 'No reason provided',
+          });
+        
+        if (appealError) {
+          console.error('Error submitting appeal:', appealError);
+          toast.error("Failed to submit appeal. Please try again.");
+          return { success: false };
+        }
+        
+        toast.success("Your appeal has been submitted for review");
+        return { success: true };
+      }
+      
+      // Submit new license for verification
+      const { error } = await supabase
+        .from('prc_licenses')
+        .insert({
+          user_id: session.user.id,
+          license_number: licenseData.license_number,
+          profession: licenseData.profession,
+        });
+      
+      if (error) {
+        console.error('Error submitting license:', error);
+        toast.error("Failed to submit license. Please try again.");
+        return { success: false };
+      }
+      
+      toast({
+        description: "Your license has been submitted for verification."
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Unexpected error in license submission:', error);
+      toast.error("An unexpected error occurred. Please try again.");
+      return { success: false };
+    } finally {
+      setLoadingSubmit(false);
+    }
+  }, [session]);
+
   return {
-    verifying,
+    loadingStatus,
+    loadingSubmit,
     verificationStatus,
-    verifyLicense,
-    checkVerificationStatus
+    licenseData,
+    getVerificationStatus,
+    submitLicenseForVerification
   };
 };

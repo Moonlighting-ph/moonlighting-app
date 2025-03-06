@@ -11,25 +11,44 @@ export const useAuthErrors = () => {
     
     // Handle specific error cases
     if (errorMessage.includes('User already registered')) {
-      toast.error('This email is already registered. Please sign in instead.');
+      toast({
+        description: 'This email is already registered. Please sign in instead.',
+        variant: "destructive"
+      });
       setFormErrors({email: 'This email is already registered'});
     } else if (errorMessage.includes('Invalid login credentials')) {
-      toast.error('Invalid email or password. Please try again.');
+      toast({
+        description: 'Invalid email or password. Please try again.',
+        variant: "destructive"
+      });
       setFormErrors({
         email: 'Invalid login credentials',
         password: 'Invalid login credentials'
       });
     } else if (errorMessage.includes('Email not confirmed')) {
-      toast.error('Please verify your email before signing in.');
+      toast({
+        description: 'Please verify your email before signing in.',
+        variant: "destructive"
+      });
       setFormErrors({email: 'Email not verified'});
     } else if (errorMessage.includes('infinite recursion detected')) {
-      toast.error('Database access error. Please try again later.');
-      setFormErrors({general: 'Database access error'});
+      toast({
+        title: "Database Policy Error",
+        description: 'There is an issue with the database access policy. Please contact support.',
+        variant: "destructive"
+      });
+      setFormErrors({general: 'Database access policy error'});
     } else if (errorMessage.includes('Error retrieving user profile')) {
-      toast.error('Unable to retrieve your profile. Please try again later.');
+      toast({
+        description: 'Unable to retrieve your profile. Please try again later.',
+        variant: "destructive"
+      });
       setFormErrors({general: 'Unable to retrieve profile'});
     } else {
-      toast.error(errorMessage);
+      toast({
+        description: errorMessage,
+        variant: "destructive"
+      });
     }
   }, []);
 
