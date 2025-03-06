@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthForm } from '@/hooks/useAuthForm';
 import SignInForm from './SignInForm';
 import SignUpForm from './SignUpForm';
-import AuthModeToggle from './AuthModeToggle';
 
 const AuthForm = () => {
   const {
@@ -13,9 +12,15 @@ const AuthForm = () => {
     userType,
     setUserType,
     formData,
+    formErrors,
     updateFormField,
     handleSubmit,
   } = useAuthForm();
+
+  // Function to toggle auth mode (signin/signup)
+  const handleToggleMode = () => {
+    setMode(mode === 'signin' ? 'signup' : 'signin');
+  };
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -32,23 +37,22 @@ const AuthForm = () => {
           {mode === 'signin' ? (
             <SignInForm 
               formData={formData}
+              formErrors={formErrors}
               updateField={updateFormField}
               loading={loading}
+              onToggleMode={handleToggleMode}
             />
           ) : (
             <SignUpForm 
               formData={formData}
+              formErrors={formErrors}
               updateField={updateFormField}
               userType={userType}
               onUserTypeChange={setUserType}
               loading={loading}
+              onToggleMode={handleToggleMode}
             />
           )}
-
-          <AuthModeToggle 
-            mode={mode}
-            onToggle={setMode}
-          />
         </form>
       </CardContent>
     </Card>

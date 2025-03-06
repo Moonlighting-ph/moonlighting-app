@@ -10,8 +10,7 @@ import { AuthFormData, UserType } from '@/hooks/useAuthForm';
 type SignUpFormProps = {
   formData: AuthFormData;
   formErrors: {[key: string]: string};
-  updateFormField: (field: keyof AuthFormData, value: string) => void;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  updateField: (field: keyof AuthFormData, value: string) => void;
   loading: boolean;
   userType: UserType;
   onUserTypeChange: (type: UserType) => void;
@@ -21,13 +20,17 @@ type SignUpFormProps = {
 const SignUpForm = ({
   formData,
   formErrors,
-  updateFormField,
-  handleSubmit,
+  updateField,
   loading,
   userType,
   onUserTypeChange,
   onToggleMode
 }: SignUpFormProps) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // The actual submission logic is handled in the parent component
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="space-y-1">
@@ -43,7 +46,7 @@ const SignUpForm = ({
               id="firstName"
               label="First Name"
               value={formData.firstName}
-              onChange={(value) => updateFormField('firstName', value)}
+              onChange={(value) => updateField('firstName', value)}
               required
               autoComplete="given-name"
               error={formErrors.firstName}
@@ -53,7 +56,7 @@ const SignUpForm = ({
               id="lastName"
               label="Last Name"
               value={formData.lastName}
-              onChange={(value) => updateFormField('lastName', value)}
+              onChange={(value) => updateField('lastName', value)}
               required
               autoComplete="family-name"
               error={formErrors.lastName}
@@ -65,7 +68,7 @@ const SignUpForm = ({
             label="Email"
             type="email"
             value={formData.email}
-            onChange={(value) => updateFormField('email', value)}
+            onChange={(value) => updateField('email', value)}
             required
             autoComplete="email"
             error={formErrors.email}
@@ -76,7 +79,7 @@ const SignUpForm = ({
             label="Password"
             type="password"
             value={formData.password}
-            onChange={(value) => updateFormField('password', value)}
+            onChange={(value) => updateField('password', value)}
             required
             autoComplete="new-password"
             error={formErrors.password}
@@ -104,7 +107,7 @@ const SignUpForm = ({
             )}
           </Button>
           
-          <AuthModeToggle mode="signup" onToggle={() => onToggleMode()} isLoading={loading} />
+          <AuthModeToggle mode="signup" onToggle={onToggleMode} isLoading={loading} />
         </CardFooter>
       </form>
     </Card>

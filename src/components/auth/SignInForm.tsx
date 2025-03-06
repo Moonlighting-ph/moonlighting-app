@@ -9,8 +9,7 @@ import { AuthFormData } from '@/hooks/useAuthForm';
 type SignInFormProps = {
   formData: AuthFormData;
   formErrors: {[key: string]: string};
-  updateFormField: (field: keyof AuthFormData, value: string) => void;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  updateField: (field: keyof AuthFormData, value: string) => void;
   loading: boolean;
   onToggleMode: () => void;
 };
@@ -18,11 +17,15 @@ type SignInFormProps = {
 const SignInForm = ({
   formData,
   formErrors,
-  updateFormField,
-  handleSubmit,
+  updateField,
   loading,
   onToggleMode
 }: SignInFormProps) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // The actual submission logic is handled in the parent component
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="space-y-1">
@@ -38,7 +41,7 @@ const SignInForm = ({
             label="Email"
             type="email"
             value={formData.email}
-            onChange={(value) => updateFormField('email', value)}
+            onChange={(value) => updateField('email', value)}
             required
             autoComplete="email"
             error={formErrors.email}
@@ -49,7 +52,7 @@ const SignInForm = ({
             label="Password"
             type="password"
             value={formData.password}
-            onChange={(value) => updateFormField('password', value)}
+            onChange={(value) => updateField('password', value)}
             required
             autoComplete="current-password"
             error={formErrors.password}
@@ -71,7 +74,7 @@ const SignInForm = ({
             )}
           </Button>
           
-          <AuthModeToggle mode="signin" onToggle={() => onToggleMode()} isLoading={loading} />
+          <AuthModeToggle mode="signin" onToggle={onToggleMode} isLoading={loading} />
         </CardFooter>
       </form>
     </Card>

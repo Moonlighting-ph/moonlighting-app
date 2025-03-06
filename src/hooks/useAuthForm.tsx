@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -15,6 +14,7 @@ export type AuthMode = 'signin' | 'signup';
 export type UserType = 'provider' | 'moonlighter';
 
 export const useAuthForm = () => {
+  // ... keep existing code (navigate, mode, loading, userType state definitions)
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('signin');
   const [loading, setLoading] = useState(false);
@@ -38,6 +38,8 @@ export const useAuthForm = () => {
       setFormErrors(updatedErrors);
     }
   };
+
+  // ... keep existing code (validateSignupForm, validateSignInForm, handleSignUp, handleSignIn, handleAuthError functions)
 
   const validateSignupForm = (): { valid: boolean; errors: {[key: string]: string} } => {
     const errors: {[key: string]: string} = {};
