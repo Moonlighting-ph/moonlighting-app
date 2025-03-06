@@ -1,121 +1,114 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tab, Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useNavigate } from 'react-router-dom';
-import { getManualPayments } from '@/services/manualPaymentService';
-import PaymentCard from '@/components/PaymentCard';
+import { PaymentCard } from '@/components/PaymentCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ManualPayment } from '@/types/payment';
+import { getManualPayments } from '@/services/manualPaymentService';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const Payments = () => {
-  const auth = useAuth();
-  const navigate = useNavigate();
+const Payments: React.FC = () => {
+  const { session } = useAuth();
   const [payments, setPayments] = useState<ManualPayment[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Get user type from session metadata
+  const userType = session?.user.user_metadata.user_type as 'moonlighter' | 'provider';
+
   useEffect(() => {
     const fetchPayments = async () => {
-      if (!auth.session?.user?.id) return;
+      if (!session?.user?.id) return;
       
       try {
         setLoading(true);
-        const data = await getManualPayments();
-        setPayments(data);
+        const paymentData = await getManualPayments(session.user.id, userType);
+        setPayments(paymentData);
       } catch (error) {
         console.error('Error fetching payments:', error);
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchPayments();
-  }, [auth.session?.user?.id]);
-  
-  const handleMakePayment = () => {
-    navigate('/provider/make-payment');
-  };
-  
-  if (!auth.session) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p>Please sign in to view your payments.</p>
-            <Button onClick={() => navigate('/auth/login')} className="mt-4">Sign In</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
+
+    if (session) {
+      fetchPayments();
+    }
+  }, [session, userType]);
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Payments</h1>
-        {auth.userType === 'provider' && (
-          <Button onClick={handleMakePayment}>Make Payment</Button>
-        )}
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
       
-      <Tabs defaultValue="all">
-        <TabsList className="mb-6">
-          <TabsTrigger value="all">All Payments</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-        </TabsList>
+      <main className="flex-grow container max-w-6xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Payment History</h1>
         
-        <TabsContent value="all">
-          <PaymentsList payments={payments} loading={loading} />
-        </TabsContent>
-        
-        <TabsContent value="completed">
-          <PaymentsList 
-            payments={payments.filter(p => p.status === 'completed')} 
-            loading={loading} 
-          />
-        </TabsContent>
-        
-        <TabsContent value="pending">
-          <PaymentsList 
-            payments={payments.filter(p => p.status === 'pending')} 
-            loading={loading} 
-          />
-        </TabsContent>
-      </Tabs>
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="all">All Payments</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all">
+            <PaymentList 
+              payments={payments} 
+              loading={loading} 
+              emptyMessage="No payment history found."
+            />
+          </TabsContent>
+          
+          <TabsContent value="completed">
+            <PaymentList 
+              payments={payments.filter(p => p.status === 'completed')} 
+              loading={loading} 
+              emptyMessage="No completed payments found."
+            />
+          </TabsContent>
+          
+          <TabsContent value="pending">
+            <PaymentList 
+              payments={payments.filter(p => p.status === 'pending')} 
+              loading={loading} 
+              emptyMessage="No pending payments found."
+            />
+          </TabsContent>
+        </Tabs>
+      </main>
+      
+      <Footer />
     </div>
   );
 };
 
-interface PaymentsListProps {
+interface PaymentListProps {
   payments: ManualPayment[];
   loading: boolean;
+  emptyMessage: string;
 }
 
-const PaymentsList: React.FC<PaymentsListProps> = ({ payments, loading }) => {
+const PaymentList: React.FC<PaymentListProps> = ({ payments, loading, emptyMessage }) => {
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p>Loading payments...</p>
-        </CardContent>
-      </Card>
+      <div className="text-center py-12">
+        <p className="text-gray-500">Loading payments...</p>
+      </div>
     );
   }
-  
-  if (!payments || payments.length === 0) {
+
+  if (payments.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <p>No payments found.</p>
+        <CardContent className="flex items-center justify-center h-40">
+          <p className="text-gray-500">{emptyMessage}</p>
         </CardContent>
       </Card>
     );
   }
-  
+
   return (
-    <div className="grid gap-4">
+    <div className="space-y-4">
       {payments.map((payment) => (
         <PaymentCard key={payment.id} payment={payment} />
       ))}

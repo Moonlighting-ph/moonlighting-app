@@ -1,79 +1,91 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { ManualPayment } from '@/types/payment';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { CreditCard, Clock, CheckCircle, XCircle } from 'lucide-react';
 
-interface PaymentCardProps {
-  amount: number;
-  currency: string;
-  status: 'pending' | 'completed' | 'failed';
-  jobTitle: string;
-  company: string;
-  counterpartyName: string;
-  date: string;
-  onProcessPayment?: () => void;
-  isProvider?: boolean;
+export interface PaymentCardProps {
+  payment: ManualPayment;
 }
 
-const PaymentCard: React.FC<PaymentCardProps> = ({
-  amount,
-  currency,
-  status,
-  jobTitle,
-  company,
-  counterpartyName,
-  date,
-  onProcessPayment,
-  isProvider = false,
-}) => {
-  const formattedAmount = new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: currency || 'PHP',
-  }).format(amount);
+export const PaymentCard: React.FC<PaymentCardProps> = ({ payment }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
-  const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-green-100 text-green-800',
-    failed: 'bg-red-100 text-red-800',
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
+    }).format(amount);
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>{formattedAmount}</CardTitle>
-            <CardDescription>{jobTitle} at {company}</CardDescription>
-          </div>
-          <Badge className={statusColors[status]}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="flex items-center space-x-2">
+          <CreditCard className="h-5 w-5 text-muted-foreground" />
+          <h3 className="font-medium capitalize">
+            {payment.payment_method_type} Payment
+          </h3>
         </div>
+        <Badge className={getStatusColor(payment.status)} variant="outline">
+          <span className="flex items-center gap-1">
+            {getStatusIcon(payment.status)}
+            <span className="capitalize">{payment.status}</span>
+          </span>
+        </Badge>
       </CardHeader>
-      <CardContent className="flex-grow">
+      <CardContent>
         <div className="space-y-2">
-          <p className="text-sm">
-            {isProvider ? 'Payment to:' : 'Payment from:'} <span className="font-medium">{counterpartyName}</span>
-          </p>
-          <p className="text-xs text-gray-500">
-            {new Date(date).toLocaleDateString()} {new Date(date).toLocaleTimeString()}
-          </p>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Amount</span>
+            <span className="font-medium">{formatCurrency(payment.amount)}</span>
+          </div>
+          {payment.reference_number && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Reference #</span>
+              <span className="font-medium">{payment.reference_number}</span>
+            </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Date</span>
+            <span>{format(new Date(payment.created_at), 'MMM d, yyyy')}</span>
+          </div>
         </div>
       </CardContent>
-      <CardFooter>
-        {status === 'pending' && onProcessPayment && (
-          <Button 
-            onClick={onProcessPayment}
-            className="w-full"
-            variant={isProvider ? 'default' : 'outline'}
-          >
-            {isProvider ? 'Make Payment' : 'View Payment'}
-          </Button>
-        )}
-      </CardFooter>
+      {payment.notes && (
+        <CardFooter className="border-t pt-4">
+          <div className="w-full">
+            <h4 className="text-sm font-medium mb-1">Notes</h4>
+            <p className="text-sm text-muted-foreground">{payment.notes}</p>
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 };
-
-export default PaymentCard;
