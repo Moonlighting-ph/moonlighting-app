@@ -1,183 +1,121 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ManualPaymentForm from '@/components/payments/ManualPaymentForm';
+import StripePaymentForm from '@/components/StripePaymentForm';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ManualPaymentForm from '@/components/payments/ManualPaymentForm';
-import { fetchUserPaymentMethods } from '@/services/paymentMethodService';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchPaymentMethods } from '@/services/paymentMethodService';
 import { PaymentMethod } from '@/types/payment';
-import { JobApplication } from '@/types/job';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
-const MakePayment: React.FC = () => {
+const MakePaymentPage: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const { applicationId } = useParams<{ applicationId: string }>();
-  
-  const [loading, setLoading] = useState(true);
-  const [application, setApplication] = useState<JobApplication | null>(null);
+  const location = useLocation();
+  const { jobId, applicationId } = useParams();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  
+  const [loading, setLoading] = useState(true);
+
+  // Get the moonlighter ID from the location state
+  const moonlighterId = location.state?.moonlighterId || '';
+  const amount = location.state?.amount || 0;
+  const jobTitle = location.state?.jobTitle || 'Job';
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!session?.user || !applicationId) {
-        navigate('/provider');
-        return;
-      }
-      
+    if (!session?.user?.id) {
+      navigate('/auth/login');
+      return;
+    }
+
+    if (!moonlighterId || !jobId || !applicationId) {
+      toast.error('Missing payment information');
+      navigate('/provider/applications');
+      return;
+    }
+
+    const loadPaymentMethods = async () => {
       try {
         setLoading(true);
-        
-        // Fetch the application
-        const { data: app, error: appError } = await supabase
-          .from('job_applications')
-          .select(`
-            *,
-            job:jobs(*),
-            moonlighter:profiles!job_applications_moonlighter_id_fkey(*)
-          `)
-          .eq('id', applicationId)
-          .maybeSingle();
-        
-        if (appError) {
-          throw appError;
-        }
-        
-        if (!app) {
-          toast.error('Application not found');
-          navigate('/provider/applications');
-          return;
-        }
-        
-        setApplication(app as unknown as JobApplication);
-        
-        // Check if the provider owns this job
-        if (app.job.provider_id !== session.user.id) {
-          toast.error('You do not have permission to access this application');
-          navigate('/provider/applications');
-          return;
-        }
-        
-        // Fetch payment methods
-        const methods = await fetchUserPaymentMethods(app.moonlighter_id);
+        // Get the moonlighter's payment methods
+        const methods = await fetchPaymentMethods(moonlighterId);
         setPaymentMethods(methods);
       } catch (error) {
-        console.error('Error fetching data:', error);
-        toast.error('Failed to load application data');
-        navigate('/provider/applications');
+        console.error('Error loading payment methods:', error);
+        toast.error('Failed to load payment methods');
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchData();
-  }, [session, applicationId, navigate]);
-  
+
+    loadPaymentMethods();
+  }, [session, navigate, moonlighterId, jobId, applicationId]);
+
   const handlePaymentComplete = () => {
     toast.success('Payment recorded successfully');
     navigate('/provider/applications');
   };
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="container mx-auto py-8 px-4">
-          <div className="text-center py-12">Loading...</div>
-        </div>
-        <Footer />
-      </div>
-    );
+
+  if (!session || !moonlighterId || !jobId || !applicationId) {
+    return null;
   }
-  
-  if (!application) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="container mx-auto py-8 px-4">
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">Application not found</p>
-            <Button onClick={() => navigate('/provider/applications')}>Back to Applications</Button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-  
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="container mx-auto py-8 px-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="mb-4"
-          onClick={() => navigate('/provider/applications')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Applications
-        </Button>
-        
-        <div className="max-w-3xl mx-auto">
-          <Card className="mb-6">
+      <main className="flex-grow py-8 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="mb-8">
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Back
+            </Button>
+          </div>
+
+          <Card>
             <CardHeader>
-              <CardTitle>Record Payment</CardTitle>
-              <CardDescription>
-                Record a payment for this application
-              </CardDescription>
+              <CardTitle>Make Payment for {jobTitle}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-medium">Job</p>
-                  <p>{application.job?.title}</p>
-                </div>
-                
-                <div>
-                  <p className="font-medium">Moonlighter</p>
-                  <p>{application.moonlighter?.first_name} {application.moonlighter?.last_name}</p>
-                </div>
-                
-                <div>
-                  <p className="font-medium">Status</p>
-                  <Badge variant="outline">{application.status}</Badge>
-                </div>
-              </div>
+              <Tabs defaultValue="manual" className="w-full">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="manual">Manual Payment</TabsTrigger>
+                  <TabsTrigger value="stripe" disabled>Stripe Payment (Coming Soon)</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="manual">
+                  {!loading && paymentMethods.length > 0 ? (
+                    <ManualPaymentForm
+                      providerId={session.user.id}
+                      moonlighterId={moonlighterId}
+                      jobId={jobId!}
+                      applicationId={applicationId!}
+                      paymentMethods={paymentMethods}
+                      onComplete={handlePaymentComplete}
+                    />
+                  ) : (
+                    <p className="text-gray-500">
+                      {loading 
+                        ? 'Loading payment methods...' 
+                        : 'No payment methods available for this moonlighter. They need to add payment methods first.'}
+                    </p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="stripe">
+                  <StripePaymentForm />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
-          
-          {application && session?.user && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Details</CardTitle>
-                <CardDescription>
-                  Enter the details of the payment
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ManualPaymentForm
-                  providerId={session.user.id}
-                  moonlighterId={application.moonlighter_id}
-                  jobId={application.job_id}
-                  applicationId={application.id}
-                  paymentMethods={paymentMethods}
-                  onComplete={handlePaymentComplete}
-                />
-              </CardContent>
-            </Card>
-          )}
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );
 };
 
-export default MakePayment;
+export default MakePaymentPage;

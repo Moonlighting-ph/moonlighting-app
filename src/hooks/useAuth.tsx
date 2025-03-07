@@ -47,22 +47,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Attempting to sign out...');
       
-      // Simply call signOut without checking for session first
-      // Let supabase handle the case where there's no session
-      const { error } = await supabase.auth.signOut();
+      // First, check if we have a session before attempting to sign out
+      const { data: sessionData } = await supabase.auth.getSession();
       
-      if (error) {
-        console.error('Error signing out:', error);
-        toast.error('Logout failed: ' + error.message);
+      // Even if no session exists, we'll still clear the local state
+      setSession(null);
+      
+      // Only attempt server-side signout if we have an actual session
+      if (sessionData.session) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('Error signing out:', error);
+          toast.error('Logout failed: ' + error.message);
+        } else {
+          toast.success('You have been signed out successfully');
+        }
       } else {
-        // Always clear the session state regardless of whether signOut succeeded
-        setSession(null);
+        // If no session exists, just inform the user they're signed out
+        console.log('No session found, but local state cleared');
         toast.success('You have been signed out successfully');
+      }
+      
+      // Clear any Supabase data from localStorage as a fallback
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('supabase.auth.token');
+        localStorage.removeItem('supabase.auth.expires_at');
+        localStorage.removeItem('supabase.auth.refresh_token');
       }
     } catch (error: any) {
       console.error('Unexpected error signing out:', error);
       // Even if an error occurred, we should still clear the local session state
-      // to allow users to "force logout" on the client side
       setSession(null);
       toast.error('An unexpected error occurred during logout');
     }

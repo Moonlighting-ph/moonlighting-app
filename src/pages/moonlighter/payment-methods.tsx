@@ -1,25 +1,31 @@
 
 import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/hooks/useAuth';
 import MoonlighterPaymentMethods from '@/components/payments/MoonlighterPaymentMethods';
+import { Navigate } from 'react-router-dom';
 
 const PaymentMethodsPage: React.FC = () => {
-  const { session } = useAuth();
-  
+  const { session, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!session) {
+    return <Navigate to="/auth/login" />;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Payment Methods</h1>
-        
-        {session?.user && (
-          <div className="max-w-2xl mx-auto">
-            <MoonlighterPaymentMethods userId={session.user.id} />
-          </div>
-        )}
-      </div>
+      <main className="flex-grow">
+        <div className="container mx-auto max-w-4xl py-8 px-4">
+          <h1 className="text-3xl font-bold mb-8">Payment Methods</h1>
+          <MoonlighterPaymentMethods userId={session.user.id} />
+        </div>
+      </main>
       <Footer />
     </div>
   );

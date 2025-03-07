@@ -1,81 +1,85 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ManualPayment } from '@/types/payment';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { formatDistanceToNow } from 'date-fns';
+import { Payment, ManualPayment } from '@/types/payment';
 
-interface PaymentCardProps {
-  payment: ManualPayment;
-  userType: 'provider' | 'moonlighter'; // Add userType prop
+export interface PaymentCardProps {
+  payment: Payment | ManualPayment;
+  userType: 'provider' | 'moonlighter';
 }
 
 const PaymentCard: React.FC<PaymentCardProps> = ({ payment, userType }) => {
-  let statusColor = '';
-  switch (payment.status) {
-    case 'completed':
-      statusColor = 'text-green-600 bg-green-50';
-      break;
-    case 'pending':
-      statusColor = 'text-yellow-600 bg-yellow-50';
-      break;
-    case 'failed':
-      statusColor = 'text-red-600 bg-red-50';
-      break;
-  }
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
+    }).format(amount);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Check if payment is a ManualPayment by checking for reference_number property
+  const isManualPayment = (payment: Payment | ManualPayment): payment is ManualPayment => {
+    return 'reference_number' in payment;
+  };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden transition-all hover:shadow-md">
+      <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">
-              Payment {payment.reference_number ? `#${payment.reference_number}` : ''}
+              {formatCurrency(payment.amount)}
             </CardTitle>
             <CardDescription>
-              {payment.job_id ? 'Job Payment' : 'General Payment'}
+              {isManualPayment(payment) && payment.reference_number && (
+                <>Ref: {payment.reference_number.substring(0, 8)}</>
+              )}
+              {!isManualPayment(payment) && (
+                <>Payment</>
+              )}
             </CardDescription>
           </div>
-          <Badge className={statusColor} variant="outline">
-            {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+          <Badge className={getStatusColor(payment.status)}>
+            {payment.status}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500">Amount:</span>
-            <span className="font-semibold">{formatCurrency(payment.amount)}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-500">Method:</span>
-            <span>{payment.payment_method_type.toUpperCase()}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-500">Date:</span>
-            <span>{payment.created_at ? formatDate(payment.created_at) : 'N/A'}</span>
-          </div>
-          
-          {payment.payment_details && (
-            <div className="flex justify-between">
-              <span className="text-gray-500">Details:</span>
-              <span className="text-right">{payment.payment_details}</span>
-            </div>
-          )}
-        </div>
+      <CardContent className="text-sm">
+        <p>
+          {userType === 'provider' ? 'To: ' : 'From: '}
+          <span className="font-medium">
+            {userType === 'provider' ? 'Moonlighter' : 'Provider'}
+          </span>
+        </p>
+        <p className="text-gray-500 text-xs mt-1">
+          {formatDistanceToNow(new Date(payment.created_at), { addSuffix: true })}
+        </p>
       </CardContent>
-      <CardFooter className="pt-3 border-t flex justify-end">
-        {userType === 'provider' && payment.status === 'pending' && (
-          <div className="space-x-2">
-            <Button size="sm" variant="outline">Confirm</Button>
-            <Button size="sm" variant="destructive">Reject</Button>
-          </div>
-        )}
-        {userType === 'moonlighter' && payment.status === 'pending' && (
-          <Button size="sm" variant="outline">View Details</Button>
+      <CardFooter className="pt-2 pb-4">
+        {isManualPayment(payment) && payment.receipt_url && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full"
+            onClick={() => window.open(payment.receipt_url, '_blank')}
+          >
+            View Receipt
+          </Button>
         )}
       </CardFooter>
     </Card>

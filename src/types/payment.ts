@@ -1,44 +1,48 @@
 
-// Add missing PaymentMethodType type to fix build errors
+export interface PaymentMethod {
+  id: string;
+  user_id: string;
+  method: string;
+  details: string;
+  is_default: boolean;
+  created_at: string;
+  type: string;
+}
 
 export interface Payment {
   id: string;
-  amount: number;
-  currency: string;
-  status: 'pending' | 'completed' | 'failed';
-  created_at: string;
   provider_id: string;
   moonlighter_id: string;
+  application_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  stripe_payment_intent_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ManualPayment extends Payment {
   job_id: string;
   payment_method_id: string;
-  payment_method_type: PaymentMethodType;
-  payment_details: string;
-  receipt_number: string;
-  notes: string;
+  payment_method_type: string;
+  payment_details: Record<string, any>;
+  reference_number: string;
+  receipt_url: string;
 }
-
-export interface PaymentMethod {
-  id: string;
-  user_id: string;
-  type: PaymentMethodType;
-  details: {
-    [key: string]: any;
-  };
-  is_default: boolean;
-  created_at: string;
-}
-
-export type PaymentMethodType = 'bank_account' | 'gcash' | 'paymaya' | 'credit_card';
 
 export interface PaymentMethodFormProps {
-  onSuccess: (paymentMethod: PaymentMethod) => void;
-  onCancel: () => void;
+  userId: string;
+  onComplete?: () => void;
 }
 
 export interface ManualPaymentFormProps {
-  onSuccess: (payment: ManualPayment) => void;
-  onCancel: () => void;
+  providerId: string;
+  moonlighterId: string;
+  jobId: string;
+  applicationId: string;
+  paymentMethods: PaymentMethod[];
+  onComplete: () => void;
 }
+
+export type PaymentMethodType = 'bank_transfer' | 'gcash' | 'credit_card' | 'paypal';

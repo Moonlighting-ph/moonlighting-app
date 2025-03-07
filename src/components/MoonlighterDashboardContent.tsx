@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { fetchMoonlighterApplications } from '@/services/jobApplicationService';
 import { JobApplication } from '@/types/job';
 import ApplicationsStats from './moonlighter/ApplicationsStats';
 import RecentApplicationsList from './moonlighter/RecentApplicationsList';
 import JobRecommendations from './moonlighter/JobRecommendations';
+import DashboardHeader from './moonlighter/dashboard/DashboardHeader';
 
 const MoonlighterDashboardContent: React.FC = () => {
   const { session } = useAuth();
@@ -44,10 +44,7 @@ const MoonlighterDashboardContent: React.FC = () => {
   return (
     <section className="py-12 px-4">
       <div className="container mx-auto max-w-6xl">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <h2 className="text-3xl font-bold text-primary mb-4 md:mb-0">Moonlighter Dashboard</h2>
-          <Button size="lg" variant="default" onClick={handleFindJobs}>Find Shifts</Button>
-        </div>
+        <DashboardHeader onFindJobs={handleFindJobs} />
         
         <ApplicationsStats applications={recentApplications} />
         

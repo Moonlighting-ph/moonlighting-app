@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -54,11 +53,25 @@ const Navbar: React.FC = () => {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
-      // Force clear local storage of any auth data to ensure clean logout
-      localStorage.removeItem('supabase.auth.token');
+      
+      // Clear any Supabase data from localStorage first
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('supabase.auth.token');
+        // Remove any other Supabase auth-related items
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('supabase.auth.')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
       
       await signOut();
       navigate('/');
+      
+      // Force refresh the page to ensure all state is cleared
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
     } catch (error) {
       console.error('Sign out error in Navbar:', error);
       toast.error('Failed to sign out. Please try again.');
