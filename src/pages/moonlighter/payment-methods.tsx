@@ -1,57 +1,86 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import SmoothScroll from '@/components/SmoothScroll';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SmoothScroll from '@/components/SmoothScroll';
 import PaymentMethodForm from '@/components/payments/PaymentMethodForm';
 import PaymentMethodsList from '@/components/payments/PaymentMethodsList';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 const PaymentMethodsPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { session, loading } = useAuth();
+  const { session } = useAuth();
+  const [showForm, setShowForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Redirect if not logged in
-  React.useEffect(() => {
-    if (!loading && !session) {
-      navigate('/auth/login');
-    }
-  }, [session, loading, navigate]);
+  const handleFormSubmitSuccess = () => {
+    setShowForm(false);
+    setRefreshTrigger(prev => prev + 1);
+    toast.success('Payment method added successfully');
+  };
 
-  const handleAddSuccess = () => {
+  const handleCancelForm = () => {
+    setShowForm(false);
+  };
+
+  const handleAddNewClick = () => {
+    setShowForm(true);
+  };
+
+  const handleMethodDeleted = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  if (loading) {
+  if (!session) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
+      <SmoothScroll>
+        <Navbar />
+        <div className="container mx-auto py-12 px-4 text-center">
+          <p>Please sign in to manage your payment methods.</p>
+        </div>
+        <Footer />
+      </SmoothScroll>
     );
   }
 
   return (
     <SmoothScroll>
-      <div className="min-h-screen bg-white">
-        <Navbar />
-        <section className="py-12 px-4">
-          <div className="container mx-auto max-w-4xl">
-            <h1 className="text-3xl font-bold text-primary mb-8">Payment Methods</h1>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <PaymentMethodForm userId={session?.user?.id || ''} onSuccess={handleAddSuccess} />
-              </div>
-              <div>
-                <PaymentMethodsList refreshTrigger={refreshTrigger} />
-              </div>
-            </div>
+      <Navbar />
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+            <h1 className="text-3xl font-bold mb-4 md:mb-0">Payment Methods</h1>
+            {!showForm && (
+              <Button onClick={handleAddNewClick}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Method
+              </Button>
+            )}
           </div>
-        </section>
-        <Footer />
+
+          {showForm ? (
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+              <h2 className="text-xl font-semibold mb-4">Add Payment Method</h2>
+              <PaymentMethodForm 
+                onSuccess={handleFormSubmitSuccess} 
+                onCancel={handleCancelForm}
+                userId={session.user.id}
+              />
+            </div>
+          ) : null}
+
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <PaymentMethodsList 
+              userId={session.user.id} 
+              onMethodDeleted={handleMethodDeleted}
+              refreshTrigger={refreshTrigger}
+            />
+          </div>
+        </div>
       </div>
+      <Footer />
     </SmoothScroll>
   );
 };

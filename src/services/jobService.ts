@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Job } from '@/types/job';
 import { JobFilters } from '@/types/filter';
+import { getUserProfile } from './profileService';
 
 export const fetchJobs = async (filters?: JobFilters): Promise<Job[]> => {
   try {
@@ -20,15 +21,15 @@ export const fetchJobs = async (filters?: JobFilters): Promise<Job[]> => {
         query = query.ilike('location', `%${filters.location}%`);
       }
       
-      if (filters.type) {
+      if (filters.type && filters.type !== '') {
         query = query.eq('type', filters.type);
       }
       
-      if (filters.specialization) {
+      if (filters.specialization && filters.specialization !== '') {
         query = query.eq('specialization', filters.specialization);
       }
       
-      if (filters.experience_level) {
+      if (filters.experience_level && filters.experience_level !== '') {
         query = query.eq('experience_level', filters.experience_level);
       }
       
@@ -83,7 +84,106 @@ export const fetchProviderJobs = async (providerId: string): Promise<Job[]> => {
   }
 };
 
-// Renamed from getMockJobs to getJobsMock for clarity
+export const createJob = async (jobData: Partial<Job>): Promise<Job> => {
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .insert(jobData)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return data as Job;
+  } catch (error) {
+    console.error('Error creating job:', error);
+    throw error;
+  }
+};
+
+export const updateJob = async (id: string, jobData: Partial<Job>): Promise<Job> => {
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .update(jobData)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return data as Job;
+  } catch (error) {
+    console.error(`Error updating job ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteJob = async (id: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('jobs')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error(`Error deleting job ${id}:`, error);
+    throw error;
+  }
+};
+
+export const getRecommendedJobs = async (userId: string, limit = 5): Promise<Job[]> => {
+  try {
+    // Fetch the user profile to get their specialization and experience level
+    const profile = await getUserProfile(userId);
+    
+    if (!profile || !profile.specialization) {
+      // If there's no profile or specialization, return all jobs
+      return await fetchJobs({ limit: limit });
+    }
+    
+    // First try to match by specialization
+    let query = supabase
+      .from('jobs')
+      .select('*')
+      .eq('specialization', profile.specialization)
+      .order('posted_date', { ascending: false })
+      .limit(limit);
+    
+    let { data, error } = await query;
+    
+    if (error) throw error;
+    
+    if (data && data.length >= limit) {
+      return data as Job[];
+    }
+    
+    // If we don't have enough matches by specialization, query more jobs
+    const remainingLimit = limit - (data?.length || 0);
+    
+    if (remainingLimit > 0) {
+      const { data: moreJobs, error: moreError } = await supabase
+        .from('jobs')
+        .select('*')
+        .neq('specialization', profile.specialization) // Exclude the ones we already have
+        .order('posted_date', { ascending: false })
+        .limit(remainingLimit);
+      
+      if (moreError) throw moreError;
+      
+      // Combine the results
+      return [...(data || []), ...(moreJobs || [])] as Job[];
+    }
+    
+    return (data || []) as Job[];
+  } catch (error) {
+    console.error('Error fetching recommended jobs:', error);
+    return [];
+  }
+};
+
+// For fallback in case supabase isn't available
 export const getJobsMock = (): Job[] => {
   // Return mock data for testing
   return [
@@ -124,7 +224,7 @@ export const getJobsMock = (): Job[] => {
   ];
 };
 
-// Renamed from getJobs to fetchJobsWithFallback
+// Fallback function to either fetch from Supabase or return mock data
 export const fetchJobsWithFallback = async (filters?: JobFilters): Promise<Job[]> => {
   try {
     // Try to fetch real jobs first

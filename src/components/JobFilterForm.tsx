@@ -26,6 +26,10 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, 
     onFilterChange({ ...filters, isUrgent: checked });
   };
 
+  const handleExperienceLevelChange = (value: string) => {
+    onFilterChange({ ...filters, experience_level: value });
+  };
+
   return (
     <div className="space-y-4 p-4 bg-white rounded-lg shadow-sm">
       <h3 className="text-lg font-medium mb-2">Filter Jobs</h3>
@@ -57,7 +61,7 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, 
               <SelectValue placeholder="Select Job Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="">All Types</SelectItem>
               <SelectItem value="Full-time">Full-time</SelectItem>
               <SelectItem value="Part-time">Part-time</SelectItem>
               <SelectItem value="Contract">Contract</SelectItem>
@@ -92,7 +96,7 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, 
               <SelectValue placeholder="Select Specialization" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Specializations</SelectItem>
+              <SelectItem value="">All Specializations</SelectItem>
               <SelectItem value="Nursing">Nursing</SelectItem>
               <SelectItem value="Pediatrics">Pediatrics</SelectItem>
               <SelectItem value="Surgery">Surgery</SelectItem>
@@ -101,6 +105,27 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, 
               <SelectItem value="Radiology">Radiology</SelectItem>
               <SelectItem value="Pharmacy">Pharmacy</SelectItem>
               <SelectItem value="General Practice">General Practice</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <label htmlFor="experience_level" className="text-sm font-medium">
+            Experience Level
+          </label>
+          <Select
+            value={filters.experience_level || ''}
+            onValueChange={handleExperienceLevelChange}
+          >
+            <SelectTrigger id="experience_level">
+              <SelectValue placeholder="Select Experience Level" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Experience Levels</SelectItem>
+              <SelectItem value="Entry-level">Entry-level</SelectItem>
+              <SelectItem value="Intermediate">Intermediate</SelectItem>
+              <SelectItem value="Experienced">Experienced</SelectItem>
+              <SelectItem value="Senior">Senior</SelectItem>
             </SelectContent>
           </Select>
         </div>

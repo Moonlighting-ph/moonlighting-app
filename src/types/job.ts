@@ -16,3 +16,15 @@ export interface Job {
   is_urgent?: boolean;
   provider_id?: string;
 }
+
+export interface JobApplication {
+  id: string;
+  job_id: string;
+  moonlighter_id: string;
+  applied_date: string;
+  status: 'pending' | 'reviewed' | 'approved' | 'rejected';
+  notes?: string | null;
+  ai_match_score?: number | null;
+  job?: Job;
+  moonlighter?: any; // Profile information
+}

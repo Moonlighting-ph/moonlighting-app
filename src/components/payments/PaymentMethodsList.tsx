@@ -1,151 +1,144 @@
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { PaymentMethod } from '@/types/payment';
-import { getUserPaymentMethods, deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, CreditCard, Trash2, Check } from 'lucide-react';
+import { PaymentMethod } from '@/types/payment';
+import { fetchUserPaymentMethods, deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
 import { toast } from 'sonner';
+import { Building, CreditCard, Smartphone, Trash, Star } from 'lucide-react';
 
-// Define the props interface for the component
-interface PaymentMethodsListProps {
-  refreshTrigger: number;
+export interface PaymentMethodsListProps {
+  userId: string;
+  onMethodDeleted?: () => void;
+  refreshTrigger?: number;
 }
 
-const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ refreshTrigger }) => {
-  const { session } = useAuth();
+const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ 
+  userId, 
+  onMethodDeleted,
+  refreshTrigger = 0
+}) => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMethods = async () => {
+    try {
+      setLoading(true);
+      const methods = await fetchUserPaymentMethods(userId);
+      setPaymentMethods(methods);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching payment methods:', err);
+      setError('Failed to load payment methods');
+      toast.error('Failed to load payment methods');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      if (!session?.user?.id) return;
-      
-      try {
-        setLoading(true);
-        const methods = await getUserPaymentMethods(session.user.id);
-        setPaymentMethods(methods);
-      } catch (error) {
-        console.error('Error fetching payment methods:', error);
-        toast('Failed to load payment methods');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPaymentMethods();
-  }, [session, refreshTrigger]);
+    if (userId) {
+      fetchMethods();
+    }
+  }, [userId, refreshTrigger]);
 
   const handleDelete = async (id: string) => {
     try {
-      setDeletingId(id);
-      await deletePaymentMethod(id);
-      setPaymentMethods(prevMethods => prevMethods.filter(method => method.id !== id));
-      toast('Payment method deleted successfully');
-    } catch (error) {
-      console.error('Error deleting payment method:', error);
-      toast('Failed to delete payment method');
-    } finally {
-      setDeletingId(null);
+      await deletePaymentMethod(id, userId);
+      toast.success('Payment method deleted');
+      fetchMethods();
+      if (onMethodDeleted) {
+        onMethodDeleted();
+      }
+    } catch (err) {
+      console.error('Error deleting payment method:', err);
+      toast.error('Failed to delete payment method');
     }
   };
 
   const handleSetDefault = async (id: string) => {
     try {
-      setSettingDefaultId(id);
-      await setDefaultPaymentMethod(id);
-      
-      // Update local state to reflect the change
-      setPaymentMethods(prevMethods => 
-        prevMethods.map(method => ({
-          ...method,
-          is_default: method.id === id
-        }))
-      );
-      
-      toast('Default payment method updated');
-    } catch (error) {
-      console.error('Error setting default payment method:', error);
-      toast('Failed to update default payment method');
-    } finally {
-      setSettingDefaultId(null);
+      await setDefaultPaymentMethod(id, userId);
+      toast.success('Default payment method updated');
+      fetchMethods();
+    } catch (err) {
+      console.error('Error setting default payment method:', err);
+      toast.error('Failed to update default payment method');
     }
   };
+
+  if (loading && paymentMethods.length === 0) {
+    return <div className="py-4 text-center">Loading payment methods...</div>;
+  }
+
+  if (error && paymentMethods.length === 0) {
+    return <div className="py-4 text-center text-red-500">{error}</div>;
+  }
+
+  if (paymentMethods.length === 0) {
+    return <div className="py-4 text-center">No payment methods added yet.</div>;
+  }
 
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'gcash':
+        return <Smartphone className="h-5 w-5 text-blue-500" />;
       case 'paymaya':
-        return <CreditCard className="h-5 w-5" />;
+        return <CreditCard className="h-5 w-5 text-purple-500" />;
       case 'bank':
-        return <Building className="h-5 w-5" />;
+        return <Building className="h-5 w-5 text-green-500" />;
       default:
-        return <CreditCard className="h-5 w-5" />;
+        return <CreditCard className="h-5 w-5 text-gray-500" />;
     }
   };
-
-  if (loading) {
-    return <div className="p-4 text-center">Loading payment methods...</div>;
-  }
-
-  if (paymentMethods.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-gray-500">
-            You haven't added any payment methods yet.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Your Payment Methods</h3>
       {paymentMethods.map((method) => (
-        <Card key={method.id} className={method.is_default ? 'border-primary' : ''}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              {getMethodIcon(method.method)}
-              {method.method === 'gcash' ? 'GCash' : 
-               method.method === 'paymaya' ? 'PayMaya' : 
-               'Bank Transfer'}
-              {method.is_default && (
-                <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5 ml-2">
-                  Default
-                </span>
+        <Card key={method.id} className={`overflow-hidden ${method.is_default ? 'border-primary' : ''}`}>
+          <div className="flex flex-col md:flex-row md:items-center">
+            <CardHeader className="py-3">
+              <div className="flex items-center space-x-3">
+                {getMethodIcon(method.method)}
+                <div>
+                  <CardTitle className="text-base">
+                    {method.method.charAt(0).toUpperCase() + method.method.slice(1)}
+                    {method.is_default && (
+                      <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
+                        Default
+                      </span>
+                    )}
+                  </CardTitle>
+                  <CardDescription className="text-sm mt-1">{method.details}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="flex flex-row ml-auto py-3 space-x-2">
+              {!method.is_default && (
+                <Button 
+                  onClick={() => handleSetDefault(method.id)} 
+                  size="sm" 
+                  variant="outline"
+                  title="Set as default"
+                >
+                  <Star className="h-4 w-4" />
+                  <span className="sr-only">Set as default</span>
+                </Button>
               )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">{method.details}</p>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 pt-0">
-            {!method.is_default && (
               <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleSetDefault(method.id)}
-                disabled={settingDefaultId === method.id}
+                onClick={() => handleDelete(method.id)} 
+                size="sm" 
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10"
+                title="Delete payment method"
               >
-                {settingDefaultId === method.id ? 'Setting...' : 'Set as Default'} 
-                <Check className="ml-2 h-4 w-4" />
+                <Trash className="h-4 w-4" />
+                <span className="sr-only">Delete</span>
               </Button>
-            )}
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={() => handleDelete(method.id)}
-              disabled={deletingId === method.id}
-            >
-              {deletingId === method.id ? 'Deleting...' : 'Delete'} 
-              <Trash2 className="ml-2 h-4 w-4" />
-            </Button>
-          </CardFooter>
+            </CardContent>
+          </div>
         </Card>
       ))}
     </div>
