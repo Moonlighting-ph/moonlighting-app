@@ -10,10 +10,14 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-3 group mb-6">
-              <Moon className="text-primary" />
-              <span className="text-xl font-bold">moonlighting.ph</span>
-            </div>
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="relative p-1">
+                <div className="absolute inset-0 rounded-full bg-primary opacity-20 group-hover:opacity-30 transition-opacity"></div>
+                <Moon className="h-8 w-8 text-primary relative z-10" />
+              </div>
+              <span className="font-display font-bold text-lg sm:text-xl">moonlighting.ph</span>
+            </Link>
             <p className="text-gray-600 mb-6 max-w-xs">
               Connecting healthcare professionals with flexible work opportunities across the Philippines.
             </p>
