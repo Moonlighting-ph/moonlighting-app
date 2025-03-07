@@ -10,16 +10,8 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     headers: {
-      "Content-Type": [
-        {
-          key: "*.js",
-          value: "application/javascript; charset=utf-8"
-        },
-        {
-          key: "*.mjs",
-          value: "application/javascript; charset=utf-8"
-        }
-      ]
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/javascript; charset=utf-8"
     }
   },
   plugins: [

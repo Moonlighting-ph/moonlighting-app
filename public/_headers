@@ -1,7 +1,8 @@
 
-# Set correct MIME types for JavaScript files
+# Set correct MIME types for JavaScript and SVG files
 /*.js
   Content-Type: application/javascript; charset=utf-8
 /*.mjs
   Content-Type: application/javascript; charset=utf-8
-
+/*.svg
+  Content-Type: image/svg+xml; charset=utf-8

@@ -11,7 +11,7 @@
   to = "/index.html"
   status = 200
 
-# Set correct MIME types for JavaScript files
+# Set correct MIME types for different file types
 [[headers]]
   for = "/*.js"
   [headers.values]
@@ -26,3 +26,8 @@
   for = "/*.css"
   [headers.values]
     Content-Type = "text/css; charset=utf-8"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Content-Type = "image/svg+xml; charset=utf-8"
