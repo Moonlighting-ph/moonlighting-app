@@ -1,105 +1,93 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { PaymentMethod } from '@/types/payment';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import { PaymentMethod } from '@/types/payment';
 import PaymentMethodsList from './PaymentMethodsList';
 import PaymentMethodForm from './PaymentMethodForm';
-import { fetchUserPaymentMethods, deletePaymentMethod } from '@/services/paymentMethodService';
-import { toast } from 'sonner';
+import { fetchPaymentMethods } from '@/services/paymentMethodService';
 
-export interface MoonlighterPaymentMethodsProps {
-  userId: string;
-  onMethodAdded?: () => void;
-}
-
-const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ 
-  userId,
-  onMethodAdded 
-}) => {
+const MoonlighterPaymentMethods: React.FC = () => {
   const { session } = useAuth();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    const fetchMethods = async () => {
-      if (!session?.user) return;
-
-      try {
-        setLoading(true);
-        const methods = await fetchUserPaymentMethods(session.user.id);
-        setMethods(methods);
-      } catch (error) {
-        console.error('Error fetching payment methods:', error);
-        toast.error('Failed to load payment methods');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMethods();
+    loadPaymentMethods();
   }, [session]);
 
-  const handleAddMethodComplete = async () => {
-    if (!session?.user) return;
+  const loadPaymentMethods = async () => {
+    if (!session?.user?.id) return;
     
     try {
-      const updatedMethods = await fetchUserPaymentMethods(session.user.id);
-      setMethods(updatedMethods);
-      toast.success('Payment method added successfully');
+      setLoading(true);
+      const paymentMethods = await fetchPaymentMethods(session.user.id);
+      setMethods(paymentMethods);
     } catch (error) {
-      console.error('Error refreshing payment methods:', error);
+      console.error('Error loading payment methods:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleMethodRemoved = async (methodId: string) => {
-    if (!session?.user) return;
-    
-    try {
-      await deletePaymentMethod(session.user.id, methodId);
-      const updatedMethods = await fetchUserPaymentMethods(session.user.id);
-      setMethods(updatedMethods);
-      toast.success('Payment method removed successfully');
-    } catch (error) {
-      console.error('Error removing payment method:', error);
-    }
+  const handleAddSuccess = (newMethod: PaymentMethod) => {
+    setMethods(prev => [newMethod, ...prev]);
+    setShowForm(false);
   };
 
-  if (!session) {
-    return null;
+  const handleDeleteMethod = (deletedId: string) => {
+    setMethods(prev => prev.filter(method => method.id !== deletedId));
+  };
+
+  const handleCancelAdd = () => {
+    setShowForm(false);
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p>Loading payment methods...</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Payment Methods</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {showForm ? (
-          <PaymentMethodForm 
-            userId={userId} 
-            onComplete={handleAddMethodComplete} 
-          />
-        ) : (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Payment Methods</h2>
+        {!showForm && (
           <Button 
             onClick={() => setShowForm(true)} 
-            variant="outline" 
-            className="w-full flex items-center justify-center gap-2"
+            size="sm"
+            className="flex items-center gap-1"
           >
-            <Plus size={16} /> Add Payment Method
+            <PlusCircle className="h-4 w-4" />
+            Add Method
           </Button>
         )}
-        
-        {methods.length > 0 && (
-          <PaymentMethodsList 
-            methods={methods} 
-            onMethodsChanged={fetchMethods} 
-          />
-        )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {showForm ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Payment Method</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PaymentMethodForm 
+              onSuccess={handleAddSuccess}
+              onCancel={handleCancelAdd}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <PaymentMethodsList methods={methods} onDelete={handleDeleteMethod} />
+      )}
+    </div>
   );
 };
 

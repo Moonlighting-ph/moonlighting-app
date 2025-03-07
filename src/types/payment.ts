@@ -1,56 +1,44 @@
 
+// Add missing PaymentMethodType type to fix build errors
+
 export interface Payment {
   id: string;
   amount: number;
-  application_id?: string | null;
-  provider_id?: string | null;
-  moonlighter_id?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
   currency: string;
-  status: PaymentStatus;
-  stripe_payment_intent_id?: string | null;
+  status: 'pending' | 'completed' | 'failed';
+  created_at: string;
+  provider_id: string;
+  moonlighter_id: string;
 }
 
-export interface ManualPayment {
-  id: string;
-  amount: number;
-  application_id?: string | null;
-  provider_id?: string | null;
-  moonlighter_id?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  job_id?: string | null;
-  payment_method_id?: string | null;
-  payment_method_type: string;
+export interface ManualPayment extends Payment {
+  job_id: string;
+  payment_method_id: string;
+  payment_method_type: PaymentMethodType;
   payment_details: string;
-  notes?: string | null;
-  status?: string | null;
-  reference_number?: string | null;
+  receipt_number: string;
+  notes: string;
 }
-
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'rejected' | 'verified';
 
 export interface PaymentMethod {
   id: string;
-  user_id?: string | null;
-  method: string;
-  details: string;
-  is_default?: boolean | null;
-  created_at?: string | null;
+  user_id: string;
+  type: PaymentMethodType;
+  details: {
+    [key: string]: any;
+  };
+  is_default: boolean;
+  created_at: string;
 }
 
-export type PaymentMethodType = 'gcash' | 'bank_transfer' | 'cash' | 'credit_card' | 'other';
+export type PaymentMethodType = 'bank_account' | 'gcash' | 'paymaya' | 'credit_card';
 
 export interface PaymentMethodFormProps {
-  userId: string;
-  onComplete: () => Promise<void>;
+  onSuccess: (paymentMethod: PaymentMethod) => void;
+  onCancel: () => void;
 }
 
 export interface ManualPaymentFormProps {
-  userId: string;
-  applicationId?: string;
-  jobId?: string;
-  moonlighterId?: string;
-  onPaymentComplete: () => void;
+  onSuccess: (payment: ManualPayment) => void;
+  onCancel: () => void;
 }

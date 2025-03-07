@@ -54,11 +54,18 @@ const Navbar: React.FC = () => {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
+      // Force clear local storage of any auth data to ensure clean logout
+      localStorage.removeItem('supabase.auth.token');
+      
       await signOut();
       navigate('/');
     } catch (error) {
       console.error('Sign out error in Navbar:', error);
       toast.error('Failed to sign out. Please try again.');
+      
+      // Force client-side logout even if server-side logout failed
+      navigate('/');
+      window.location.reload();
     } finally {
       setIsSigningOut(false);
     }

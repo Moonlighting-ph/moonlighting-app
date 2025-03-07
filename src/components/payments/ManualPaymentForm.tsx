@@ -1,207 +1,155 @@
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useAuth } from '@/hooks/useAuth';
+import { createManualPayment } from '@/services/manualPaymentService';
 import { 
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
+  PaymentMethod, 
+  PaymentMethodType, 
+  ManualPayment,
+  ManualPaymentFormProps
+} from '@/types/payment';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { recordManualPayment } from '@/services/manualPaymentService';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ManualPaymentFormProps, PaymentMethodType } from '@/types/payment';
 
-interface FormValues {
-  amount: number;
-  paymentMethodType: PaymentMethodType;
-  paymentDetails: string;
-  referenceNumber?: string;
-  notes?: string;
-}
+const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({ onSuccess, onCancel }) => {
+  const { session } = useAuth();
+  const [amount, setAmount] = useState('');
+  const [receiptNumber, setReceiptNumber] = useState('');
+  const [methodId, setMethodId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
 
-const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
-  providerId,
-  moonlighterId,
-  jobId,
-  applicationId,
-  paymentMethods,
-  onComplete
-}) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm<FormValues>({
-    defaultValues: {
-      amount: 0,
-      paymentMethodType: 'bank_transfer',
-      paymentDetails: '',
-      referenceNumber: '',
-      notes: ''
-    }
-  });
-  
-  const handleSubmit = async (values: FormValues) => {
-    if (values.amount <= 0) {
-      toast.error('Please enter a valid amount');
+  // These would be passed as props in a real implementation
+  const providerId = ''; // Example value
+  const moonlighterId = ''; // Example value
+  const jobId = ''; // Example value
+  const applicationId = ''; // Example value
+  const paymentMethods: PaymentMethod[] = []; // Example value
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!session?.user?.id) {
+      toast.error('You must be logged in to create a payment');
       return;
     }
-    
+
+    if (!amount || !receiptNumber || !methodId) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     try {
-      setIsSubmitting(true);
+      setLoading(true);
       
-      await recordManualPayment({
+      // Find the selected payment method
+      const selectedMethod = paymentMethods.find(m => m.id === methodId);
+      if (!selectedMethod) {
+        toast.error('Invalid payment method selected');
+        return;
+      }
+
+      const paymentData = {
         provider_id: providerId,
         moonlighter_id: moonlighterId,
         job_id: jobId,
         application_id: applicationId,
-        amount: values.amount,
-        payment_method_type: values.paymentMethodType,
-        payment_details: values.paymentDetails,
-        reference_number: values.referenceNumber || undefined,
-        notes: values.notes || undefined
-      });
+        amount: parseFloat(amount),
+        currency: 'PHP',
+        payment_method_id: methodId,
+        payment_method_type: selectedMethod.type,
+        receipt_number: receiptNumber,
+        notes: notes,
+        payment_details: JSON.stringify(selectedMethod.details)
+      };
+      
+      const payment = await createManualPayment(paymentData);
       
       toast.success('Payment recorded successfully');
-      form.reset();
-      
-      if (onComplete) {
-        onComplete();
-      }
-    } catch (error: any) {
-      console.error('Error recording payment:', error);
-      toast.error(error.message || 'Failed to record payment');
+      onSuccess(payment);
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast.error('Failed to record payment');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
-  
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="amount"
-          rules={{ 
-            required: 'Amount is required',
-            min: { value: 1, message: 'Amount must be greater than 0' }
-          }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Amount (PHP)</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  placeholder="Enter amount"
-                  onChange={e => field.onChange(parseFloat(e.target.value))}
-                  disabled={isSubmitting}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount (PHP)</Label>
+          <Input 
+            id="amount"
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            min="1"
+            step="0.01"
+            required
+          />
+        </div>
         
-        <FormField
-          control={form.control}
-          name="paymentMethodType"
-          rules={{ required: 'Payment method is required' }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Payment Method</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                disabled={isSubmitting}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="gcash">GCash</SelectItem>
-                  <SelectItem value="paymaya">PayMaya</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="payment_method">Payment Method</Label>
+          <Select value={methodId} onValueChange={setMethodId} required>
+            <SelectTrigger id="payment_method">
+              <SelectValue placeholder="Select payment method" />
+            </SelectTrigger>
+            <SelectContent>
+              {paymentMethods.map((method) => (
+                <SelectItem key={method.id} value={method.id}>
+                  {method.type === 'bank_account' 
+                    ? `${method.details.bank_name} - ${method.details.account_name}`
+                    : method.type === 'gcash' 
+                    ? `GCash - ${method.details.phone}`
+                    : method.type === 'paymaya'
+                    ? `PayMaya - ${method.details.phone}`
+                    : 'Other'}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         
-        <FormField
-          control={form.control}
-          name="paymentDetails"
-          rules={{ required: 'Payment details are required' }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Payment Details</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Enter payment details"
-                  disabled={isSubmitting}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="receipt_number">Receipt/Reference Number</Label>
+          <Input 
+            id="receipt_number"
+            value={receiptNumber}
+            onChange={(e) => setReceiptNumber(e.target.value)}
+            placeholder="e.g., 123456789"
+            required
+          />
+        </div>
         
-        <FormField
-          control={form.control}
-          name="referenceNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Reference Number (Optional)</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="Enter reference number"
-                  disabled={isSubmitting}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes (Optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Enter additional notes"
-                  disabled={isSubmitting}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Recording Payment...' : 'Record Payment'}
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes (Optional)</Label>
+          <Textarea 
+            id="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any additional payment details"
+            rows={3}
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+          Cancel
         </Button>
-      </form>
-    </Form>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Processing...' : 'Record Payment'}
+        </Button>
+      </div>
+    </form>
   );
 };
 

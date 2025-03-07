@@ -1,111 +1,142 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchMoonlighterPayments, fetchProviderPayments } from '@/services/manualPaymentService';
-import { ManualPayment } from '@/types/payment';
-import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PaymentCard from '@/components/PaymentCard';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { Payment, ManualPayment } from '@/types/payment';
 
 const Payments: React.FC = () => {
   const { session } = useAuth();
-  const navigate = useNavigate();
-  const [payments, setPayments] = useState<ManualPayment[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isProvider, setIsProvider] = useState<boolean>(false);
+  const [isProvider, setIsProvider] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
+  const [outgoingPayments, setOutgoingPayments] = useState<any[]>([]);
+  const [incomingPayments, setIncomingPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!session?.user) {
-      navigate('/auth/login');
-      return;
-    }
-
-    const getUserTypeAndPayments = async () => {
+    const getUserType = async () => {
+      if (!session?.user?.id) return;
+      
       try {
-        setLoading(true);
-        
-        // Get user type
-        const { data: profileData, error: profileError } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('user_type')
           .eq('id', session.user.id)
           .single();
         
-        if (profileError) throw profileError;
-        
-        const isProviderUser = profileData.user_type === 'provider';
-        setIsProvider(isProviderUser);
-        
-        // Fetch payments based on user type
-        let paymentData: ManualPayment[] = [];
-        
-        if (isProviderUser) {
-          paymentData = await fetchProviderPayments(session.user.id);
-        } else {
-          paymentData = await fetchMoonlighterPayments(session.user.id);
+        if (error) {
+          console.error("Error fetching user type:", error);
+          return;
         }
         
-        setPayments(paymentData);
+        const userType = data?.user_type;
+        setUserType(userType);
+        setIsProvider(userType === 'provider');
+      } catch (err) {
+        console.error("Error determining user type:", err);
+      }
+    };
+    
+    getUserType();
+  }, [session]);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      if (!session?.user?.id || !userType) return;
+      
+      try {
+        setLoading(true);
+        
+        if (userType === 'provider') {
+          // Fetch outgoing payments (provider is the payer)
+          const { data: providerPayments, error: providerError } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('provider_id', session.user.id)
+            .order('created_at', { ascending: false });
+          
+          if (providerError) throw providerError;
+          setOutgoingPayments(providerPayments || []);
+          setIncomingPayments([]);
+        } else if (userType === 'moonlighter') {
+          // Fetch incoming payments (moonlighter is the payee)
+          const { data: moonlighterPayments, error: moonlighterError } = await supabase
+            .from('payments')
+            .select('*')
+            .eq('moonlighter_id', session.user.id)
+            .order('created_at', { ascending: false });
+          
+          if (moonlighterError) throw moonlighterError;
+          setIncomingPayments(moonlighterPayments || []);
+          setOutgoingPayments([]);
+        }
       } catch (error) {
-        console.error('Error fetching payments:', error);
-        toast.error('Failed to load payments');
+        console.error("Error fetching payments:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    getUserTypeAndPayments();
-  }, [session, navigate]);
-
-  const renderEmptyState = () => (
-    <div className="text-center py-12 bg-white rounded-lg shadow">
-      <h3 className="text-xl font-medium text-gray-900 mb-2">No payments yet</h3>
-      <p className="text-gray-500 mb-6">
-        {isProvider
-          ? "You haven't made any payments to moonlighters yet."
-          : "You haven't received any payments yet."}
-      </p>
-      {isProvider && (
-        <Button onClick={() => navigate('/provider/applications')}>
-          View Applications
-        </Button>
-      )}
-    </div>
-  );
+    
+    fetchPayments();
+  }, [session, userType]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Payment History</h1>
-          {isProvider && (
-            <Button onClick={() => navigate('/provider/make-payment')}>
-              Make a Payment
-            </Button>
+      
+      <main className="flex-grow py-8">
+        <div className="container mx-auto px-4">
+          <h1 className="text-3xl font-bold mb-6">Payments</h1>
+          
+          {loading ? (
+            <div className="text-center py-10">Loading payment history...</div>
+          ) : (
+            <div className="space-y-8">
+              {isProvider && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Outgoing Payments</h2>
+                  {outgoingPayments.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-6 text-center">
+                        <p className="text-muted-foreground">No outgoing payments yet.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-4">
+                      {outgoingPayments.map((payment: any) => (
+                        <PaymentCard key={payment.id} payment={payment} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {!isProvider && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Incoming Payments</h2>
+                  {incomingPayments.length === 0 ? (
+                    <Card>
+                      <CardContent className="py-6 text-center">
+                        <p className="text-muted-foreground">No incoming payments yet.</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="space-y-4">
+                      {incomingPayments.map((payment: any) => (
+                        <PaymentCard key={payment.id} payment={payment} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
-
-        {loading ? (
-          <div className="text-center py-12">Loading payment history...</div>
-        ) : payments.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <div className="space-y-4">
-            {payments.map((payment) => (
-              <PaymentCard 
-                key={payment.id} 
-                payment={payment as any} 
-                isProvider={isProvider} 
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      </main>
+      
       <Footer />
     </div>
   );

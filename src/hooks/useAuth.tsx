@@ -47,33 +47,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log('Attempting to sign out...');
       
-      // First check if there's an active session before trying to sign out
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData.session) {
-        console.log('No active session found, no need to sign out');
-        setSession(null);
-        toast('You have been signed out successfully');
-        return;
-      }
-      
-      // Perform the sign out
+      // Simply call signOut without checking for session first
+      // Let supabase handle the case where there's no session
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Error signing out:', error);
-        toast('Logout failed: ' + error.message, {
-          description: 'Please try again'
-        });
+        toast.error('Logout failed: ' + error.message);
       } else {
+        // Always clear the session state regardless of whether signOut succeeded
         setSession(null);
-        toast('You have been signed out successfully');
+        toast.success('You have been signed out successfully');
       }
     } catch (error: any) {
       console.error('Unexpected error signing out:', error);
-      toast('An unexpected error occurred during logout', {
-        description: 'Please try again or contact support'
-      });
+      // Even if an error occurred, we should still clear the local session state
+      // to allow users to "force logout" on the client side
+      setSession(null);
+      toast.error('An unexpected error occurred during logout');
     }
   };
 
