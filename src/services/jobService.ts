@@ -36,6 +36,11 @@ export const fetchJobs = async (filters?: JobFilters): Promise<Job[]> => {
       if (filters.isUrgent) {
         query = query.eq('is_urgent', true);
       }
+
+      // Handle limit if provided
+      if (filters.limit && filters.limit > 0) {
+        query = query.limit(filters.limit);
+      }
     }
     
     const { data, error } = await query
@@ -91,20 +96,21 @@ export const createJob = async (jobData: Partial<Job>): Promise<Job> => {
       throw new Error('Missing required job fields: company, title, description, and type are required');
     }
 
+    // Create an object with the exact structure Supabase expects
     const jobToInsert = {
       company: jobData.company,
       title: jobData.title,
       description: jobData.description,
       type: jobData.type,
-      location: jobData.location,
-      salary: jobData.salary,
-      deadline: jobData.deadline,
-      requirements: jobData.requirements,
-      responsibilities: jobData.responsibilities,
-      specialization: jobData.specialization,
-      experience_level: jobData.experience_level,
-      is_urgent: jobData.is_urgent,
-      provider_id: jobData.provider_id,
+      location: jobData.location || null,
+      salary: jobData.salary || null,
+      deadline: jobData.deadline || null,
+      requirements: jobData.requirements || null,
+      responsibilities: jobData.responsibilities || null,
+      specialization: jobData.specialization || null,
+      experience_level: jobData.experience_level || null,
+      is_urgent: jobData.is_urgent || false,
+      provider_id: jobData.provider_id || null,
       posted_date: jobData.posted_date || new Date().toISOString()
     };
 

@@ -12,7 +12,10 @@ import Jobs from "./pages/Jobs";
 import ProviderDashboard from "./pages/provider";
 import MoonlighterDashboard from "./pages/moonlighter";
 import NotFound from "./pages/NotFound";
-import PostJob from "./pages/provider/PostJob"; // Import the PostJob component
+import PostJob from "./pages/provider/PostJob";
+import JobDetail from "./pages/jobs/JobDetail";
+import EditJob from "./pages/provider/EditJob";
+import Applications from "./pages/provider/Applications";
 
 const queryClient = new QueryClient();
 
@@ -28,8 +31,11 @@ const App = () => (
             <Route path="/auth/login" element={<Login />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/:jobId" element={<JobDetail />} />
             <Route path="/provider" element={<ProviderDashboard />} />
-            <Route path="/provider/post-job" element={<PostJob />} /> {/* Add the new route */}
+            <Route path="/provider/post-job" element={<PostJob />} />
+            <Route path="/provider/edit-job/:jobId" element={<EditJob />} />
+            <Route path="/provider/applications" element={<Applications />} />
             <Route path="/moonlighter" element={<MoonlighterDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

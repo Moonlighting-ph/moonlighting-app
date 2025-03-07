@@ -1,99 +1,102 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SmoothScroll from '@/components/SmoothScroll';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { JobApplication, Job } from '@/types/job';
-import { fetchProviderJobs } from '@/services/jobService';
+import { fetchJobById } from '@/services/jobService';
 import { fetchJobApplications, updateApplicationStatus } from '@/services/jobApplicationService';
+import { Job, JobApplication } from '@/types/job';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from '@/components/ui/tabs';
+import { CalendarClock, CheckCircle, Clock, XCircle, User } from 'lucide-react';
 
-const ApplicationStatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  switch (status) {
-    case 'pending':
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
-    case 'reviewed':
-      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Reviewed</Badge>;
-    case 'approved':
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
-    case 'rejected':
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
-    default:
-      return <Badge>{status}</Badge>;
-  }
-};
-
-const ProviderApplicationsPage: React.FC = () => {
+const Applications: React.FC = () => {
   const { session } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const jobId = location.state?.jobId;
+  
+  const [job, setJob] = useState<Job | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [jobsLoading, setJobsLoading] = useState(true);
-  const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      if (!session?.user?.id) return;
-      
+    const fetchData = async () => {
+      if (!session?.user?.id) {
+        navigate('/provider');
+        return;
+      }
+
+      if (!jobId) {
+        toast.error('No job selected');
+        navigate('/provider');
+        return;
+      }
+
       try {
-        setJobsLoading(true);
-        const jobsData = await fetchProviderJobs(session.user.id);
-        setJobs(jobsData);
+        setLoading(true);
+        // Fetch the job details first
+        const jobData = await fetchJobById(jobId);
         
-        // Select the first job by default if available
-        if (jobsData.length > 0 && !selectedJobId) {
-          setSelectedJobId(jobsData[0].id);
+        if (!jobData) {
+          toast.error('Job not found');
+          navigate('/provider');
+          return;
         }
+
+        // Check if this job belongs to the current provider
+        if (jobData.provider_id !== session.user.id) {
+          toast.error('You do not have permission to view these applications');
+          navigate('/provider');
+          return;
+        }
+
+        setJob(jobData);
+
+        // Now fetch the applications for this job
+        const applicationsData = await fetchJobApplications(jobId);
+        setApplications(applicationsData);
       } catch (error) {
-        console.error('Error fetching jobs:', error);
+        console.error('Error fetching job or applications:', error);
+        toast.error('Failed to load data');
       } finally {
-        setJobsLoading(false);
         setLoading(false);
       }
     };
 
-    fetchJobs();
-  }, [session]);
+    fetchData();
+  }, [jobId, session, navigate]);
 
-  // Fetch applications when selectedJobId changes
-  useEffect(() => {
-    const fetchApplicationsForJob = async () => {
-      if (!selectedJobId) return;
-      
-      try {
-        setApplicationsLoading(true);
-        const applicationsData = await fetchJobApplications(selectedJobId);
-        setApplications(applicationsData);
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-      } finally {
-        setApplicationsLoading(false);
-      }
-    };
-
-    fetchApplicationsForJob();
-  }, [selectedJobId]);
-
-  const handleJobChange = (jobId: string) => {
-    setSelectedJobId(jobId);
-  };
-
-  const handlePostJob = () => {
-    navigate('/provider/post-job');
-  };
-
-  const handleUpdateStatus = async (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected') => {
+  const handleStatusChange = async (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected') => {
     if (!session?.user?.id) return;
-    
+
     try {
+      setStatusUpdating(prev => ({ ...prev, [applicationId]: true }));
+      
       await updateApplicationStatus(applicationId, status, session.user.id);
       
       // Update the local state
@@ -107,21 +110,39 @@ const ProviderApplicationsPage: React.FC = () => {
     } catch (error) {
       console.error('Error updating application status:', error);
       toast.error('Failed to update application status');
+    } finally {
+      setStatusUpdating(prev => ({ ...prev, [applicationId]: false }));
     }
   };
 
-  const handleViewMoonlighterProfile = (moonlighterId: string) => {
-    // Navigate to moonlighter profile page (to be implemented)
-    // For now, we'll just show a toast
-    toast('View moonlighter profile feature coming soon');
-  };
+  // Filter applications by status
+  const pendingApplications = applications.filter(app => app.status === 'pending');
+  const reviewedApplications = applications.filter(app => app.status === 'reviewed');
+  const approvedApplications = applications.filter(app => app.status === 'approved');
+  const rejectedApplications = applications.filter(app => app.status === 'rejected');
 
-  if (!session) {
+  if (loading) {
     return (
       <SmoothScroll>
         <Navbar />
-        <div className="container mx-auto py-12 px-4 text-center">
-          <p>Please sign in to view applications for your jobs.</p>
+        <div className="container mx-auto py-12 px-4 min-h-screen">
+          <div className="text-center">Loading applications...</div>
+        </div>
+        <Footer />
+      </SmoothScroll>
+    );
+  }
+
+  if (!job) {
+    return (
+      <SmoothScroll>
+        <Navbar />
+        <div className="container mx-auto py-12 px-4 min-h-screen">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4">Job Not Found</h2>
+            <p className="mb-6">The job you're looking for doesn't exist or you don't have permission to view it.</p>
+            <Button onClick={() => navigate('/provider')}>Back to Dashboard</Button>
+          </div>
         </div>
         <Footer />
       </SmoothScroll>
@@ -132,147 +153,186 @@ const ProviderApplicationsPage: React.FC = () => {
     <SmoothScroll>
       <Navbar />
       <div className="container mx-auto py-8 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <h1 className="text-3xl font-bold mb-4 md:mb-0">Manage Applications</h1>
-            <Button onClick={handlePostJob}>Post New Job</Button>
+        <Button 
+          variant="ghost" 
+          className="mb-6"
+          onClick={() => navigate('/provider')}
+        >
+          ← Back to Dashboard
+        </Button>
+        
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-4">Applications for: {job.title}</h1>
+          <div className="flex items-center gap-3 text-gray-600">
+            <span>{job.company}</span>
+            {job.location && (
+              <>
+                <span className="text-gray-400">•</span>
+                <span>{job.location}</span>
+              </>
+            )}
           </div>
-
-          {loading || jobsLoading ? (
-            <div className="text-center py-12">
-              <p>Loading your jobs...</p>
-            </div>
-          ) : jobs.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent>
-                <h3 className="text-lg font-medium mb-2">No jobs found</h3>
-                <p className="text-gray-500 mb-4">You haven't posted any jobs yet.</p>
-                <Button onClick={handlePostJob}>Post Your First Job</Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="mb-6">
-                <label htmlFor="job-select" className="block text-sm font-medium mb-2">
-                  Select Job
-                </label>
-                <Select
-                  value={selectedJobId}
-                  onValueChange={handleJobChange}
-                >
-                  <SelectTrigger id="job-select" className="w-full md:w-96">
-                    <SelectValue placeholder="Select a job" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jobs.map((job) => (
-                      <SelectItem key={job.id} value={job.id}>
-                        {job.title} - {job.company}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {applicationsLoading ? (
-                <div className="text-center py-12">
-                  <p>Loading applications...</p>
-                </div>
-              ) : !selectedJobId ? (
-                <div className="text-center py-12">
-                  <p>Please select a job to view applications</p>
-                </div>
-              ) : applications.length === 0 ? (
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <h3 className="text-lg font-medium mb-2">No applications yet</h3>
-                    <p className="text-gray-500">
-                      This job hasn't received any applications yet.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {applications.map((app) => (
-                    <Card key={app.id} className="overflow-hidden">
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle>
-                              {app.moonlighter?.first_name} {app.moonlighter?.last_name}
-                            </CardTitle>
-                            <CardDescription>
-                              {app.moonlighter?.specialization || 'No specialization'} • 
-                              {app.moonlighter?.years_of_experience 
-                                ? ` ${app.moonlighter.years_of_experience} years experience` 
-                                : ' Experience not specified'}
-                            </CardDescription>
-                          </div>
-                          <ApplicationStatusBadge status={app.status} />
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {app.notes && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium mb-1">Applicant Notes:</h4>
-                            <p className="text-sm italic bg-gray-50 p-3 rounded">{app.notes}</p>
-                          </div>
-                        )}
-                        
-                        <div className="flex flex-wrap gap-2 items-center mt-4">
-                          {app.ai_match_score && (
-                            <div className="flex items-center bg-blue-50 px-3 py-1 rounded-full">
-                              <span className="text-sm font-medium text-blue-700 mr-1">Match Score:</span>
-                              <span className="text-sm font-bold text-blue-800">{Math.round(app.ai_match_score)}%</span>
-                            </div>
-                          )}
-                          
-                          <div className="ml-auto flex flex-wrap gap-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => app.moonlighter && handleViewMoonlighterProfile(app.moonlighter.id)}
-                            >
-                              View Profile
-                            </Button>
-                            
-                            <Select
-                              value={app.status}
-                              onValueChange={(value) => 
-                                handleUpdateStatus(
-                                  app.id, 
-                                  value as 'pending' | 'reviewed' | 'approved' | 'rejected'
-                                )
-                              }
-                            >
-                              <SelectTrigger className="w-36">
-                                <SelectValue placeholder="Update Status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="reviewed">Reviewed</SelectItem>
-                                <SelectItem value="approved">Approved</SelectItem>
-                                <SelectItem value="rejected">Rejected</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </CardContent>
-                      {app.applied_date && (
-                        <div className="px-6 py-2 bg-gray-50 text-sm text-gray-500">
-                          Applied on {new Date(app.applied_date).toLocaleDateString()}
-                        </div>
-                      )}
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
         </div>
+        
+        <Tabs defaultValue="all">
+          <TabsList className="mb-6">
+            <TabsTrigger value="all">
+              All <Badge className="ml-2" variant="outline">{applications.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="pending">
+              Pending <Badge className="ml-2" variant="outline">{pendingApplications.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="reviewed">
+              Reviewed <Badge className="ml-2" variant="outline">{reviewedApplications.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="approved">
+              Approved <Badge className="ml-2" variant="outline">{approvedApplications.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Rejected <Badge className="ml-2" variant="outline">{rejectedApplications.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="all">
+            {renderApplicationsList(applications)}
+          </TabsContent>
+          
+          <TabsContent value="pending">
+            {renderApplicationsList(pendingApplications)}
+          </TabsContent>
+          
+          <TabsContent value="reviewed">
+            {renderApplicationsList(reviewedApplications)}
+          </TabsContent>
+          
+          <TabsContent value="approved">
+            {renderApplicationsList(approvedApplications)}
+          </TabsContent>
+          
+          <TabsContent value="rejected">
+            {renderApplicationsList(rejectedApplications)}
+          </TabsContent>
+        </Tabs>
       </div>
       <Footer />
     </SmoothScroll>
   );
+
+  function renderApplicationsList(apps: JobApplication[]) {
+    if (apps.length === 0) {
+      return (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">No applications found in this category</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {apps.map((application) => (
+          <Card key={application.id}>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>
+                    {application.moonlighter?.first_name} {application.moonlighter?.last_name}
+                  </CardTitle>
+                  <CardDescription>
+                    {application.moonlighter?.email}
+                    {application.moonlighter?.specialization && (
+                      <span className="ml-2">• {application.moonlighter.specialization}</span>
+                    )}
+                  </CardDescription>
+                </div>
+                <Badge
+                  variant={
+                    application.status === 'approved' ? 'success' :
+                    application.status === 'rejected' ? 'destructive' :
+                    application.status === 'reviewed' ? 'secondary' :
+                    'outline'
+                  }
+                >
+                  {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                </Badge>
+              </div>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="mb-4">
+                <div className="flex items-center text-sm text-gray-500 mb-2">
+                  <CalendarClock className="h-4 w-4 mr-2" />
+                  <span>Applied on {new Date(application.applied_date).toLocaleDateString()}</span>
+                </div>
+                
+                {application.moonlighter?.years_of_experience && (
+                  <div className="flex items-center text-sm text-gray-500 mb-2">
+                    <User className="h-4 w-4 mr-2" />
+                    <span>{application.moonlighter.years_of_experience} years of experience</span>
+                  </div>
+                )}
+                
+                {application.notes && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-1">Notes from Applicant</h4>
+                    <div className="bg-gray-50 p-3 rounded text-sm">{application.notes}</div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-between items-center mt-6">
+                {/* Left side - status selector */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-500">Update status:</span>
+                  <Select
+                    value={application.status}
+                    onValueChange={(value) => 
+                      handleStatusChange(
+                        application.id, 
+                        value as 'pending' | 'reviewed' | 'approved' | 'rejected'
+                      )
+                    }
+                    disabled={statusUpdating[application.id]}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="reviewed">Reviewed</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Right side - action buttons */}
+                <div className="space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={statusUpdating[application.id] || application.status === 'rejected'}
+                    onClick={() => handleStatusChange(application.id, 'rejected')}
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    Reject
+                  </Button>
+                  <Button 
+                    variant="default"
+                    size="sm"
+                    disabled={statusUpdating[application.id] || application.status === 'approved'}
+                    onClick={() => handleStatusChange(application.id, 'approved')}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Approve
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 };
 
-export default ProviderApplicationsPage;
+export default Applications;

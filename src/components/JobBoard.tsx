@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import JobFilterForm from './JobFilterForm';
 import { fetchJobsWithFallback, getJobsMock } from '@/services/jobService';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface JobBoardProps {
   jobs?: Job[];
@@ -16,10 +19,13 @@ interface JobBoardProps {
 }
 
 const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobBoardProps) => {
+  const { session } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState<boolean>(propLoading || true);
   const [filters, setFilters] = useState<JobFilters>(initialFilters || {});
+  const [userType, setUserType] = useState<string | null>(null);
 
   // Initialize with either provided jobs or fetch them
   useEffect(() => {
@@ -86,6 +92,34 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobB
     setFilteredJobs(result);
   }, [jobs, filters]);
 
+  // Get user type
+  useEffect(() => {
+    const getUserType = async () => {
+      if (!session?.user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching user type:', error);
+          return;
+        }
+        
+        if (data) {
+          setUserType(data.user_type);
+        }
+      } catch (err) {
+        console.error('Unexpected error fetching user type:', err);
+      }
+    };
+    
+    getUserType();
+  }, [session]);
+
   const handleFilterChange = (newFilters: JobFilters) => {
     setFilters(newFilters);
   };
@@ -95,9 +129,25 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobB
   };
 
   const handleApply = (job: Job) => {
-    toast(`Applied for ${job.title} at ${job.company}`, {
-      description: 'Your application has been submitted'
-    });
+    if (!session) {
+      toast('Please sign in to apply', {
+        description: 'You need to be signed in as a healthcare professional to apply for jobs'
+      });
+      navigate('/auth/login');
+      return;
+    }
+
+    if (userType !== 'moonlighter') {
+      toast.error('Only healthcare professionals can apply for jobs');
+      return;
+    }
+
+    // Navigate to job detail page where they can apply
+    navigate(`/jobs/${job.id}`);
+  };
+
+  const handleViewJob = (job: Job) => {
+    navigate(`/jobs/${job.id}`);
   };
 
   if (loading) {
@@ -142,7 +192,7 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobB
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredJobs.map((job) => (
             <Card key={job.id} className="h-full flex flex-col">
-              <CardHeader>
+              <CardHeader className="cursor-pointer" onClick={() => handleViewJob(job)}>
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle>{job.title}</CardTitle>
@@ -153,7 +203,7 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobB
                   )}
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow cursor-pointer" onClick={() => handleViewJob(job)}>
                 <p className="mb-4 text-sm line-clamp-3">{job.description}</p>
                 <div className="flex flex-wrap gap-2 mb-3">
                   <Badge variant="outline">{job.type}</Badge>
@@ -172,10 +222,22 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobB
                   </p>
                 )}
               </CardContent>
-              <CardFooter className="border-t pt-4">
-                <Button onClick={() => handleApply(job)} className="w-full">
-                  Apply Now
+              <CardFooter className="border-t pt-4 flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={() => handleViewJob(job)}
+                >
+                  View Details
                 </Button>
+                {userType === 'moonlighter' && (
+                  <Button 
+                    onClick={() => handleApply(job)} 
+                    className="flex-1"
+                  >
+                    Apply Now
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}

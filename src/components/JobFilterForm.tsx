@@ -1,11 +1,22 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { JobFilters } from '@/types/filter';
 
 interface JobFilterFormProps {
@@ -14,45 +25,65 @@ interface JobFilterFormProps {
   onReset: () => void;
 }
 
-const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, onReset }) => {
-  const handleTypeChange = (value: string) => {
-    onFilterChange({ ...filters, type: value });
+const JobFilterForm: React.FC<JobFilterFormProps> = ({ 
+  filters, 
+  onFilterChange, 
+  onReset 
+}) => {
+  const [formValues, setFormValues] = useState<JobFilters>(filters);
+
+  // Update form values when filters prop changes
+  useEffect(() => {
+    setFormValues(filters);
+  }, [filters]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSpecChange = (value: string) => {
-    onFilterChange({ ...filters, specialization: value });
+  const handleSelectChange = (name: string, value: string) => {
+    setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleExperienceChange = (value: string) => {
-    onFilterChange({ ...filters, experience_level: value });
+  const handleSwitchChange = (checked: boolean) => {
+    setFormValues(prev => ({ ...prev, isUrgent: checked }));
   };
 
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onFilterChange({ ...filters, location: e.target.value });
-  };
-
-  const handleUrgentChange = (checked: boolean) => {
-    onFilterChange({ ...filters, isUrgent: checked });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onFilterChange(formValues);
   };
 
   return (
-    <Card className="sticky top-24">
+    <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">Filter Jobs</CardTitle>
+        <CardTitle className="text-lg">Filter Jobs</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="job-type">Job Type</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="searchTerm">Search</Label>
+            <Input 
+              id="searchTerm"
+              name="searchTerm"
+              placeholder="Job title, company, keywords..."
+              value={formValues.searchTerm || ''}
+              onChange={handleInputChange}
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="type">Job Type</Label>
             <Select 
-              value={filters.type || "all"}
-              onValueChange={handleTypeChange}
+              value={formValues.type || ""}
+              onValueChange={(value) => handleSelectChange('type', value)}
             >
-              <SelectTrigger id="job-type">
-                <SelectValue placeholder="Select job type" />
+              <SelectTrigger id="type">
+                <SelectValue placeholder="All job types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="">All job types</SelectItem>
                 <SelectItem value="Full-time">Full-time</SelectItem>
                 <SelectItem value="Part-time">Part-time</SelectItem>
                 <SelectItem value="Contract">Contract</SelectItem>
@@ -60,41 +91,52 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, 
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
+          
+          <div>
+            <Label htmlFor="location">Location</Label>
+            <Input 
+              id="location"
+              name="location"
+              placeholder="City, province..."
+              value={formValues.location || ''}
+              onChange={handleInputChange}
+            />
+          </div>
+          
+          <div>
             <Label htmlFor="specialization">Specialization</Label>
             <Select 
-              value={filters.specialization || "all"}
-              onValueChange={handleSpecChange}
+              value={formValues.specialization || ""}
+              onValueChange={(value) => handleSelectChange('specialization', value)}
             >
               <SelectTrigger id="specialization">
-                <SelectValue placeholder="Select specialization" />
+                <SelectValue placeholder="All specializations" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Specializations</SelectItem>
-                <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
+                <SelectItem value="">All specializations</SelectItem>
+                <SelectItem value="Nursing">Nursing</SelectItem>
                 <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
                 <SelectItem value="Surgery">Surgery</SelectItem>
-                <SelectItem value="Obstetrics">Obstetrics</SelectItem>
-                <SelectItem value="Psychiatry">Psychiatry</SelectItem>
-                <SelectItem value="Dermatology">Dermatology</SelectItem>
+                <SelectItem value="Cardiology">Cardiology</SelectItem>
+                <SelectItem value="Laboratory">Laboratory</SelectItem>
+                <SelectItem value="Radiology">Radiology</SelectItem>
+                <SelectItem value="Pharmacy">Pharmacy</SelectItem>
                 <SelectItem value="General Practice">General Practice</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="experience">Experience Level</Label>
+          
+          <div>
+            <Label htmlFor="experience_level">Experience Level</Label>
             <Select 
-              value={filters.experience_level || "all"}
-              onValueChange={handleExperienceChange}
+              value={formValues.experience_level || ""}
+              onValueChange={(value) => handleSelectChange('experience_level', value)}
             >
-              <SelectTrigger id="experience">
-                <SelectValue placeholder="Select experience" />
+              <SelectTrigger id="experience_level">
+                <SelectValue placeholder="All levels" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="">All levels</SelectItem>
                 <SelectItem value="Entry-level">Entry-level</SelectItem>
                 <SelectItem value="Intermediate">Intermediate</SelectItem>
                 <SelectItem value="Experienced">Experienced</SelectItem>
@@ -102,30 +144,28 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, 
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input 
-              id="location" 
-              placeholder="City or region"
-              value={filters.location || ''}
-              onChange={handleLocationChange}
-            />
-          </div>
-
-          <div className="flex items-center space-x-2 pt-2">
+          
+          <div className="flex items-center space-x-2">
             <Switch 
-              id="urgent-only" 
-              checked={filters.isUrgent || false}
-              onCheckedChange={handleUrgentChange}
+              id="urgent"
+              checked={formValues.isUrgent || false}
+              onCheckedChange={handleSwitchChange}
             />
-            <Label htmlFor="urgent-only">Urgent positions only</Label>
+            <Label htmlFor="urgent">Urgent Positions Only</Label>
           </div>
-
-          <Button onClick={onReset} variant="outline" className="w-full mt-4">
-            Reset Filters
-          </Button>
-        </div>
+          
+          <div className="pt-2 space-y-2">
+            <Button type="submit" className="w-full">Apply Filters</Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full"
+              onClick={onReset}
+            >
+              Reset
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );
