@@ -1,95 +1,31 @@
 
 import React from 'react';
 import { PaymentMethod } from '@/types/payment';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { StarIcon, CreditCard, Trash2, Plus, Wallet, Phone } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Trash2 } from 'lucide-react';
+import { deletePaymentMethod } from '@/services/paymentMethodService';
 
 interface PaymentMethodsListProps {
-  paymentMethods: PaymentMethod[];
+  methods: PaymentMethod[];
   onDelete: (id: string) => void;
-  onSetDefault: (id: string) => void;
-  onAddNew: () => void;
 }
 
-const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({
-  paymentMethods,
-  onDelete,
-  onSetDefault,
-  onAddNew
-}) => {
-  // Helper to safely access nested properties
-  const getDetailsValue = (details: any, key: string): string => {
-    if (!details) return '';
-    if (typeof details === 'string') return '';
-    return details[key] || '';
-  };
-
-  const formatMethodDetails = (method: PaymentMethod) => {
-    const { method: methodType, details } = method;
-    
-    switch (methodType.toLowerCase()) {
-      case 'bank':
-        return (
-          <div className="space-y-1">
-            <div className="flex items-center">
-              <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span className="font-medium">
-                {getDetailsValue(details, 'bank_name')} - {getDetailsValue(details, 'account_name')}
-              </span>
-            </div>
-            {getDetailsValue(details, 'account_number') && (
-              <div className="text-sm text-muted-foreground ml-6">
-                Account: •••• {getDetailsValue(details, 'account_number').slice(-4)}
-              </div>
-            )}
-          </div>
-        );
-      
-      case 'gcash':
-      case 'paymaya':
-        return (
-          <div className="space-y-1">
-            <div className="flex items-center">
-              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span className="font-medium">
-                {methodType === 'gcash' ? 'GCash' : 'PayMaya'} 
-              </span>
-            </div>
-            {getDetailsValue(details, 'phone') && (
-              <div className="text-sm text-muted-foreground ml-6">
-                Phone: {getDetailsValue(details, 'phone')}
-              </div>
-            )}
-          </div>
-        );
-      
-      default:
-        return (
-          <div className="flex items-center">
-            <Wallet className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span className="font-medium">{methodType}</span>
-          </div>
-        );
+const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ methods, onDelete }) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePaymentMethod(id);
+      onDelete(id);
+    } catch (error) {
+      console.error('Error deleting payment method:', error);
     }
   };
 
-  if (paymentMethods.length === 0) {
+  if (methods.length === 0) {
     return (
       <Card>
-        <CardContent className="py-10">
-          <div className="text-center">
-            <Wallet className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Payment Methods</h3>
-            <p className="text-muted-foreground mb-6">
-              Add a payment method to receive payments from healthcare providers.
-            </p>
-            <Button onClick={onAddNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Payment Method
-            </Button>
-          </div>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">No payment methods added yet.</p>
         </CardContent>
       </Card>
     );
@@ -97,55 +33,37 @@ const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({
 
   return (
     <div className="space-y-4">
-      {paymentMethods.map((method) => (
-        <Card key={method.id} className="overflow-hidden">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-base font-medium">
-                {method.method.charAt(0).toUpperCase() + method.method.slice(1)} Payment
+      {methods.map((method) => (
+        <Card key={method.id}>
+          <CardContent className="p-4 flex justify-between items-center">
+            <div>
+              <h3 className="font-medium capitalize">
+                {method.type.replace('_', ' ')}
                 {method.is_default && (
-                  <Badge variant="outline" className="ml-2 bg-amber-50 text-amber-700 border-amber-200">
-                    <StarIcon className="h-3 w-3 mr-1 fill-amber-500" />
+                  <span className="ml-2 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">
                     Default
-                  </Badge>
+                  </span>
                 )}
-              </CardTitle>
-              <div className="flex space-x-2">
-                {!method.is_default && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => onSetDefault(method.id)}
-                    className="h-8 text-xs"
-                  >
-                    Set as Default
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => onDelete(method.id)}
-                  className="h-8 text-xs text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" />
-                  Remove
-                </Button>
-              </div>
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {method.type === 'bank_account' && method.details.account_number 
+                  ? `**** ${method.details.account_number.slice(-4)}` 
+                  : method.type === 'gcash' && method.details.phone 
+                  ? method.details.phone 
+                  : 'Details hidden for security'}
+              </p>
             </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {formatMethodDetails(method)}
-            <p className="text-xs text-muted-foreground mt-2">
-              Added: {new Date(method.created_at || '').toLocaleDateString()}
-            </p>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleDelete(method.id)}
+              aria-label="Delete payment method"
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
           </CardContent>
         </Card>
       ))}
-      
-      <Button variant="outline" onClick={onAddNew} className="w-full">
-        <Plus className="h-4 w-4 mr-2" />
-        Add Another Payment Method
-      </Button>
     </div>
   );
 };

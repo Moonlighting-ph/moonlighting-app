@@ -1,167 +1,121 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { toast } from 'sonner';
-import { fetchPaymentMethods } from '@/services/paymentMethodService';
-import { PaymentMethod, StripePaymentFormProps } from '@/types/payment';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ManualPaymentForm from '@/components/payments/ManualPaymentForm';
 import StripePaymentForm from '@/components/StripePaymentForm';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, CreditCard, Wallet } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { useAuth } from '@/hooks/useAuth';
+import { fetchPaymentMethods } from '@/services/paymentMethodService';
+import { PaymentMethod } from '@/types/payment';
+import { toast } from 'sonner';
 
-const MakePayment: React.FC = () => {
+const MakePaymentPage: React.FC = () => {
   const { session } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { jobId, applicationId } = useParams();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
-  const providerId = session?.user?.id;
-  
-  const { state } = location;
-  const { jobTitle, companyName, moonlighterId, jobId, applicationId, paymentAmount } = 
-    state || {};
-  
+
+  // Get the moonlighter ID from the location state
+  const moonlighterId = location.state?.moonlighterId || '';
+  const amount = location.state?.amount || 0;
+  const jobTitle = location.state?.jobTitle || 'Job';
+
   useEffect(() => {
-    if (!session?.user) {
+    if (!session?.user?.id) {
       navigate('/auth/login');
       return;
     }
-    
-    if (!state || !moonlighterId || !jobId || !applicationId) {
-      toast.error('Missing required payment information');
-      navigate('/provider');
+
+    if (!moonlighterId || !jobId || !applicationId) {
+      toast.error('Missing payment information');
+      navigate('/provider/applications');
       return;
     }
-    
+
     const loadPaymentMethods = async () => {
       try {
         setLoading(true);
+        // Get the moonlighter's payment methods
         const methods = await fetchPaymentMethods(moonlighterId);
         setPaymentMethods(methods);
       } catch (error) {
-        console.error('Error fetching payment methods:', error);
-        toast.error('Unable to load payment methods');
+        console.error('Error loading payment methods:', error);
+        toast.error('Failed to load payment methods');
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadPaymentMethods();
-  }, [session, navigate, state, moonlighterId]);
-  
+  }, [session, navigate, moonlighterId, jobId, applicationId]);
+
   const handlePaymentComplete = () => {
-    toast.success('Payment has been sent');
+    toast.success('Payment recorded successfully');
     navigate('/provider/applications');
   };
-  
-  if (loading || !providerId) {
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="container mx-auto py-8 px-4">
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-pulse text-center">
-              <p className="text-muted-foreground">Loading payment information...</p>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
+
+  if (!session || !moonlighterId || !jobId || !applicationId) {
+    return null;
   }
-  
-  // Prepare data for Stripe payment form
-  const stripeProps: StripePaymentFormProps = {
-    amount: paymentAmount || 0,
-    currency: 'PHP',
-    jobTitle: jobTitle || '',
-    payeeName: companyName || '',
-    applicationId,
-    providerId,
-    moonlighterId
-  };
-  
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/provider/applications')}
-            className="text-muted-foreground"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Applications
-          </Button>
+      <main className="flex-grow py-8 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="mb-8">
+            <Button variant="outline" onClick={() => navigate(-1)}>
+              Back
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Make Payment for {jobTitle}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="manual" className="w-full">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="manual">Manual Payment</TabsTrigger>
+                  <TabsTrigger value="stripe" disabled>Stripe Payment (Coming Soon)</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="manual">
+                  {!loading && paymentMethods.length > 0 ? (
+                    <ManualPaymentForm
+                      providerId={session.user.id}
+                      moonlighterId={moonlighterId}
+                      jobId={jobId!}
+                      applicationId={applicationId!}
+                      paymentMethods={paymentMethods}
+                      onComplete={handlePaymentComplete}
+                    />
+                  ) : (
+                    <p className="text-gray-500">
+                      {loading 
+                        ? 'Loading payment methods...' 
+                        : 'No payment methods available for this moonlighter. They need to add payment methods first.'}
+                    </p>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="stripe">
+                  <StripePaymentForm />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
         </div>
-        
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Make a Payment</h1>
-          <p className="text-muted-foreground mt-1">
-            Send payment to healthcare professional for completed work
-          </p>
-        </div>
-        
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Payment Summary</CardTitle>
-            <CardDescription>Review details before proceeding</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Job:</span>
-                <span className="font-medium">{jobTitle}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Company:</span>
-                <span>{companyName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount:</span>
-                <span className="font-semibold">₱ {paymentAmount?.toLocaleString() || '0'}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Tabs defaultValue="manual">
-          <TabsList className="mb-6">
-            <TabsTrigger value="manual" className="flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
-              Manual Payment
-            </TabsTrigger>
-            <TabsTrigger value="stripe" className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Stripe Payment
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="manual" className="space-y-6">
-            <ManualPaymentForm
-              providerId={providerId}
-              moonlighterId={moonlighterId}
-              jobId={jobId}
-              applicationId={applicationId}
-              paymentMethods={paymentMethods}
-              onComplete={handlePaymentComplete}
-            />
-          </TabsContent>
-          
-          <TabsContent value="stripe">
-            <StripePaymentForm {...stripeProps} />
-          </TabsContent>
-        </Tabs>
-      </div>
+      </main>
       <Footer />
     </div>
   );
 };
 
-export default MakePayment;
+export default MakePaymentPage;

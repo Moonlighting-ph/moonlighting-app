@@ -96,15 +96,7 @@ export const updateApplicationStatus = async (
     const result: JobApplication = {
       ...updatedApplication,
       status: updatedApplication.status as JobApplication['status'],
-      moonlighter: updatedApplication.profile_info && typeof updatedApplication.profile_info === 'object' ? updatedApplication.profile_info : null,
-      // Ensure job properties are properly typed
-      job: updatedApplication.job ? {
-        ...updatedApplication.job,
-        requirements: Array.isArray(updatedApplication.job.requirements) ? updatedApplication.job.requirements : 
-                     (updatedApplication.job.requirements ? [String(updatedApplication.job.requirements)] : []),
-        responsibilities: Array.isArray(updatedApplication.job.responsibilities) ? updatedApplication.job.responsibilities : 
-                         (updatedApplication.job.responsibilities ? [String(updatedApplication.job.responsibilities)] : [])
-      } : undefined
+      moonlighter: updatedApplication.profile_info && typeof updatedApplication.profile_info === 'object' ? updatedApplication.profile_info : null
     };
     
     console.log('Updated application successfully:', result);
