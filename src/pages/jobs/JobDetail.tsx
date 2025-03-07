@@ -128,10 +128,25 @@ const JobDetail: React.FC = () => {
     try {
       setApplying(true);
       
+      // Get user profile first to include in application
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        toast.error('Failed to submit application: Could not retrieve your profile');
+        setApplying(false);
+        return;
+      }
+      
       await submitJobApplication({
         job_id: job.id,
         moonlighter_id: session.user.id,
-        notes: applicationNotes.trim() || null
+        notes: applicationNotes.trim() || null,
+        profile_info: profileData
       });
       
       // Get the updated application

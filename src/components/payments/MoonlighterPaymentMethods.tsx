@@ -1,59 +1,91 @@
 
-import React, { useEffect, useState } from 'react';
-import { PaymentMethod } from '@/types/payment';
-import { fetchPaymentMethods } from '@/services/paymentMethodService';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import PaymentMethodForm from './PaymentMethodForm';
 import PaymentMethodsList from './PaymentMethodsList';
+import { fetchPaymentMethods } from '@/services/paymentMethodService';
+import { PaymentMethod } from '@/types/payment';
+import { toast } from 'sonner';
 
-export interface MoonlighterPaymentMethodsProps {
-  moonlighterId: string;
+interface MoonlighterPaymentMethodsProps {
+  userId: string;
 }
 
-const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ 
-  moonlighterId 
-}) => {
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ userId }) => {
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const loadPaymentMethods = async () => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  
+  const fetchPaymentMethodsData = async () => {
     try {
       setLoading(true);
-      const methods = await fetchPaymentMethods(moonlighterId);
-      setPaymentMethods(methods);
+      const data = await fetchPaymentMethods(userId);
+      setMethods(data);
     } catch (error) {
-      console.error('Error loading payment methods:', error);
+      console.error('Error fetching payment methods:', error);
+      toast.error('Failed to load payment methods');
     } finally {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    if (moonlighterId) {
-      loadPaymentMethods();
+    if (userId) {
+      fetchPaymentMethodsData();
     }
-  }, [moonlighterId]);
-
+  }, [userId]);
+  
+  const handleAddComplete = async () => {
+    setShowAddForm(false);
+    await fetchPaymentMethodsData();
+  };
+  
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Moonlighter's Payment Methods</CardTitle>
+        <CardTitle>Payment Methods</CardTitle>
+        <CardDescription>
+          Add your payment methods to receive payments from healthcare providers
+        </CardDescription>
+        <Button 
+          onClick={() => setShowAddForm(true)} 
+          className="mt-2"
+          variant="outline"
+          size="sm"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Payment Method
+        </Button>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <p className="text-center py-4 text-gray-500">Loading payment methods...</p>
         ) : (
           <PaymentMethodsList 
-            methods={paymentMethods} 
-            userId={moonlighterId}
-            onUpdate={loadPaymentMethods}
+            methods={methods} 
+            userId={userId} 
+            onUpdate={fetchPaymentMethodsData} 
           />
         )}
       </CardContent>
+      
+      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Payment Method</DialogTitle>
+            <DialogDescription>
+              Add a payment method for receiving payments
+            </DialogDescription>
+          </DialogHeader>
+          <PaymentMethodForm 
+            userId={userId} 
+            onComplete={handleAddComplete} 
+          />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

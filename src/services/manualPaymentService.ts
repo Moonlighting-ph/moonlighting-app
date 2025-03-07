@@ -2,65 +2,90 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ManualPayment } from '@/types/payment';
 
-export const recordManualPayment = async (paymentData: Partial<ManualPayment>): Promise<ManualPayment> => {
+export const createManualPayment = async (payment: Omit<ManualPayment, 'id' | 'created_at' | 'updated_at' | 'status'>): Promise<ManualPayment> => {
   try {
-    // Ensure required fields are present
-    if (!paymentData.amount) {
-      throw new Error('Payment amount is required');
-    }
-    
-    if (!paymentData.payment_details || !paymentData.payment_method_type) {
-      throw new Error('Payment details and method are required');
-    }
+    const paymentData = {
+      ...payment,
+      amount: Number(payment.amount),
+      status: 'pending'
+    };
     
     const { data, error } = await supabase
       .from('manual_payments')
-      .insert({
-        amount: paymentData.amount,
-        provider_id: paymentData.provider_id,
-        moonlighter_id: paymentData.moonlighter_id,
-        job_id: paymentData.job_id,
-        application_id: paymentData.application_id,
-        payment_method_id: paymentData.payment_method_id,
-        payment_details: paymentData.payment_details,
-        payment_method_type: paymentData.payment_method_type,
-        reference_number: paymentData.reference_number,
-        notes: paymentData.notes,
-        status: paymentData.status || 'pending',
-      })
+      .insert(paymentData)
       .select()
       .single();
     
-    if (error) {
-      console.error('Error recording manual payment:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     return data as ManualPayment;
   } catch (error) {
-    console.error('Error in recordManualPayment:', error);
+    console.error('Error creating manual payment:', error);
     throw error;
   }
 };
 
-export const fetchManualPayments = async (userId: string, role: 'provider' | 'moonlighter'): Promise<ManualPayment[]> => {
+export const fetchMoonlighterPayments = async (moonlighterId: string): Promise<ManualPayment[]> => {
   try {
-    const column = role === 'provider' ? 'provider_id' : 'moonlighter_id';
-    
     const { data, error } = await supabase
       .from('manual_payments')
-      .select('*')
-      .eq(column, userId)
+      .select(`
+        *,
+        job:jobs(*),
+        payment_method:payment_methods(*)
+      `)
+      .eq('moonlighter_id', moonlighterId)
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.error('Error fetching manual payments:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     return data as ManualPayment[];
   } catch (error) {
-    console.error('Error in fetchManualPayments:', error);
+    console.error('Error fetching moonlighter payments:', error);
+    return [];
+  }
+};
+
+export const fetchProviderPayments = async (providerId: string): Promise<ManualPayment[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('manual_payments')
+      .select(`
+        *,
+        job:jobs(*),
+        moonlighter:profiles(*)
+      `)
+      .eq('provider_id', providerId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    return data as ManualPayment[];
+  } catch (error) {
+    console.error('Error fetching provider payments:', error);
+    return [];
+  }
+};
+
+export const recordManualPayment = async (paymentData: Partial<ManualPayment>): Promise<ManualPayment> => {
+  try {
+    // Ensure amount is a number
+    const data = {
+      ...paymentData,
+      amount: Number(paymentData.amount)
+    };
+    
+    const { data: payment, error } = await supabase
+      .from('manual_payments')
+      .insert(data)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return payment as ManualPayment;
+  } catch (error) {
+    console.error('Error recording manual payment:', error);
     throw error;
   }
 };

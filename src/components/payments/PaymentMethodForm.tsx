@@ -1,51 +1,32 @@
 
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { PaymentMethod } from '@/types/payment';
-import { toast } from 'sonner';
-import { addPaymentMethod } from '@/services/paymentMethodService';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { createPaymentMethod } from '@/services/paymentMethodService';
+import { toast } from 'sonner';
 
-const formSchema = z.object({
-  method: z.string(),
-  details: z.string().min(5, 'Please provide more details'),
-  is_default: z.boolean().default(false),
-});
-
-export interface PaymentMethodFormProps {
+interface PaymentMethodFormProps {
   userId: string;
-  onSuccess: () => void;
-  onCancel?: () => void;
+  onComplete: () => void;
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
-  userId,
-  onSuccess,
-  onCancel,
-}) => {
+const formSchema = z.object({
+  method: z.string().min(1, 'Payment method is required'),
+  details: z.string().min(3, 'Details are required'),
+  is_default: z.boolean().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ userId, onComplete }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       method: '',
@@ -53,20 +34,20 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       is_default: false,
     },
   });
-  
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+
+  const onSubmit = async (values: FormValues) => {
     try {
       setIsSubmitting(true);
-      
-      await addPaymentMethod({
+      await createPaymentMethod({
         user_id: userId,
         method: values.method,
         details: values.details,
-        is_default: values.is_default,
+        is_default: values.is_default || false,
       });
       
       toast.success('Payment method added successfully');
-      onSuccess();
+      form.reset();
+      onComplete();
     } catch (error) {
       console.error('Error adding payment method:', error);
       toast.error('Failed to add payment method');
@@ -74,10 +55,10 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="method"
@@ -90,14 +71,13 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a payment method" />
+                    <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="gcash">GCash</SelectItem>
-                  <SelectItem value="bank">Bank Transfer</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="paymaya">PayMaya</SelectItem>
+                  <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="GCash">GCash</SelectItem>
+                  <SelectItem value="PayMaya">PayMaya</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -110,11 +90,11 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           name="details"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Details</FormLabel>
+              <FormLabel>Account Details</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Enter payment details (e.g., account number, name, etc.)"
-                  {...field}
+                <Input 
+                  placeholder="Account number, name, etc." 
+                  {...field} 
                 />
               </FormControl>
               <FormMessage />
@@ -126,33 +106,26 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
           control={form.control}
           name="is_default"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <FormLabel>Set as Default</FormLabel>
-                <div className="text-sm text-muted-foreground">
-                  Make this your preferred payment method
-                </div>
-              </div>
+            <FormItem className="flex items-center gap-2 space-y-0">
               <FormControl>
-                <Switch
+                <input
+                  type="checkbox"
                   checked={field.value}
-                  onCheckedChange={field.onChange}
+                  onChange={field.onChange}
+                  id="is_default"
+                  className="rounded border-gray-300 text-primary focus:ring-primary"
                 />
               </FormControl>
+              <FormLabel htmlFor="is_default" className="cursor-pointer font-normal">
+                Set as default payment method
+              </FormLabel>
             </FormItem>
           )}
         />
         
-        <div className="flex justify-end space-x-2 pt-4">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add Payment Method'}
-          </Button>
-        </div>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Adding...' : 'Add Payment Method'}
+        </Button>
       </form>
     </Form>
   );

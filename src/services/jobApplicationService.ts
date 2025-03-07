@@ -6,6 +6,7 @@ interface JobApplicationSubmission {
   job_id: string;
   moonlighter_id: string;
   notes?: string | null;
+  profile_info?: any; // Include profile info
 }
 
 export const submitJobApplication = async (
@@ -26,6 +27,15 @@ export const submitJobApplication = async (
       throw new Error('You have already applied for this job');
     }
     
+    // Fetch the moonlighter's profile to include in application
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', applicationData.moonlighter_id)
+      .single();
+      
+    if (profileError) throw profileError;
+    
     // If no existing application, create a new one
     const { data, error } = await supabase
       .from('job_applications')
@@ -33,6 +43,7 @@ export const submitJobApplication = async (
         ...applicationData,
         applied_date: new Date().toISOString(),
         status: 'pending',
+        profile_info: profileData // Include the profile info
       })
       .select()
       .single();
@@ -68,7 +79,7 @@ export const fetchMoonlighterApplications = async (moonlighterId: string): Promi
 
 export const fetchJobApplications = async (jobId: string): Promise<JobApplication[]> => {
   try {
-    // First fetch the applications
+    // Fetch the applications
     const { data: applications, error } = await supabase
       .from('job_applications')
       .select('*')
@@ -81,7 +92,7 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
       return [];
     }
     
-    // Then fetch the moonlighter profiles separately
+    // Fetch moonlighter profiles
     const moonlighterIds = applications.map(app => app.moonlighter_id);
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
@@ -95,7 +106,9 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
       const moonlighter = profiles?.find(p => p.id === app.moonlighter_id) || null;
       return {
         ...app,
-        moonlighter
+        moonlighter,
+        // Add profile_info if not already present
+        profile_info: app.profile_info || moonlighter
       };
     });
     

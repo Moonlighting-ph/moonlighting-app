@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { User, LogOut, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import { Moon } from './icons/Moon';
 
 const Navbar: React.FC = () => {
   const { session, signOut } = useAuth();
@@ -72,7 +73,8 @@ const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-primary">
+        <Link to="/" className="text-xl font-bold text-primary flex items-center">
+          <Moon className="mr-2 text-primary" width={28} height={28} />
           Moonlighting.ph
         </Link>
         

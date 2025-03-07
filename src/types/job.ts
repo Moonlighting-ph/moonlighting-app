@@ -27,6 +27,7 @@ export interface JobApplication {
   ai_match_score?: number | null;
   job?: Job;
   moonlighter?: any; // Profile information
+  profile_info?: any; // Additional profile information
 }
 
 // Adding this to fix the reference in the JobFilters type
