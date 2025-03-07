@@ -22,6 +22,13 @@ const FooterSection = () => {
               Seamlessly connects understaffed hospitals with pre-vetted, on-demand medical professionals
             </p>
           </div>
+
+          {/* Quick Links Section */}
+          <div>
+            <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
+            <ul className="text-muted-foreground">
+            </ul>
+          </div>
           
           {/* Contact Section */}
           <div>
