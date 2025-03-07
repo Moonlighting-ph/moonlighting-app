@@ -117,15 +117,32 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased dark:bg-background dark:text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "San Francisco", "Helvetica Neue", sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-sans tracking-tight;
+    @apply font-display font-semibold tracking-tight;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "San Francisco", "Helvetica Neue", sans-serif;
+  }
+
+  h1 {
+    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl;
+  }
+
+  h3 {
+    @apply text-xl sm:text-2xl md:text-3xl;
   }
 
   p {
-    @apply leading-relaxed;
+    @apply text-base sm:text-lg leading-relaxed;
   }
 }
 
