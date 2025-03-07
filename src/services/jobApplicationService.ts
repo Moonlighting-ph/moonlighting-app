@@ -123,7 +123,7 @@ export const updateApplicationStatus = async (
       .from('job_applications')
       .select('job_id')
       .eq('id', applicationId)
-      .maybeSingle(); // Use maybeSingle instead of single
+      .maybeSingle();
     
     if (fetchError) throw fetchError;
     
@@ -136,7 +136,7 @@ export const updateApplicationStatus = async (
       .from('jobs')
       .select('provider_id')
       .eq('id', application.job_id)
-      .maybeSingle(); // Use maybeSingle instead of single
+      .maybeSingle();
     
     if (jobError) throw jobError;
     
@@ -154,12 +154,15 @@ export const updateApplicationStatus = async (
       .update({ status })
       .eq('id', applicationId)
       .select(`
-        *,
+        id, job_id, moonlighter_id, notes, status, applied_date, ai_match_score, profile_info,
         job:jobs(*)
       `)
-      .maybeSingle(); // Use maybeSingle instead of single
+      .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error updating application:', error);
+      throw new Error('Failed to update application status');
+    }
     
     if (!data) {
       throw new Error('Failed to update application status');

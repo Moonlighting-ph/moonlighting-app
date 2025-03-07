@@ -1,34 +1,35 @@
 
 import React, { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { PaymentMethod } from '@/types/payment';
+import { Button } from '@/components/ui/button';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { recordManualPayment } from '@/services/manualPaymentService';
 import { toast } from 'sonner';
+import { ManualPaymentFormProps, PaymentMethodType } from '@/types/payment';
 
-export interface ManualPaymentFormProps {
-  providerId: string;
-  moonlighterId: string;
-  jobId: string;
-  applicationId: string;
-  paymentMethods: PaymentMethod[];
-  onComplete?: () => void;
+interface FormValues {
+  amount: number;
+  paymentMethodType: PaymentMethodType;
+  paymentDetails: string;
+  referenceNumber?: string;
+  notes?: string;
 }
-
-const formSchema = z.object({
-  amount: z.coerce.number().min(1, "Amount must be at least 1"),
-  paymentMethodId: z.string().min(1, "Payment method is required"),
-  referenceNumber: z.string().min(1, "Reference number is required"),
-  notes: z.string().optional(),
-  paymentDetails: z.string().min(1, "Payment details are required"),
-});
 
 const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
   providerId,
@@ -38,56 +39,40 @@ const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
   paymentMethods,
   onComplete
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
     defaultValues: {
       amount: 0,
-      paymentMethodId: '',
-      referenceNumber: '',
-      notes: '',
+      paymentMethodType: 'bank_transfer',
       paymentDetails: '',
-    },
+      referenceNumber: '',
+      notes: ''
+    }
   });
   
-  // Watch for changes to paymentMethodId
-  const paymentMethodId = form.watch('paymentMethodId');
-  
-  // Update selected payment method when paymentMethodId changes
-  React.useEffect(() => {
-    if (paymentMethodId && paymentMethods) {
-      const method = paymentMethods.find(m => m.id === paymentMethodId);
-      setSelectedPaymentMethod(method || null);
-    } else {
-      setSelectedPaymentMethod(null);
+  const handleSubmit = async (values: FormValues) => {
+    if (values.amount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
     }
-  }, [paymentMethodId, paymentMethods]);
-  
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    
     try {
-      setLoading(true);
-      
-      if (!selectedPaymentMethod) {
-        toast.error("Please select a valid payment method");
-        return;
-      }
+      setIsSubmitting(true);
       
       await recordManualPayment({
-        amount: values.amount,
         provider_id: providerId,
         moonlighter_id: moonlighterId,
         job_id: jobId,
         application_id: applicationId,
-        payment_method_id: values.paymentMethodId,
-        payment_method_type: selectedPaymentMethod.method,
+        amount: values.amount,
+        payment_method_type: values.paymentMethodType,
         payment_details: values.paymentDetails,
-        reference_number: values.referenceNumber,
-        notes: values.notes,
+        reference_number: values.referenceNumber || undefined,
+        notes: values.notes || undefined
       });
       
-      toast.success("Payment recorded successfully");
+      toast.success('Payment recorded successfully');
       form.reset();
       
       if (onComplete) {
@@ -95,23 +80,33 @@ const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
       }
     } catch (error: any) {
       console.error('Error recording payment:', error);
-      toast.error(error.message || "Failed to record payment");
+      toast.error(error.message || 'Failed to record payment');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="amount"
+          rules={{ 
+            required: 'Amount is required',
+            min: { value: 1, message: 'Amount must be greater than 0' }
+          }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Payment Amount (PHP)</FormLabel>
+              <FormLabel>Amount (PHP)</FormLabel>
               <FormControl>
-                <Input type="number" {...field} placeholder="Enter amount" />
+                <Input
+                  {...field}
+                  type="number"
+                  placeholder="Enter amount"
+                  onChange={e => field.onChange(parseFloat(e.target.value))}
+                  disabled={isSubmitting}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -120,22 +115,26 @@ const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
         
         <FormField
           control={form.control}
-          name="paymentMethodId"
+          name="paymentMethodType"
+          rules={{ required: 'Payment method is required' }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Payment Method</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isSubmitting}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {paymentMethods.map(method => (
-                    <SelectItem key={method.id} value={method.id}>
-                      {method.method.toUpperCase()} - {getPaymentMethodDescription(method)}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="gcash">GCash</SelectItem>
+                  <SelectItem value="paymaya">PayMaya</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -143,30 +142,18 @@ const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
           )}
         />
         
-        {selectedPaymentMethod && (
-          <Card className="bg-muted/50">
-            <CardContent className="pt-4">
-              <div className="text-sm">
-                <p className="font-medium">Payment Method Details:</p>
-                <pre className="whitespace-pre-wrap mt-1 font-mono text-xs bg-muted p-2 rounded">
-                  {formatPaymentMethodDetails(selectedPaymentMethod)}
-                </pre>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
         <FormField
           control={form.control}
           name="paymentDetails"
+          rules={{ required: 'Payment details are required' }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Payment Details</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
-                  placeholder="Enter details about the payment"
-                  className="h-20"
+                  placeholder="Enter payment details"
+                  disabled={isSubmitting}
                 />
               </FormControl>
               <FormMessage />
@@ -179,9 +166,13 @@ const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
           name="referenceNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Reference Number</FormLabel>
+              <FormLabel>Reference Number (Optional)</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Enter payment reference number" />
+                <Input
+                  {...field}
+                  placeholder="Enter reference number"
+                  disabled={isSubmitting}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -197,8 +188,8 @@ const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
               <FormControl>
                 <Textarea
                   {...field}
-                  placeholder="Add any additional notes about this payment"
-                  className="h-20"
+                  placeholder="Enter additional notes"
+                  disabled={isSubmitting}
                 />
               </FormControl>
               <FormMessage />
@@ -206,59 +197,12 @@ const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
           )}
         />
         
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Recording Payment..." : "Record Payment"}
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Recording Payment...' : 'Record Payment'}
         </Button>
       </form>
     </Form>
   );
 };
-
-// Helper function to get a readable description for the payment method
-function getPaymentMethodDescription(method: PaymentMethod): string {
-  try {
-    const details = JSON.parse(method.details);
-    switch (method.method.toLowerCase()) {
-      case 'bank':
-        return `${details.bank_name} - ${maskString(details.account_number)}`;
-      case 'gcash':
-      case 'paymaya':
-        return maskString(details.phone_number);
-      default:
-        return method.method;
-    }
-  } catch (e) {
-    return method.method;
-  }
-}
-
-// Helper function to format payment method details
-function formatPaymentMethodDetails(method: PaymentMethod): string {
-  try {
-    const details = JSON.parse(method.details);
-    switch (method.method.toLowerCase()) {
-      case 'bank':
-        return `Bank: ${details.bank_name}\nAccount Number: ${details.account_number}\nAccount Name: ${details.account_name || 'N/A'}`;
-      case 'gcash':
-        return `GCash Number: ${details.phone_number}`;
-      case 'paymaya':
-        return `PayMaya Number: ${details.phone_number}`;
-      default:
-        return JSON.stringify(details, null, 2);
-    }
-  } catch (e) {
-    return method.details;
-  }
-}
-
-// Helper function to mask a string
-function maskString(str: string, visibleChars = 4): string {
-  if (!str) return '';
-  if (str.length <= visibleChars) return str;
-  
-  const visible = str.slice(-visibleChars);
-  const masked = '•'.repeat(str.length - visibleChars);
-  return `${masked}${visible}`;
-}
 
 export default ManualPaymentForm;

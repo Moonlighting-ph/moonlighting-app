@@ -1,5 +1,7 @@
 
-export type PaymentMethodType = 'bank_transfer' | 'gcash' | 'paymaya' | 'other';
+export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'rejected' | 'verified';
+
+export type PaymentMethodType = 'bank_transfer' | 'gcash' | 'paymaya' | 'credit_card' | 'cash';
 
 export interface PaymentMethod {
   id: string;
@@ -10,37 +12,33 @@ export interface PaymentMethod {
   created_at: string;
 }
 
-export interface ManualPayment {
-  id: string;
-  provider_id: string;
-  moonlighter_id: string;
-  job_id: string;
-  application_id: string;
-  amount: number;
-  payment_method_id?: string;
-  payment_method_type: PaymentMethodType;
-  payment_details: string;
-  reference_number?: string;
-  notes?: string;
-  status: 'pending' | 'verified' | 'rejected';
-  created_at: string;
-  updated_at: string;
-  // Relationships
-  provider?: any;
-  moonlighter?: any;
-  job?: any;
-  application?: any;
-}
-
 export interface Payment {
   id: string;
-  application_id?: string;
+  application_id: string;
   amount: number;
-  provider_id?: string;
-  moonlighter_id?: string;
+  provider_id: string;
+  moonlighter_id: string;
+  job_id?: string;
   created_at: string;
   updated_at: string;
-  currency: string;
-  status: 'pending' | 'succeeded' | 'failed';
-  stripe_payment_intent_id?: string;
+  status: PaymentStatus;
+  payment_method_id?: string;
+  payment_method_type?: PaymentMethodType;
+  payment_details?: string;
+  reference_number?: string;
+  notes?: string;
+}
+
+export interface ManualPaymentFormProps {
+  providerId: string;
+  moonlighterId: string;
+  jobId: string;
+  applicationId: string;
+  paymentMethods: PaymentMethod[];
+  onComplete: () => void;
+}
+
+export interface PaymentMethodFormProps {
+  userId: string;
+  onComplete: () => Promise<void>;
 }

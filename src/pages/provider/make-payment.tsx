@@ -1,82 +1,110 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ManualPaymentForm from '@/components/payments/ManualPaymentForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchPaymentMethods } from '@/services/paymentMethodService';
-import { getUserProfile } from '@/services/profileService';
-import { UserProfile } from '@/types/profile';
-import { getApplicationForMoonlighter } from '@/services/jobApplicationService';
+import { fetchUserPaymentMethods } from '@/services/paymentMethodService';
 import { PaymentMethod } from '@/types/payment';
-import { ArrowLeft } from 'lucide-react';
+import { JobApplication } from '@/types/job';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const MakePayment: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
-  const { jobId, moonlighterId } = useParams<{ jobId: string; moonlighterId: string }>();
+  const { applicationId } = useParams<{ applicationId: string }>();
   
-  const [moonlighterProfile, setMoonlighterProfile] = useState<UserProfile | null>(null);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
-  const [applicationId, setApplicationId] = useState<string | null>(null);
+  const [application, setApplication] = useState<JobApplication | null>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   
   useEffect(() => {
-    if (!session?.user) {
-      navigate('/auth/login');
-      return;
-    }
-    
-    if (!jobId || !moonlighterId) {
-      toast.error('Missing required information');
-      navigate('/provider');
-      return;
-    }
-    
     const fetchData = async () => {
+      if (!session?.user || !applicationId) {
+        navigate('/provider');
+        return;
+      }
+      
       try {
         setLoading(true);
         
-        // Fetch the moonlighter's profile
-        const profile = await getUserProfile(moonlighterId);
-        if (!profile) {
-          toast.error('Could not find healthcare professional');
-          navigate('/provider');
+        // Fetch the application
+        const { data: app, error: appError } = await supabase
+          .from('job_applications')
+          .select(`
+            *,
+            job:jobs(*),
+            moonlighter:profiles!job_applications_moonlighter_id_fkey(*)
+          `)
+          .eq('id', applicationId)
+          .maybeSingle();
+        
+        if (appError) {
+          throw appError;
+        }
+        
+        if (!app) {
+          toast.error('Application not found');
+          navigate('/provider/applications');
           return;
         }
-        setMoonlighterProfile(profile);
         
-        // Fetch the moonlighter's payment methods
-        const methods = await fetchPaymentMethods(moonlighterId);
-        setPaymentMethods(methods);
+        setApplication(app as unknown as JobApplication);
         
-        // Get the application ID
-        const application = await getApplicationForMoonlighter(jobId, moonlighterId);
-        if (application) {
-          setApplicationId(application.id);
+        // Check if the provider owns this job
+        if (app.job.provider_id !== session.user.id) {
+          toast.error('You do not have permission to access this application');
+          navigate('/provider/applications');
+          return;
         }
+        
+        // Fetch payment methods
+        const methods = await fetchUserPaymentMethods(app.moonlighter_id);
+        setPaymentMethods(methods);
       } catch (error) {
         console.error('Error fetching data:', error);
-        toast.error('Failed to load required data');
+        toast.error('Failed to load application data');
+        navigate('/provider/applications');
       } finally {
         setLoading(false);
       }
     };
     
     fetchData();
-  }, [session, jobId, moonlighterId, navigate]);
+  }, [session, applicationId, navigate]);
+  
+  const handlePaymentComplete = () => {
+    toast.success('Payment recorded successfully');
+    navigate('/provider/applications');
+  };
   
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="container mx-auto py-8 px-4">
-          <h1 className="text-3xl font-bold mb-6">Make Payment</h1>
           <div className="text-center py-12">Loading...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+  
+  if (!application) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto py-8 px-4">
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">Application not found</p>
+            <Button onClick={() => navigate('/provider/applications')}>Back to Applications</Button>
+          </div>
         </div>
         <Footer />
       </div>
@@ -97,49 +125,54 @@ const MakePayment: React.FC = () => {
           Back to Applications
         </Button>
         
-        <h1 className="text-3xl font-bold mb-6">Make Payment</h1>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="max-w-3xl mx-auto">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Record Payment</CardTitle>
+              <CardDescription>
+                Record a payment for this application
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <p className="font-medium">Job</p>
+                  <p>{application.job?.title}</p>
+                </div>
+                
+                <div>
+                  <p className="font-medium">Moonlighter</p>
+                  <p>{application.moonlighter?.first_name} {application.moonlighter?.last_name}</p>
+                </div>
+                
+                <div>
+                  <p className="font-medium">Status</p>
+                  <Badge variant="outline">{application.status}</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {application && session?.user && (
             <Card>
               <CardHeader>
                 <CardTitle>Payment Details</CardTitle>
                 <CardDescription>
-                  Submit a payment to {moonlighterProfile?.first_name} {moonlighterProfile?.last_name}
+                  Enter the details of the payment
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ManualPaymentForm
-                  providerId={session?.user?.id || ''}
-                  moonlighterId={moonlighterId || ''}
-                  jobId={jobId || ''}
-                  applicationId={applicationId}
+                  providerId={session.user.id}
+                  moonlighterId={application.moonlighter_id}
+                  jobId={application.job_id}
+                  applicationId={application.id}
                   paymentMethods={paymentMethods}
-                  onComplete={() => navigate('/provider/payments')}
+                  onComplete={handlePaymentComplete}
                 />
               </CardContent>
             </Card>
-          </div>
-          
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Healthcare Professional</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p><strong>Name:</strong> {moonlighterProfile?.first_name} {moonlighterProfile?.last_name}</p>
-                  {moonlighterProfile?.specialization && (
-                    <p><strong>Specialization:</strong> {moonlighterProfile.specialization}</p>
-                  )}
-                  <p><strong>Email:</strong> {moonlighterProfile?.email}</p>
-                  {moonlighterProfile?.phone && (
-                    <p><strong>Phone:</strong> {moonlighterProfile.phone}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          )}
         </div>
       </div>
       <Footer />

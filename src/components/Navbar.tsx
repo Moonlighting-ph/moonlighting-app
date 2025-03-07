@@ -80,7 +80,7 @@ const Navbar: React.FC = () => {
         
         <nav className="flex items-center space-x-4">
           <Link to="/jobs" className="text-gray-700 hover:text-primary">
-            Find Jobs
+            Browse Jobs
           </Link>
           
           {!session ? (
