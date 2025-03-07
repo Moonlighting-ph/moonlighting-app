@@ -11,12 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, CheckCircle } from 'lucide-react';
 
 interface ApplicationCardProps {
   application: JobApplication;
   onViewDetails: (application: JobApplication) => void;
-  onUpdateStatus: (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected') => void;
+  onUpdateStatus: (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid') => void;
   statusUpdateLoading: string | null;
 }
 
@@ -34,10 +34,14 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         return 'destructive';
       case 'reviewed':
         return 'secondary';
+      case 'paid':
+        return 'default';
       default:
         return 'outline';
     }
   };
+
+  const isLoading = statusUpdateLoading === application.id;
 
   return (
     <TableRow key={application.id}>
@@ -50,13 +54,20 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
       </TableCell>
       <TableCell>
         <Badge variant={getStatusBadgeVariant(application.status)}>
-          {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+          {isLoading ? (
+            <span className="flex items-center">
+              <span className="mr-1 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+              Updating...
+            </span>
+          ) : (
+            application.status.charAt(0).toUpperCase() + application.status.slice(1)
+          )}
         </Badge>
       </TableCell>
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isLoading}>
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -68,24 +79,34 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              disabled={statusUpdateLoading === application.id || application.status === 'reviewed'}
+              disabled={isLoading || application.status === 'reviewed'}
               onClick={() => onUpdateStatus(application.id, 'reviewed')}
             >
               Mark as Reviewed
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={statusUpdateLoading === application.id || application.status === 'approved'}
+              disabled={isLoading || application.status === 'approved'}
               onClick={() => onUpdateStatus(application.id, 'approved')}
             >
               Approve
             </DropdownMenuItem>
             <DropdownMenuItem
-              disabled={statusUpdateLoading === application.id || application.status === 'rejected'}
+              disabled={isLoading || application.status === 'rejected'}
               onClick={() => onUpdateStatus(application.id, 'rejected')}
               className="text-red-600"
             >
               Reject
             </DropdownMenuItem>
+            {application.status === 'approved' && (
+              <DropdownMenuItem
+                disabled={isLoading || application.status === 'paid'}
+                onClick={() => onUpdateStatus(application.id, 'paid')}
+                className="text-green-600"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Mark as Paid
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>

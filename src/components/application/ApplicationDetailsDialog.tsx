@@ -11,13 +11,13 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, User } from 'lucide-react';
+import { CalendarClock, User, CheckCircle } from 'lucide-react';
 
 interface ApplicationDetailsDialogProps {
   application: JobApplication | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdateStatus: (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected') => void;
+  onUpdateStatus: (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid') => void;
   statusUpdateLoading: string | null;
 }
 
@@ -38,10 +38,14 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
         return 'destructive';
       case 'reviewed':
         return 'secondary';
+      case 'paid':
+        return 'default';
       default:
         return 'outline';
     }
   };
+
+  const isLoading = statusUpdateLoading === application.id;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,7 +73,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
           <div>
             <p className="font-medium mb-1">Status</p>
             <Badge variant={getStatusBadgeVariant(application.status)}>
-              {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+              {isLoading ? 'Updating...' : application.status.charAt(0).toUpperCase() + application.status.slice(1)}
             </Badge>
           </div>
           
@@ -86,20 +90,33 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
             </DialogClose>
             
             <div className="space-x-2">
-              <Button
-                variant="outline"
-                disabled={statusUpdateLoading === application.id}
-                onClick={() => onUpdateStatus(application.id, 'approved')}
-              >
-                Approve
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={statusUpdateLoading === application.id}
-                onClick={() => onUpdateStatus(application.id, 'rejected')}
-              >
-                Reject
-              </Button>
+              {application.status === 'approved' ? (
+                <Button
+                  variant="default"
+                  disabled={isLoading || application.status === 'paid'}
+                  onClick={() => onUpdateStatus(application.id, 'paid')}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark as Paid
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    disabled={isLoading || application.status === 'approved'}
+                    onClick={() => onUpdateStatus(application.id, 'approved')}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={isLoading || application.status === 'rejected'}
+                    onClick={() => onUpdateStatus(application.id, 'rejected')}
+                  >
+                    Reject
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
