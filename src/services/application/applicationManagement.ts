@@ -8,6 +8,8 @@ export const updateApplicationStatus = async (
   providerId: string
 ): Promise<JobApplication> => {
   try {
+    console.log(`Starting update for application ${applicationId} to status: ${status}`);
+    
     // First verify that the provider owns the job
     const { data: application, error: fetchError } = await supabase
       .from('job_applications')
@@ -21,8 +23,11 @@ export const updateApplicationStatus = async (
     }
     
     if (!application?.job_id) {
+      console.error('Application not found or does not have a job_id');
       throw new Error('Application not found');
     }
+    
+    console.log(`Found application with job_id: ${application.job_id}`);
     
     // Verify job ownership
     const { data: job, error: jobError } = await supabase
@@ -37,33 +42,35 @@ export const updateApplicationStatus = async (
     }
     
     if (!job) {
+      console.error('Job not found');
       throw new Error('Job not found');
     }
     
     if (job.provider_id !== providerId) {
+      console.error(`Permission denied: user ${providerId} is not the owner of job ${application.job_id}`);
       throw new Error('You do not have permission to update this application');
     }
     
     console.log(`Updating application ${applicationId} to status: ${status}`);
     
-    // Update the status - separate from the fetch
+    // Update the status with fewer conditions to debug
     const { data: updateData, error: updateError } = await supabase
-      .from('job_applications')
+      .from('job_applications') // Ensure this matches your actual table name
       .update({ status })
       .eq('id', applicationId)
-      .select();
+      .select('*');
     
     if (updateError) {
       console.error('Supabase error updating application:', updateError);
-      throw new Error('Failed to update application status');
-    }
-    
-    if (!updateData || updateData.length === 0) {
-      console.error('No rows updated');
-      throw new Error('Application not found after update');
+      throw new Error(`Failed to update application status: ${updateError.message}`);
     }
     
     console.log('Update response:', updateData);
+    
+    if (!updateData || updateData.length === 0) {
+      console.error('No rows updated', updateData);
+      throw new Error('Application not found after update');
+    }
     
     // Fetch the updated application with job details to return
     const { data: updatedApplication, error: fetchUpdatedError } = await supabase
@@ -81,6 +88,7 @@ export const updateApplicationStatus = async (
     }
     
     if (!updatedApplication) {
+      console.error('Updated application not found when fetching details');
       throw new Error('Application not found after update');
     }
     
@@ -88,7 +96,7 @@ export const updateApplicationStatus = async (
     const result: JobApplication = {
       ...updatedApplication,
       status: updatedApplication.status as JobApplication['status'],
-      moonlighter: updatedApplication.profile_info || null
+      moonlighter: updatedApplication.profile_info && typeof updatedApplication.profile_info === 'object' ? updatedApplication.profile_info : null
     };
     
     console.log('Updated application successfully:', result);
