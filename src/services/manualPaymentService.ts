@@ -1,137 +1,126 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Payment, PaymentMethodType } from '@/types/payment';
+import { ManualPayment } from '@/types/payment';
+import { PaymentMethodType } from '@/types/payment';
 
-export const recordManualPayment = async (payment: {
-  provider_id: string;
-  moonlighter_id: string;
-  job_id: string;
-  application_id: string;
-  amount: number;
-  payment_method_type: PaymentMethodType;
-  payment_details: string;
-  reference_number?: string;
-  notes?: string;
-}): Promise<Payment> => {
+export const recordManualPayment = async (
+  providerId: string,
+  moonlighterId: string,
+  applicationId: string | null,
+  jobId: string | null,
+  amount: number,
+  paymentMethodId: string | null,
+  paymentMethodType: PaymentMethodType,
+  paymentDetails: string,
+  notes?: string | null,
+  referenceNumber?: string | null
+): Promise<ManualPayment> => {
   try {
-    // Insert the payment record
     const { data, error } = await supabase
       .from('manual_payments')
       .insert({
-        provider_id: payment.provider_id,
-        moonlighter_id: payment.moonlighter_id,
-        job_id: payment.job_id,
-        application_id: payment.application_id,
-        amount: payment.amount,
-        payment_method_type: payment.payment_method_type,
-        payment_details: payment.payment_details,
-        reference_number: payment.reference_number,
-        notes: payment.notes,
-        status: 'pending'
+        provider_id: providerId,
+        moonlighter_id: moonlighterId,
+        application_id: applicationId,
+        job_id: jobId,
+        amount,
+        payment_method_id: paymentMethodId,
+        payment_method_type: paymentMethodType,
+        payment_details: paymentDetails,
+        notes,
+        reference_number: referenceNumber,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .select()
       .single();
     
-    if (error) {
-      console.error('Error recording manual payment:', error);
-      throw error;
+    if (error) throw error;
+    
+    // If this payment is for a job application, update the job application status
+    if (applicationId) {
+      const { error: updateError } = await supabase
+        .from('job_applications')
+        .update({ status: 'paid' })
+        .eq('id', applicationId);
+      
+      if (updateError) {
+        console.error('Error updating job application status:', updateError);
+        // We don't throw here because the payment was already recorded
+      }
     }
     
-    return data as unknown as Payment;
+    return data as ManualPayment;
   } catch (error) {
-    console.error('Failed to record manual payment:', error);
+    console.error('Error recording manual payment:', error);
     throw error;
   }
 };
 
-export const fetchMoonlighterPayments = async (moonlighterId: string): Promise<Payment[]> => {
+export const fetchMoonlighterPayments = async (moonlighterId: string): Promise<ManualPayment[]> => {
   try {
     const { data, error } = await supabase
       .from('manual_payments')
       .select(`
         *,
-        provider:profiles!manual_payments_provider_id_fkey(first_name, last_name)
+        job:jobs(*),
+        application:job_applications(*)
       `)
       .eq('moonlighter_id', moonlighterId)
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.error('Error fetching moonlighter payments:', error);
-      throw error;
-    }
+    if (error) throw error;
     
-    return (data || []) as unknown as Payment[];
+    return data as ManualPayment[];
   } catch (error) {
-    console.error('Failed to fetch moonlighter payments:', error);
+    console.error('Error fetching moonlighter payments:', error);
     return [];
   }
 };
 
-export const fetchProviderPayments = async (providerId: string): Promise<Payment[]> => {
+export const fetchProviderPayments = async (providerId: string): Promise<ManualPayment[]> => {
   try {
     const { data, error } = await supabase
       .from('manual_payments')
       .select(`
         *,
-        moonlighter:profiles!manual_payments_moonlighter_id_fkey(first_name, last_name)
+        job:jobs(*),
+        application:job_applications(*),
+        moonlighter:profiles!manual_payments_moonlighter_id_fkey(*)
       `)
       .eq('provider_id', providerId)
       .order('created_at', { ascending: false });
     
-    if (error) {
-      console.error('Error fetching provider payments:', error);
-      throw error;
-    }
+    if (error) throw error;
     
-    return (data || []) as unknown as Payment[];
+    return data as ManualPayment[];
   } catch (error) {
-    console.error('Failed to fetch provider payments:', error);
+    console.error('Error fetching provider payments:', error);
     return [];
   }
 };
 
 export const updatePaymentStatus = async (
-  paymentId: string,
-  status: 'pending' | 'completed' | 'rejected',
-  userId: string,
-  isProvider: boolean
-): Promise<Payment> => {
+  paymentId: string, 
+  status: 'pending' | 'verified' | 'rejected'
+): Promise<ManualPayment> => {
   try {
-    // Verify user owns the payment
-    const userColumn = isProvider ? 'provider_id' : 'moonlighter_id';
-    
-    const { data: payment, error: fetchError } = await supabase
-      .from('manual_payments')
-      .select('*')
-      .eq('id', paymentId)
-      .eq(userColumn, userId)
-      .maybeSingle();
-    
-    if (fetchError) {
-      console.error('Error fetching payment:', fetchError);
-      throw fetchError;
-    }
-    
-    if (!payment) {
-      throw new Error('Payment not found or you do not have permission to update it');
-    }
-    
-    // Update the status
     const { data, error } = await supabase
       .from('manual_payments')
-      .update({ status })
+      .update({ 
+        status,
+        updated_at: new Date().toISOString() 
+      })
       .eq('id', paymentId)
       .select()
-      .maybeSingle();
+      .single();
     
-    if (error) {
-      console.error('Error updating payment status:', error);
-      throw error;
-    }
+    if (error) throw error;
     
-    return data as unknown as Payment;
+    return data as ManualPayment;
   } catch (error) {
-    console.error('Failed to update payment status:', error);
+    console.error('Error updating payment status:', error);
     throw error;
   }
 };

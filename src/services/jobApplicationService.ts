@@ -148,30 +148,40 @@ export const updateApplicationStatus = async (
       throw new Error('You do not have permission to update this application');
     }
     
-    // Update the status - KEY FIX: use maybeSingle() instead of single()
-    const { data, error } = await supabase
+    // Update the status
+    const { error: updateError } = await supabase
       .from('job_applications')
       .update({ status })
-      .eq('id', applicationId)
+      .eq('id', applicationId);
+    
+    if (updateError) {
+      console.error('Supabase error updating application:', updateError);
+      throw new Error('Failed to update application status');
+    }
+    
+    // Fetch the updated application separately
+    const { data: updatedApplication, error: fetchUpdatedError } = await supabase
+      .from('job_applications')
       .select(`
         id, job_id, moonlighter_id, notes, status, applied_date, ai_match_score, profile_info,
         job:jobs(*)
       `)
-      .maybeSingle(); // Changed from single() to maybeSingle()
+      .eq('id', applicationId)
+      .maybeSingle();
     
-    if (error) {
-      console.error('Supabase error updating application:', error);
-      throw new Error('Failed to update application status');
+    if (fetchUpdatedError) {
+      console.error('Error fetching updated application:', fetchUpdatedError);
+      throw new Error('Application updated but could not retrieve the updated record');
     }
     
-    if (!data) {
+    if (!updatedApplication) {
       throw new Error('Application not found after update');
     }
     
     // Ensure moonlighter property exists using profile_info
     const result = {
-      ...data,
-      moonlighter: data.profile_info || null
+      ...updatedApplication,
+      moonlighter: updatedApplication.profile_info || null
     };
     
     return result as JobApplication;
