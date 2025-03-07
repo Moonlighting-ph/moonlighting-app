@@ -2,74 +2,121 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PaymentMethod, PaymentMethodType } from '@/types/payment';
 
-export const fetchPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
+export const createPaymentMethod = async (
+  method: PaymentMethodType,
+  details: string | any,
+  userId: string,
+  isDefault: boolean = false
+): Promise<PaymentMethod> => {
   try {
-    const { data, error } = await supabase
-      .from('payment_methods')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (error) {
-      throw error;
+    // If setting this as default, first update any existing default methods
+    if (isDefault) {
+      await supabase
+        .from('payment_methods')
+        .update({ is_default: false })
+        .eq('user_id', userId);
     }
 
-    // Add the type property to match the PaymentMethod interface
-    return data.map(method => ({
-      ...method,
-      type: method.method as PaymentMethodType // Add the missing type property
-    })) as PaymentMethod[];
-  } catch (error) {
-    console.error('Error fetching payment methods:', error);
-    return [];
-  }
-};
-
-// Create an alias for compatibility with existing code
-export const fetchUserPaymentMethods = fetchPaymentMethods;
-
-export const addPaymentMethod = async (
-  userId: string, 
-  type: PaymentMethodType, 
-  details: Record<string, any>
-): Promise<PaymentMethod | null> => {
-  try {
+    // Insert the new payment method
+    const detailsStr = typeof details === 'object' ? JSON.stringify(details) : details;
+    
     const { data, error } = await supabase
       .from('payment_methods')
       .insert({
+        method,
+        details: detailsStr,
         user_id: userId,
-        method: type,
-        details: JSON.stringify(details),
-        is_default: false
+        is_default: isDefault
       })
       .select()
       .single();
 
     if (error) {
-      throw error;
+      console.error('Error creating payment method:', error);
+      throw new Error('Failed to create payment method');
     }
 
-    // Add the type property to match the PaymentMethod interface
-    return { ...data, type: data.method as PaymentMethodType } as PaymentMethod;
+    return data as PaymentMethod;
   } catch (error) {
-    console.error('Error adding payment method:', error);
-    return null;
+    console.error('Error in createPaymentMethod:', error);
+    throw error;
   }
 };
 
-export const deletePaymentMethod = async (methodId: string): Promise<boolean> => {
+export const getUserPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('payment_methods')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching payment methods:', error);
+      throw new Error('Failed to fetch payment methods');
+    }
+
+    return data.map(method => {
+      try {
+        // Try to parse the details if it's a JSON string
+        const parsedDetails = typeof method.details === 'string' 
+          ? JSON.parse(method.details) 
+          : method.details;
+        
+        return {
+          ...method,
+          details: parsedDetails
+        };
+      } catch (e) {
+        // If parsing fails, just return the original details
+        return method;
+      }
+    }) as PaymentMethod[];
+  } catch (error) {
+    console.error('Error in getUserPaymentMethods:', error);
+    throw error;
+  }
+};
+
+export const setDefaultPaymentMethod = async (methodId: string, userId: string): Promise<void> => {
+  try {
+    // First, set all payment methods for this user to non-default
+    await supabase
+      .from('payment_methods')
+      .update({ is_default: false })
+      .eq('user_id', userId);
+
+    // Then set the selected one as default
+    const { error } = await supabase
+      .from('payment_methods')
+      .update({ is_default: true })
+      .eq('id', methodId)
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error setting default payment method:', error);
+      throw new Error('Failed to set default payment method');
+    }
+  } catch (error) {
+    console.error('Error in setDefaultPaymentMethod:', error);
+    throw error;
+  }
+};
+
+export const deletePaymentMethod = async (methodId: string, userId: string): Promise<void> => {
   try {
     const { error } = await supabase
       .from('payment_methods')
       .delete()
-      .eq('id', methodId);
+      .eq('id', methodId)
+      .eq('user_id', userId);
 
     if (error) {
-      throw error;
+      console.error('Error deleting payment method:', error);
+      throw new Error('Failed to delete payment method');
     }
-
-    return true;
   } catch (error) {
-    console.error('Error deleting payment method:', error);
-    return false;
+    console.error('Error in deletePaymentMethod:', error);
+    throw error;
   }
 };

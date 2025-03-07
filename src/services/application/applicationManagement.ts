@@ -15,7 +15,10 @@ export const updateApplicationStatus = async (
       .eq('id', applicationId)
       .maybeSingle();
     
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error('Error fetching application:', fetchError);
+      throw fetchError;
+    }
     
     if (!application?.job_id) {
       throw new Error('Application not found');
@@ -28,7 +31,10 @@ export const updateApplicationStatus = async (
       .eq('id', application.job_id)
       .maybeSingle();
     
-    if (jobError) throw jobError;
+    if (jobError) {
+      console.error('Error fetching job:', jobError);
+      throw jobError;
+    }
     
     if (!job) {
       throw new Error('Job not found');
@@ -38,18 +44,28 @@ export const updateApplicationStatus = async (
       throw new Error('You do not have permission to update this application');
     }
     
+    console.log(`Updating application ${applicationId} to status: ${status}`);
+    
     // Update the status - separate from the fetch
-    const { error: updateError } = await supabase
+    const { data: updateData, error: updateError } = await supabase
       .from('job_applications')
       .update({ status })
-      .eq('id', applicationId);
+      .eq('id', applicationId)
+      .select();
     
     if (updateError) {
       console.error('Supabase error updating application:', updateError);
       throw new Error('Failed to update application status');
     }
     
-    // Fetch the updated application separately
+    if (!updateData || updateData.length === 0) {
+      console.error('No rows updated');
+      throw new Error('Application not found after update');
+    }
+    
+    console.log('Update response:', updateData);
+    
+    // Fetch the updated application with job details to return
     const { data: updatedApplication, error: fetchUpdatedError } = await supabase
       .from('job_applications')
       .select(`
