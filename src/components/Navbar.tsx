@@ -26,11 +26,12 @@ const Navbar: React.FC = () => {
       if (!session?.user) return;
       
       try {
+        console.log('Fetching user type for user:', session.user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('user_type')
           .eq('id', session.user.id)
-          .maybeSingle();
+          .single();
         
         if (error) {
           console.error('Error fetching user type:', error);
@@ -39,6 +40,7 @@ const Navbar: React.FC = () => {
         
         if (data) {
           setUserType(data.user_type);
+          console.log('User type set to:', data.user_type);
         }
       } catch (err) {
         console.error('Unexpected error fetching user type:', err);

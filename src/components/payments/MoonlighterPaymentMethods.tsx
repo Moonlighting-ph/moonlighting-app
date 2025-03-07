@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { PaymentMethod } from '@/types/payment';
-import { getUserPaymentMethods } from '@/services/paymentMethodService';
+import { fetchUserPaymentMethods } from '@/services/paymentMethodService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, Wallet, Building } from 'lucide-react';
 
@@ -19,7 +19,7 @@ const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ m
       
       try {
         setLoading(true);
-        const methods = await getUserPaymentMethods(moonlighterId);
+        const methods = await fetchUserPaymentMethods(moonlighterId);
         setPaymentMethods(methods);
       } catch (error) {
         console.error('Error fetching payment methods:', error);
