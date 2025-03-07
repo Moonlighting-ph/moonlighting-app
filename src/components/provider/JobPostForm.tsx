@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,8 @@ interface JobPostFormProps {
   onSuccess?: (job: Job) => void;
 }
 
+const STORAGE_KEY = 'job_post_form_data';
+
 const JobPostForm: React.FC<JobPostFormProps> = ({ onSuccess }) => {
   const { session } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,32 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ onSuccess }) => {
     is_urgent: false,
     deadline: ''
   });
+
+  // Load saved form data when component mounts
+  useEffect(() => {
+    const savedForm = localStorage.getItem(STORAGE_KEY);
+    if (savedForm) {
+      try {
+        const parsedForm = JSON.parse(savedForm);
+        setFormData(parsedForm);
+        toast.info("Restored your draft job posting", {
+          duration: 3000,
+          position: 'bottom-right'
+        });
+      } catch (error) {
+        console.error('Error parsing saved form data:', error);
+      }
+    }
+  }, []);
+
+  // Save form data whenever it changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+    }, 500); // Debounce to prevent excessive writes
+    
+    return () => clearTimeout(timeoutId);
+  }, [formData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -70,6 +98,28 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ onSuccess }) => {
     if (formData[type].length <= 1) return;
     const newList = formData[type].filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, [type]: newList }));
+  };
+
+  // Function to clear the form and localStorage
+  const clearForm = () => {
+    if (window.confirm('Are you sure you want to clear this form?')) {
+      setFormData({
+        title: '',
+        company: '',
+        description: '',
+        type: '',
+        location: '',
+        salary: '',
+        requirements: [''],
+        responsibilities: [''],
+        specialization: '',
+        experience_level: '',
+        is_urgent: false,
+        deadline: ''
+      });
+      localStorage.removeItem(STORAGE_KEY);
+      toast.info('Form cleared');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,6 +160,10 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ onSuccess }) => {
       };
 
       const newJob = await createJob(jobData);
+      
+      // Clear form data from localStorage after successful submission
+      localStorage.removeItem(STORAGE_KEY);
+      
       toast.success('Job posted successfully!');
       
       // Reset form
@@ -347,9 +401,18 @@ const JobPostForm: React.FC<JobPostFormProps> = ({ onSuccess }) => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Posting...' : 'Post Job'}
-          </Button>
+          <div className="flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={clearForm}
+            >
+              Clear Form
+            </Button>
+            <Button type="submit" className="w-fit" disabled={loading}>
+              {loading ? 'Posting...' : 'Post Job'}
+            </Button>
+          </div>
         </form>
       </CardContent>
     </Card>

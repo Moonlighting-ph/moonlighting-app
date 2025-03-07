@@ -44,6 +44,37 @@ const EditJob: React.FC = () => {
     deadline: ''
   });
 
+  // Load form data from localStorage when component mounts
+  useEffect(() => {
+    if (!jobId) return;
+    
+    const savedForm = localStorage.getItem(`edit_job_${jobId}`);
+    if (savedForm) {
+      try {
+        const parsedForm = JSON.parse(savedForm);
+        setFormData(parsedForm);
+        toast.info("Restored your unsaved changes", {
+          duration: 3000,
+          position: 'bottom-right'
+        });
+      } catch (error) {
+        console.error('Error parsing saved form data:', error);
+        // If there's an error parsing, we'll just load the job data from the server
+      }
+    }
+  }, [jobId]);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (!jobId || loading) return;
+    
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem(`edit_job_${jobId}`, JSON.stringify(formData));
+    }, 500); // Debounce to prevent excessive writes
+    
+    return () => clearTimeout(timeoutId);
+  }, [formData, jobId, loading]);
+
   useEffect(() => {
     const fetchJobData = async () => {
       if (!jobId || !session?.user?.id) {
@@ -69,6 +100,13 @@ const EditJob: React.FC = () => {
         }
 
         setJob(jobData);
+        
+        // Check if we have saved form data
+        const savedForm = localStorage.getItem(`edit_job_${jobId}`);
+        if (savedForm) {
+          // We already loaded the saved form in the first useEffect
+          return;
+        }
         
         // Format the date for the input field
         let formattedDeadline = '';
@@ -172,6 +210,8 @@ const EditJob: React.FC = () => {
       };
 
       await updateJob(jobId, jobData);
+      // Remove saved form data after successful submission
+      localStorage.removeItem(`edit_job_${jobId}`);
       toast.success('Job updated successfully!');
       navigate('/provider');
     } catch (error) {
@@ -179,6 +219,43 @@ const EditJob: React.FC = () => {
       toast.error('Failed to update job. Please try again.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Function to discard changes and reset form
+  const discardChanges = () => {
+    if (window.confirm('Are you sure you want to discard all changes?')) {
+      if (job) {
+        // Format the date for the input field
+        let formattedDeadline = '';
+        if (job.deadline) {
+          const date = new Date(job.deadline);
+          formattedDeadline = date.toISOString().split('T')[0];
+        }
+
+        // Reset to original job data
+        setFormData({
+          title: job.title || '',
+          company: job.company || '',
+          description: job.description || '',
+          type: job.type || '',
+          location: job.location || '',
+          salary: job.salary || '',
+          requirements: job.requirements?.length ? job.requirements : [''],
+          responsibilities: job.responsibilities?.length ? job.responsibilities : [''],
+          specialization: job.specialization || '',
+          experience_level: job.experience_level || '',
+          is_urgent: job.is_urgent || false,
+          deadline: formattedDeadline
+        });
+        
+        // Remove saved data
+        if (jobId) {
+          localStorage.removeItem(`edit_job_${jobId}`);
+        }
+        
+        toast.info('Changes discarded');
+      }
     }
   };
 
@@ -432,13 +509,22 @@ const EditJob: React.FC = () => {
                 </div>
 
                 <div className="flex justify-between">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => navigate('/provider')}
-                  >
-                    Cancel
-                  </Button>
+                  <div className="space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => navigate('/provider')}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="destructive"
+                      onClick={discardChanges}
+                    >
+                      Discard Changes
+                    </Button>
+                  </div>
                   <Button type="submit" disabled={saving}>
                     {saving ? 'Saving...' : 'Save Changes'}
                   </Button>
