@@ -1,32 +1,28 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { FileQuestion } from 'lucide-react';
+import { Button } from '@/components/ui/card';
+import { NavigateFunction } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 
-const JobNotFound: React.FC = () => {
-  const navigate = useNavigate();
-  
+interface JobNotFoundProps {
+  navigate: NavigateFunction;
+}
+
+const JobNotFound: React.FC<JobNotFoundProps> = ({ navigate }) => {
   return (
-    <div className="container mx-auto max-w-4xl py-20 px-4 text-center">
-      <div className="flex flex-col items-center space-y-6">
-        <FileQuestion className="h-24 w-24 text-gray-400" />
-        
-        <h1 className="text-3xl font-bold text-gray-900">Job Not Found</h1>
-        
-        <p className="text-gray-600 max-w-md">
-          The job posting you're looking for doesn't exist or may have been removed.
+    <div className="container mx-auto py-12 px-4">
+      <div className="text-center space-y-6">
+        <h1 className="text-3xl font-bold">Job Not Found</h1>
+        <p className="text-gray-600">
+          The job you're looking for doesn't exist or has been removed.
         </p>
-        
-        <div className="flex space-x-4 pt-4">
-          <Button onClick={() => navigate('/jobs')}>
-            Browse Available Jobs
-          </Button>
-          
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            Go Back
-          </Button>
-        </div>
+        <Button 
+          onClick={() => navigate('/jobs')}
+          className="inline-flex items-center"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Jobs
+        </Button>
       </div>
     </div>
   );

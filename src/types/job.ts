@@ -1,4 +1,3 @@
-
 export interface Job {
   id: string;
   title: string;
@@ -21,16 +20,21 @@ export interface JobApplication {
   id: string;
   job_id: string;
   moonlighter_id: string;
-  applied_date: string;
+  notes: string | null;
   status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid';
-  notes?: string | null;
-  ai_match_score?: number | null;
-  profile_info?: any; // Adding profile_info to the type
+  applied_date: string;
+  ai_match_score: number | null;
+  profile_info?: any;
   job?: Job;
-  moonlighter?: any; // Profile information
+  moonlighter?: {
+    id?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    [key: string]: any;
+  } | null;
 }
 
-// Adding this to fix the reference in the JobFilters type
 export type JobFilterLimitProp = {
   limit?: number;
 };

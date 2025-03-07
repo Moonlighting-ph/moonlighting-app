@@ -1,9 +1,9 @@
-
-export type PaymentMethodType = 'bank_account' | 'gcash' | 'paymaya' | 'bank_transfer' | 'credit_card' | 'paypal';
+export type PaymentMethodType = 'gcash' | 'paymaya' | 'bank' | 'bank_account' | 'credit_card' | 'paypal';
 
 export interface PaymentMethod {
   id: string;
-  method: PaymentMethodType;
+  user_id?: string;
+  method: string;
   details: string | {
     bank_name?: string;
     account_name?: string;
@@ -11,9 +11,23 @@ export interface PaymentMethod {
     phone?: string;
     [key: string]: any;
   };
-  user_id?: string;
   is_default?: boolean;
   created_at?: string;
+  type: PaymentMethodType;
+}
+
+export interface Payment {
+  id: string;
+  amount: number;
+  application_id?: string;
+  provider_id?: string;
+  moonlighter_id?: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  created_at?: string;
+  updated_at?: string;
+  currency: string;
+  receipt_url?: string;
+  stripe_payment_intent_id?: string;
 }
 
 export interface ManualPayment {
@@ -45,11 +59,11 @@ export interface PaymentMethodFormProps {
 }
 
 export interface ManualPaymentFormProps {
-  jobId?: string;
-  applicationId?: string;
-  providerId?: string;
-  moonlighterId?: string;
-  amount?: number;
+  providerId: string;
+  moonlighterId: string;
+  jobId: string;
+  applicationId: string;
+  paymentMethods?: PaymentMethod[];
   onSuccess?: (payment: ManualPayment) => void;
   onCancel?: () => void;
 }
@@ -59,6 +73,6 @@ export interface StripePaymentFormProps {
   currency: string;
   jobTitle: string;
   payeeName: string;
-  onPaymentSuccess: () => void;
+  onPaymentSuccess: (paymentIntent: any) => void;
   onPaymentError: (error: any) => void;
 }

@@ -4,7 +4,7 @@ import { JobApplication } from '@/types/job';
 
 export const updateApplicationStatus = async (
   applicationId: string, 
-  status: 'pending' | 'reviewed' | 'approved' | 'rejected',
+  status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid',
   providerId: string
 ): Promise<JobApplication> => {
   try {
@@ -84,14 +84,15 @@ export const updateApplicationStatus = async (
       throw new Error('Application not found after update');
     }
     
-    // Ensure moonlighter property exists using profile_info
-    const result = {
+    // Ensure moonlighter property exists using profile_info and correct typing
+    const result: JobApplication = {
       ...updatedApplication,
+      status: updatedApplication.status as JobApplication['status'],
       moonlighter: updatedApplication.profile_info || null
     };
     
     console.log('Updated application successfully:', result);
-    return result as JobApplication;
+    return result;
   } catch (error) {
     console.error('Error updating application status:', error);
     throw error;

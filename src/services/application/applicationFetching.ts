@@ -24,9 +24,10 @@ export const getApplicationForMoonlighter = async (jobId: string, moonlighterId:
       return null;
     }
     
-    // Format the application data
+    // Format the application data with proper typing
     const application: JobApplication = {
       ...data,
+      status: data.status as JobApplication['status'],
       moonlighter: data.profile_info
     };
     
@@ -53,9 +54,10 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
       throw error;
     }
     
-    // Format all applications with moonlighter data
+    // Format all applications with moonlighter data and ensure correct typing
     const applications = data.map(app => ({
       ...app,
+      status: app.status as JobApplication['status'],
       moonlighter: app.profile_info
     }));
     
@@ -83,9 +85,10 @@ export const fetchMoonlighterApplications = async (moonlighterId: string): Promi
       throw error;
     }
     
-    // Format all applications with moonlighter data
+    // Format all applications with moonlighter data and ensure correct typing
     const applications = data.map(app => ({
       ...app,
+      status: app.status as JobApplication['status'],
       moonlighter: app.profile_info
     }));
     
