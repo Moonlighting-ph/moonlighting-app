@@ -10,18 +10,17 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     headers: {
-      // Set proper MIME types for JavaScript files
-      "*.js": [
+      "Content-Type": [
         {
-          "Content-Type": "application/javascript",
+          key: "*.js",
+          value: "application/javascript; charset=utf-8"
         },
-      ],
-      "*.mjs": [
         {
-          "Content-Type": "application/javascript",
-        },
-      ],
-    },
+          key: "*.mjs",
+          value: "application/javascript; charset=utf-8"
+        }
+      ]
+    }
   },
   plugins: [
     react(),

@@ -1,6 +1,7 @@
 
 # Set correct MIME types for JavaScript files
 /*.js
-  Content-Type: application/javascript
+  Content-Type: application/javascript; charset=utf-8
 /*.mjs
-  Content-Type: application/javascript
+  Content-Type: application/javascript; charset=utf-8
+
