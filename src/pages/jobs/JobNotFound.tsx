@@ -2,8 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import { AlertTriangle } from 'lucide-react';
 
 interface JobNotFoundProps {
   navigate: ReturnType<typeof useNavigate>;
@@ -11,18 +10,19 @@ interface JobNotFoundProps {
 
 const JobNotFound: React.FC<JobNotFoundProps> = ({ navigate }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="container mx-auto py-16 px-4 text-center">
-        <h1 className="text-3xl font-bold mb-4">Job Not Found</h1>
-        <p className="text-gray-600 mb-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-sm max-w-md w-full text-center">
+        <div className="flex justify-center mb-4">
+          <AlertTriangle className="h-12 w-12 text-amber-500" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Job Not Found</h1>
+        <p className="text-gray-600 mb-6">
           The job you're looking for doesn't exist or has been removed.
         </p>
-        <Button onClick={() => navigate('/jobs')}>
+        <Button onClick={() => navigate('/jobs')} className="w-full">
           Browse All Jobs
         </Button>
       </div>
-      <Footer />
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { JobApplication } from '@/types/job';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Briefcase } from 'lucide-react';
+import { Calendar, MapPin, Briefcase, RefreshCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -17,6 +17,23 @@ const Applications: React.FC = () => {
   const navigate = useNavigate();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const fetchApplications = async () => {
+    if (!session?.user) return;
+    
+    try {
+      setLoading(true);
+      const data = await fetchMoonlighterApplications(session.user.id);
+      console.log('Loaded applications:', data);
+      setApplications(data);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      toast.error('Failed to load your applications');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!session?.user) {
@@ -24,21 +41,15 @@ const Applications: React.FC = () => {
       return;
     }
 
-    const fetchApplications = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchMoonlighterApplications(session.user.id);
-        setApplications(data);
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-        toast.error('Failed to load your applications');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchApplications();
   }, [session, navigate]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchApplications();
+    setRefreshing(false);
+    toast.success('Applications refreshed');
+  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -57,7 +68,19 @@ const Applications: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">My Job Applications</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">My Job Applications</h1>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh} 
+            disabled={refreshing}
+            className="flex items-center gap-2"
+          >
+            <RefreshCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
         
         {loading ? (
           <div className="text-center py-12">Loading your applications...</div>

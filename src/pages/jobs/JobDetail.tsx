@@ -17,6 +17,8 @@ import JobApplicationStatus from './JobApplicationStatus';
 import JobApplicationDialog from './JobApplicationDialog';
 import JobProviderActions from './JobProviderActions';
 import MoonlighterActions from './MoonlighterActions';
+import JobDetailSkeleton from './JobDetailSkeleton';
+import JobNotFound from './JobNotFound';
 
 const JobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -31,65 +33,77 @@ const JobDetail: React.FC = () => {
   const [isJobProvider, setIsJobProvider] = useState(false);
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
   
+  const fetchJobDetails = async () => {
+    if (!jobId) return;
+    
+    try {
+      setLoading(true);
+      const jobData = await fetchJobById(jobId);
+      
+      if (!jobData) {
+        toast.error('Job not found');
+        navigate('/jobs');
+        return;
+      }
+      
+      setJob(jobData);
+      
+      // Check if current user is the provider of this job
+      if (session?.user && jobData.provider_id === session.user.id) {
+        setIsJobProvider(true);
+      }
+      
+      // Check if user has already applied to this job
+      if (session?.user) {
+        await refreshApplicationStatus();
+      }
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+      toast.error('Failed to load job details');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const refreshApplicationStatus = async () => {
+    if (!session?.user || !jobId) return;
+    
+    try {
+      console.log('Refreshing application status...');
+      const application = await getApplicationForMoonlighter(jobId, session.user.id);
+      if (application) {
+        console.log('Updated application status:', application);
+        setUserApplication(application);
+      }
+    } catch (error) {
+      console.error('Error refreshing application status:', error);
+    }
+  };
+  
+  // Get user type
+  const getUserType = async () => {
+    if (!session?.user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user type:', error);
+        return;
+      }
+      
+      setIsProvider(data.user_type === 'provider');
+      setIsMoonlighter(data.user_type === 'moonlighter');
+    } catch (err) {
+      console.error('Unexpected error fetching user type:', err);
+    }
+  };
+  
   useEffect(() => {
-    const fetchJobDetails = async () => {
-      if (!jobId) return;
-      
-      try {
-        setLoading(true);
-        const jobData = await fetchJobById(jobId);
-        
-        if (!jobData) {
-          toast.error('Job not found');
-          navigate('/jobs');
-          return;
-        }
-        
-        setJob(jobData);
-        
-        // Check if current user is the provider of this job
-        if (session?.user && jobData.provider_id === session.user.id) {
-          setIsJobProvider(true);
-        }
-        
-        // Check if user has already applied to this job
-        if (session?.user) {
-          const application = await getApplicationForMoonlighter(jobId, session.user.id);
-          if (application) {
-            setUserApplication(application);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching job details:', error);
-        toast.error('Failed to load job details');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    // Get user type
-    const getUserType = async () => {
-      if (!session?.user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching user type:', error);
-          return;
-        }
-        
-        setIsProvider(data.user_type === 'provider');
-        setIsMoonlighter(data.user_type === 'moonlighter');
-      } catch (err) {
-        console.error('Unexpected error fetching user type:', err);
-      }
-    };
-    
     fetchJobDetails();
     if (session?.user) {
       getUserType();
@@ -149,7 +163,10 @@ const JobDetail: React.FC = () => {
             {isJobProvider ? (
               <JobProviderActions job={job} onEdit={handleEditJob} />
             ) : userApplication ? (
-              <JobApplicationStatus application={userApplication} />
+              <JobApplicationStatus 
+                application={userApplication} 
+                onRefresh={refreshApplicationStatus}
+              />
             ) : isMoonlighter ? (
               <MoonlighterActions onApply={handleApplyClick} />
             ) : null}
