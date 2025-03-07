@@ -1,155 +1,222 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import { createManualPayment } from '@/services/manualPaymentService';
-import { 
-  PaymentMethod, 
-  PaymentMethodType, 
-  ManualPayment,
-  ManualPaymentFormProps
-} from '@/types/payment';
-import { Button } from '@/components/ui/button';
+import { PaymentMethod, ManualPaymentFormProps } from '@/types/payment';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({ onSuccess, onCancel }) => {
-  const { session } = useAuth();
-  const [amount, setAmount] = useState('');
-  const [receiptNumber, setReceiptNumber] = useState('');
-  const [methodId, setMethodId] = useState('');
-  const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
+const formSchema = z.object({
+  paymentMethodId: z.string({
+    required_error: 'Please select a payment method'
+  }),
+  amount: z.string().min(1, 'Amount is required'),
+  referenceNumber: z.string().min(1, 'Reference number is required'),
+  notes: z.string().optional(),
+});
 
-  // These would be passed as props in a real implementation
-  const providerId = ''; // Example value
-  const moonlighterId = ''; // Example value
-  const jobId = ''; // Example value
-  const applicationId = ''; // Example value
-  const paymentMethods: PaymentMethod[] = []; // Example value
+const ManualPaymentForm: React.FC<ManualPaymentFormProps> = ({
+  providerId,
+  moonlighterId,
+  jobId,
+  applicationId,
+  paymentMethods,
+  onComplete
+}) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      paymentMethodId: '',
+      amount: '',
+      referenceNumber: '',
+      notes: '',
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setSubmitting(true);
+    setError(null);
     
-    if (!session?.user?.id) {
-      toast.error('You must be logged in to create a payment');
-      return;
-    }
-
-    if (!amount || !receiptNumber || !methodId) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
     try {
-      setLoading(true);
-      
-      // Find the selected payment method
-      const selectedMethod = paymentMethods.find(m => m.id === methodId);
-      if (!selectedMethod) {
-        toast.error('Invalid payment method selected');
-        return;
-      }
-
       const paymentData = {
+        payment_method_id: values.paymentMethodId,
+        amount: parseFloat(values.amount),
+        reference_number: values.referenceNumber,
+        notes: values.notes || null,
         provider_id: providerId,
         moonlighter_id: moonlighterId,
         job_id: jobId,
-        application_id: applicationId,
-        amount: parseFloat(amount),
-        currency: 'PHP',
-        payment_method_id: methodId,
-        payment_method_type: selectedMethod.type,
-        receipt_number: receiptNumber,
-        notes: notes,
-        payment_details: JSON.stringify(selectedMethod.details)
+        application_id: applicationId
       };
       
-      const payment = await createManualPayment(paymentData);
-      
+      await createManualPayment(paymentData);
       toast.success('Payment recorded successfully');
-      onSuccess(payment);
-    } catch (error) {
-      console.error('Error creating payment:', error);
-      toast.error('Failed to record payment');
+      
+      if (onComplete) {
+        onComplete();
+      }
+    } catch (err) {
+      console.error('Error creating manual payment:', err);
+      setError('Failed to create payment. Please try again.');
+      toast.error('Payment failed');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
+    }
+  };
+
+  // Helper to safely access nested properties
+  const getDetailsValue = (details: any, key: string): string => {
+    if (!details) return '';
+    if (typeof details === 'string') return '';
+    return details[key] || '';
+  };
+
+  const formatPaymentMethodLabel = (method: PaymentMethod) => {
+    switch (method.method.toLowerCase()) {
+      case 'bank':
+        return `${getDetailsValue(method.details, 'bank_name')} - ${getDetailsValue(method.details, 'account_name')}`;
+      case 'gcash':
+      case 'paymaya':
+        return `${method.method} (${getDetailsValue(method.details, 'phone')})`;
+      default:
+        return method.method;
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="amount">Amount (PHP)</Label>
-          <Input 
-            id="amount"
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.00"
-            min="1"
-            step="0.01"
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="payment_method">Payment Method</Label>
-          <Select value={methodId} onValueChange={setMethodId} required>
-            <SelectTrigger id="payment_method">
-              <SelectValue placeholder="Select payment method" />
-            </SelectTrigger>
-            <SelectContent>
-              {paymentMethods.map((method) => (
-                <SelectItem key={method.id} value={method.id}>
-                  {method.type === 'bank_account' 
-                    ? `${method.details.bank_name} - ${method.details.account_name}`
-                    : method.type === 'gcash' 
-                    ? `GCash - ${method.details.phone}`
-                    : method.type === 'paymaya'
-                    ? `PayMaya - ${method.details.phone}`
-                    : 'Other'}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="receipt_number">Receipt/Reference Number</Label>
-          <Input 
-            id="receipt_number"
-            value={receiptNumber}
-            onChange={(e) => setReceiptNumber(e.target.value)}
-            placeholder="e.g., 123456789"
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes (Optional)</Label>
-          <Textarea 
-            id="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any additional payment details"
-            rows={3}
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Processing...' : 'Record Payment'}
-        </Button>
-      </div>
-    </form>
+    <div className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {paymentMethods.length === 0 ? (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>No Payment Methods</AlertTitle>
+          <AlertDescription>
+            The healthcare professional hasn't added any payment methods yet. 
+            Ask them to add a payment method before proceeding.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="paymentMethodId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Method</FormLabel>
+                  <Select
+                    disabled={submitting}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment method" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {paymentMethods.map((method) => (
+                        <SelectItem key={method.id} value={method.id}>
+                          {formatPaymentMethodLabel(method)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amount (PHP)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled={submitting}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Enter amount"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="referenceNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Reference Number</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      disabled={submitting}
+                      placeholder="Transaction reference or confirmation number"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      disabled={submitting}
+                      placeholder="Any additional payment details"
+                      className="resize-none"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <Button type="submit" disabled={submitting} className="w-full">
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {submitting ? 'Processing...' : 'Record Payment'}
+            </Button>
+          </form>
+        </Form>
+      )}
+    </div>
   );
 };
 

@@ -205,7 +205,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
                 <Button
                   variant="default"
                   size="sm"
-                  disabled={isLoading || application.status === 'approved'}
+                  disabled={isLoading || application.status === 'approved' || application.status === 'paid'}
                   onClick={() => onUpdateStatus(application.id, 'approved')}
                   className="whitespace-nowrap"
                 >
@@ -229,7 +229,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
               
               {(application.status === 'approved') && (
                 <Button
-                  variant="success"
+                  variant="default"
                   size="sm"
                   disabled={isLoading || application.status === 'paid'}
                   onClick={() => onUpdateStatus(application.id, 'paid')}

@@ -28,7 +28,15 @@ export const getApplicationForMoonlighter = async (jobId: string, moonlighterId:
     const application: JobApplication = {
       ...data,
       status: data.status as JobApplication['status'],
-      moonlighter: data.profile_info && typeof data.profile_info === 'object' ? data.profile_info : null
+      moonlighter: data.profile_info && typeof data.profile_info === 'object' ? data.profile_info : null,
+      // Ensure job properties are properly typed
+      job: data.job ? {
+        ...data.job,
+        requirements: Array.isArray(data.job.requirements) ? data.job.requirements : 
+                     (data.job.requirements ? [String(data.job.requirements)] : []),
+        responsibilities: Array.isArray(data.job.responsibilities) ? data.job.responsibilities : 
+                         (data.job.responsibilities ? [String(data.job.responsibilities)] : [])
+      } : undefined
     };
     
     return application;
@@ -58,7 +66,15 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
     const applications = data.map(app => ({
       ...app,
       status: app.status as JobApplication['status'],
-      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null
+      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null,
+      // Ensure job properties are properly typed
+      job: app.job ? {
+        ...app.job,
+        requirements: Array.isArray(app.job.requirements) ? app.job.requirements : 
+                     (app.job.requirements ? [String(app.job.requirements)] : []),
+        responsibilities: Array.isArray(app.job.responsibilities) ? app.job.responsibilities : 
+                         (app.job.responsibilities ? [String(app.job.responsibilities)] : [])
+      } : undefined
     }));
     
     return applications as JobApplication[];
@@ -89,7 +105,15 @@ export const fetchMoonlighterApplications = async (moonlighterId: string): Promi
     const applications = data.map(app => ({
       ...app,
       status: app.status as JobApplication['status'],
-      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null
+      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null,
+      // Ensure job properties are properly typed
+      job: app.job ? {
+        ...app.job,
+        requirements: Array.isArray(app.job.requirements) ? app.job.requirements : 
+                     (app.job.requirements ? [String(app.job.requirements)] : []),
+        responsibilities: Array.isArray(app.job.responsibilities) ? app.job.responsibilities : 
+                         (app.job.responsibilities ? [String(app.job.responsibilities)] : [])
+      } : undefined
     }));
     
     return applications as JobApplication[];
