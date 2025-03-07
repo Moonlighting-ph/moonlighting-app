@@ -1,45 +1,71 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { createPaymentMethod } from '@/services/paymentMethodService';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { PaymentMethod } from '@/types/payment';
 import { toast } from 'sonner';
-import { PaymentMethodType } from '@/types/payment';
+import { addPaymentMethod } from '@/services/paymentMethodService';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+
+const formSchema = z.object({
+  method: z.string(),
+  details: z.string().min(5, 'Please provide more details'),
+  is_default: z.boolean().default(false),
+});
 
 export interface PaymentMethodFormProps {
   userId: string;
   onSuccess: () => void;
-  onCancel?: () => void; // Make onCancel optional
+  onCancel?: () => void;
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ userId, onSuccess, onCancel }) => {
-  const [activeTab, setActiveTab] = useState<PaymentMethodType>('gcash');
-  const [details, setDetails] = useState('');
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({
+  userId,
+  onSuccess,
+  onCancel,
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!details.trim()) {
-      toast.error('Please enter your account details');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      method: '',
+      details: '',
+      is_default: false,
+    },
+  });
+  
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await createPaymentMethod({
+      setIsSubmitting(true);
+      
+      await addPaymentMethod({
         user_id: userId,
-        method: activeTab,
-        details: details,
-        is_default: true
+        method: values.method,
+        details: values.details,
+        is_default: values.is_default,
       });
       
-      toast.success(`${activeTab.toUpperCase()} payment method added successfully`);
-      setDetails('');
+      toast.success('Payment method added successfully');
       onSuccess();
     } catch (error) {
       console.error('Error adding payment method:', error);
@@ -48,80 +74,87 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ userId, onSuccess
       setIsSubmitting(false);
     }
   };
-
-  const handleCancel = () => {
-    if (onCancel) onCancel();
-  };
-
+  
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Add Payment Method</CardTitle>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PaymentMethodType)}>
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="gcash">GCash</TabsTrigger>
-              <TabsTrigger value="paymaya">PayMaya</TabsTrigger>
-              <TabsTrigger value="bank">Bank</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="gcash">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gcash-number">GCash Number</Label>
-                  <Input 
-                    id="gcash-number" 
-                    placeholder="09xxxxxxxxx"
-                    value={details}
-                    onChange={(e) => setDetails(e.target.value)}
-                  />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="method"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Payment Method</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a payment method" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="gcash">GCash</SelectItem>
+                  <SelectItem value="bank">Bank Transfer</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="paymaya">PayMaya</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="details"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Details</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter payment details (e.g., account number, name, etc.)"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="is_default"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <FormLabel>Set as Default</FormLabel>
+                <div className="text-sm text-muted-foreground">
+                  Make this your preferred payment method
                 </div>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="paymaya">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="paymaya-number">PayMaya Number</Label>
-                  <Input 
-                    id="paymaya-number" 
-                    placeholder="09xxxxxxxxx or email"
-                    value={details}
-                    onChange={(e) => setDetails(e.target.value)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="bank">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bank-details">Bank Account Details</Label>
-                  <Input 
-                    id="bank-details" 
-                    placeholder="Bank name, account number, account name"
-                    value={details}
-                    onChange={(e) => setDetails(e.target.value)}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-between">
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        
+        <div className="flex justify-end space-x-2 pt-4">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={handleCancel}>
+            <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
           )}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Adding...' : 'Add Payment Method'}
           </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </Form>
   );
 };
 

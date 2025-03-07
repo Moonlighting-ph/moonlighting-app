@@ -1,104 +1,97 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { Trash2, Smartphone, CreditCard, Building } from 'lucide-react';
+import React, { useState } from 'react';
 import { PaymentMethod } from '@/types/payment';
-import { fetchUserPaymentMethods, deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { formatDate } from '@/lib/utils';
+import { toast } from 'sonner';
+import { deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import {
+  Trash2,
+  CreditCard,
+  Wallet,
+  Bank,
+  DollarSign,
+} from 'lucide-react';
 
 interface PaymentMethodsListProps {
+  methods: PaymentMethod[];
   userId: string;
-  refreshTrigger?: number;
+  onUpdate: () => void;
 }
 
-const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ userId, refreshTrigger = 0 }) => {
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({
+  methods,
+  userId,
+  onUpdate,
+}) => {
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [methodToDelete, setMethodToDelete] = useState<PaymentMethod | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
-  useEffect(() => {
-    const loadPaymentMethods = async () => {
-      if (!userId) return;
-      
-      setLoading(true);
-      try {
-        const methods = await fetchUserPaymentMethods(userId);
-        setPaymentMethods(methods);
-      } catch (error) {
-        console.error('Error loading payment methods:', error);
-        toast.error('Failed to load payment methods');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleDelete = async () => {
+    if (!methodToDelete) return;
     
-    loadPaymentMethods();
-  }, [userId, refreshTrigger]);
-  
-  const handleDelete = async (id: string) => {
     try {
-      await deletePaymentMethod(id);
-      setPaymentMethods(prev => prev.filter(method => method.id !== id));
-      toast.success('Payment method deleted');
+      setIsProcessing(true);
+      await deletePaymentMethod(methodToDelete.id, userId);
+      toast.success('Payment method deleted successfully');
+      onUpdate();
     } catch (error) {
       console.error('Error deleting payment method:', error);
       toast.error('Failed to delete payment method');
     } finally {
-      setDeleteId(null);
+      setIsProcessing(false);
+      setDeleteConfirmOpen(false);
+      setMethodToDelete(null);
     }
   };
   
-  const handleSetDefault = async (id: string) => {
+  const handleSetDefault = async (methodId: string) => {
     try {
-      await setDefaultPaymentMethod(userId, id);
-      
-      // Update the local state to reflect the change
-      setPaymentMethods(prev => 
-        prev.map(method => ({
-          ...method,
-          is_default: method.id === id
-        }))
-      );
-      
+      setIsProcessing(true);
+      await setDefaultPaymentMethod(methodId, userId);
       toast.success('Default payment method updated');
+      onUpdate();
     } catch (error) {
       console.error('Error setting default payment method:', error);
       toast.error('Failed to update default payment method');
+    } finally {
+      setIsProcessing(false);
     }
   };
   
   const getMethodIcon = (method: string) => {
-    switch (method) {
+    switch (method.toLowerCase()) {
       case 'gcash':
-        return <Smartphone className="h-5 w-5 text-blue-500" />;
+        return <Wallet className="h-5 w-5 text-blue-500" />;
+      case 'bank':
+        return <Bank className="h-5 w-5 text-gray-700" />;
+      case 'cash':
+        return <DollarSign className="h-5 w-5 text-green-500" />;
       case 'paymaya':
         return <CreditCard className="h-5 w-5 text-purple-500" />;
-      case 'bank':
-        return <Building className="h-5 w-5 text-green-600" />;
       default:
         return <CreditCard className="h-5 w-5 text-gray-500" />;
     }
   };
   
-  if (loading) {
-    return <div className="text-center py-8">Loading payment methods...</div>;
-  }
-  
-  if (paymentMethods.length === 0) {
+  if (methods.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>No Payment Methods</CardTitle>
-          <CardDescription>
-            You haven't added any payment methods yet.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-500 mb-4">
-            Add a payment method to receive payments for your services.
-          </p>
+        <CardContent className="p-6 text-center">
+          <p className="text-gray-500">No payment methods added yet.</p>
         </CardContent>
       </Card>
     );
@@ -106,61 +99,73 @@ const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ userId, refresh
   
   return (
     <div className="space-y-4">
-      {paymentMethods.map(method => (
-        <Card key={method.id} className={method.is_default ? 'border-primary' : ''}>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <div className="flex items-center">
-              {getMethodIcon(method.method)}
-              <div className="ml-3">
-                <CardTitle className="text-base capitalize">
-                  {method.method}
+      {methods.map((method) => (
+        <Card key={method.id} className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="flex items-center p-4">
+              <div className="mr-4">
+                {getMethodIcon(method.method)}
+              </div>
+              <div className="flex-grow">
+                <div className="flex items-center">
+                  <h3 className="font-medium capitalize">{method.method}</h3>
                   {method.is_default && (
-                    <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                      Default
-                    </span>
+                    <Badge variant="outline" className="ml-2">Default</Badge>
                   )}
-                </CardTitle>
-                <CardDescription>{method.details}</CardDescription>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">{method.details}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Added on {formatDate(method.created_at)}
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                {!method.is_default && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSetDefault(method.id)}
+                    disabled={isProcessing}
+                  >
+                    Set Default
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => {
+                    setMethodToDelete(method);
+                    setDeleteConfirmOpen(true);
+                  }}
+                  disabled={isProcessing}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setDeleteId(method.id)}
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {!method.is_default && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => handleSetDefault(method.id)}
-                className="mt-2"
-              >
-                Set as Default
-              </Button>
-            )}
           </CardContent>
         </Card>
       ))}
       
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Payment Method</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this payment method. You won't be able to use it for future payments.
+              Are you sure you want to delete this payment method? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => deleteId && handleDelete(deleteId)}
+            <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={isProcessing}
               className="bg-red-500 hover:bg-red-600"
             >
-              Delete
+              {isProcessing ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

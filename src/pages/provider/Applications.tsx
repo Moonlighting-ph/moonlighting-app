@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { CalendarClock, MoreVertical, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Applications: React.FC = () => {
   const { session } = useAuth();
