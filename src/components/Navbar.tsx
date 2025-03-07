@@ -101,7 +101,7 @@ const Navbar: React.FC = () => {
             <div className="absolute inset-0 rounded-full bg-primary opacity-20 group-hover:opacity-30 transition-opacity"></div>
             <Moon className="h-8 w-8 text-primary relative z-10" />
           </div>
-          <span className="font-display font-bold text-lg sm:text-xl">moonlighting.ph</span>
+          <span className="hidden sm:inline-block font-display font-bold text-lg sm:text-xl">moonlighting.ph</span>
         </Link>
         
         <nav className="flex items-center gap-6">
