@@ -12,9 +12,30 @@ const Jobs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<JobFilters>({});
 
+  // Updated search handler to match useJobFilters.ts approach
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setFilters(prev => ({ ...prev, searchTerm }));
+    
+    if (searchTerm.trim()) {
+      // Apply the search term to filter jobs by title, description, or facility/company
+      setFilters(prev => ({ 
+        ...prev, 
+        searchTerm: searchTerm.trim()
+      }));
+    } else {
+      // If search is empty, remove the searchTerm filter
+      const { searchTerm: _, ...restFilters } = filters;
+      setFilters(restFilters);
+    }
+  };
+
+  // Clear search function
+  const clearSearch = () => {
+    setSearchTerm('');
+    if (filters.searchTerm) {
+      const { searchTerm: _, ...restFilters } = filters;
+      setFilters(restFilters);
+    }
   };
 
   return (
@@ -32,11 +53,21 @@ const Jobs: React.FC = () => {
               <Input
                 type="text"
                 placeholder="Search for jobs, specializations, or locations..."
-                className="pl-10 h-12 bg-white"
+                className="pl-10 h-12 bg-white pr-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <Search className="absolute left-3 top-4 h-4 w-4 text-gray-400" />
+              {searchTerm && (
+                <button 
+                  type="button"
+                  className="absolute right-3 top-4 text-gray-400 hover:text-gray-600"
+                  onClick={clearSearch}
+                >
+                  ✕
+                </button>
+              )}
+              <button type="submit" className="sr-only">Search</button>
             </form>
           </div>
           

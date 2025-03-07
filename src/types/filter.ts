@@ -7,4 +7,5 @@ export interface JobFilters {
   experience_level?: string;
   isUrgent?: boolean;
   limit?: number;
+  keyword?: string; // Adding this to maintain compatibility with useJobFilters
 }
