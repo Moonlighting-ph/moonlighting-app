@@ -42,7 +42,7 @@ const PaymentMethodsPage: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <PaymentMethodForm onSuccess={handleAddSuccess} />
+                <PaymentMethodForm userId={session?.user?.id || ''} onSuccess={handleAddSuccess} />
               </div>
               <div>
                 <PaymentMethodsList refreshTrigger={refreshTrigger} />

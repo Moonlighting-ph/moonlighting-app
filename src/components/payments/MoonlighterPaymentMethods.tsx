@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { PaymentMethod } from '@/types/payment';
 import { fetchUserPaymentMethods } from '@/services/paymentMethodService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bank, CreditCard } from 'lucide-react';
+import { Building, CreditCard } from 'lucide-react';
 
 interface MoonlighterPaymentMethodsProps {
   moonlighterId: string;
@@ -36,7 +36,7 @@ const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ m
       case 'paymaya':
         return <CreditCard className="h-5 w-5 text-blue-500" />;
       case 'bank':
-        return <Bank className="h-5 w-5 text-blue-500" />;
+        return <Building className="h-5 w-5 text-blue-500" />;
       default:
         return <CreditCard className="h-5 w-5 text-blue-500" />;
     }

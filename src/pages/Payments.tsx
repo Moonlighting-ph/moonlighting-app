@@ -1,121 +1,172 @@
 
 import React, { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import SmoothScroll from '../components/SmoothScroll';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ManualPayment } from '@/types/payment';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
-import { getManualPayments } from '@/services/manualPaymentService';
+import { useNavigate } from 'react-router-dom';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
-
-const PaymentCard: React.FC<{ payment: ManualPayment }> = ({ payment }) => {
-  return (
-    <Card className="mb-4">
-      <CardHeader>
-        <CardTitle className="text-lg">Payment #{payment.reference_number || payment.id.slice(0, 8)}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <p><strong>Amount:</strong> ₱{payment.amount.toFixed(2)}</p>
-          <p><strong>Method:</strong> {payment.payment_method_type}</p>
-          <p><strong>Status:</strong> <span className={`font-medium ${
-            payment.status === 'completed' ? 'text-green-600' : 
-            payment.status === 'failed' ? 'text-red-600' : 'text-yellow-600'
-          }`}>{payment.status}</span></p>
-          <p><strong>Details:</strong> {payment.payment_details}</p>
-          <p><strong>Date:</strong> {new Date(payment.created_at).toLocaleDateString()}</p>
-          {payment.notes && <p><strong>Notes:</strong> {payment.notes}</p>}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
+import { useAuth } from '@/hooks/useAuth';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { ManualPayment } from '@/types/payment';
+import { getManualPayments } from '@/services/manualPaymentService';
+import PaymentCard from '@/components/PaymentCard';
+import { toast } from 'sonner';
 
 const Payments: React.FC = () => {
+  const navigate = useNavigate();
   const { session } = useAuth();
+  const [userType, setUserType] = useState<"provider" | "moonlighter" | null>(null);
   const [payments, setPayments] = useState<ManualPayment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userType, setUserType] = useState<string | null>(null);
 
   useEffect(() => {
+    // Redirect if not logged in
+    if (!session) {
+      navigate('/auth/login');
+      return;
+    }
+
     const fetchUserType = async () => {
-      if (!session?.user) return;
-      
       try {
+        // Fetch the user's type from profiles
         const { data, error } = await supabase
           .from('profiles')
           .select('user_type')
           .eq('id', session.user.id)
           .single();
-        
+
         if (error) {
-          console.error('Error fetching user type:', error);
-          return;
+          throw error;
         }
-        
-        setUserType(data.user_type);
-        
-        // Fetch payments
-        if (data.user_type) {
-          const fetchedPayments = await getManualPayments(session.user.id, data.user_type);
-          setPayments(fetchedPayments);
+
+        if (data && (data.user_type === 'provider' || data.user_type === 'moonlighter')) {
+          setUserType(data.user_type);
+        } else {
+          // Handle unexpected user type
+          toast.error('Invalid user type for payment access');
+          navigate('/');
         }
-      } catch (err) {
-        console.error('Error:', err);
+      } catch (error) {
+        console.error('Error fetching user type:', error);
+        toast.error('Failed to fetch user data');
+      }
+    };
+
+    fetchUserType();
+  }, [session, navigate]);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      if (!session?.user?.id || !userType) return;
+      
+      try {
+        setLoading(true);
+        const userPayments = await getManualPayments(session.user.id, userType);
+        setPayments(userPayments);
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+        toast.error('Failed to load payment data');
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchUserType();
-  }, [session]);
 
-  return (
-    <SmoothScroll>
-      <div className="min-h-screen flex flex-col">
+    if (userType) {
+      fetchPayments();
+    }
+  }, [session, userType]);
+
+  if (loading) {
+    return (
+      <div>
         <Navbar />
-        <div className="flex-grow container mx-auto py-8 px-4">
-          <h1 className="text-3xl font-bold mb-6">Payments</h1>
-          
-          <Tabs defaultValue="history" className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="history">Payment History</TabsTrigger>
-              {userType === 'moonlighter' && (
-                <TabsTrigger value="methods">Payment Methods</TabsTrigger>
-              )}
-            </TabsList>
-            
-            <TabsContent value="history" className="mt-4">
-              {loading ? (
-                <p className="text-center p-8">Loading payment history...</p>
-              ) : payments.length === 0 ? (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <p className="text-gray-500">No payment history found.</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div>
-                  {payments.map((payment) => (
-                    <PaymentCard key={payment.id} payment={payment} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-            
-            {userType === 'moonlighter' && (
-              <TabsContent value="methods" className="mt-4">
-                {/* Payment methods component would go here */}
-                <p>Payment methods component</p>
-              </TabsContent>
-            )}
-          </Tabs>
+        <div className="container mx-auto py-12 px-4">
+          <h1 className="text-2xl font-bold mb-6">Payments</h1>
+          <p>Loading payment information...</p>
         </div>
         <Footer />
       </div>
-    </SmoothScroll>
+    );
+  }
+
+  return (
+    <div>
+      <Navbar />
+      <div className="container mx-auto py-12 px-4">
+        <h1 className="text-2xl font-bold mb-6">Payments</h1>
+
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="all">All Payments</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {payments.length > 0 ? (
+                payments.map((payment) => (
+                  <PaymentCard key={payment.id} payment={payment} />
+                ))
+              ) : (
+                <Card className="col-span-full">
+                  <CardContent className="p-6 text-center">
+                    <p className="text-gray-500">No payments found.</p>
+                    {userType === 'provider' && (
+                      <p className="mt-2">
+                        <button 
+                          onClick={() => navigate('/provider/make-payment')}
+                          className="text-primary hover:underline"
+                        >
+                          Make a payment
+                        </button>
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="pending">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {payments.filter(p => p.status === 'pending').length > 0 ? (
+                payments
+                  .filter(p => p.status === 'pending')
+                  .map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))
+              ) : (
+                <Card className="col-span-full">
+                  <CardContent className="p-6 text-center">
+                    <p className="text-gray-500">No pending payments.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="completed">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {payments.filter(p => p.status === 'completed').length > 0 ? (
+                payments
+                  .filter(p => p.status === 'completed')
+                  .map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))
+              ) : (
+                <Card className="col-span-full">
+                  <CardContent className="p-6 text-center">
+                    <p className="text-gray-500">No completed payments.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+      <Footer />
+    </div>
   );
 };
 
