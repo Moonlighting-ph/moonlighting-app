@@ -4,112 +4,58 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Moon } from './icons/Moon';
 
-const Footer: React.FC = () => {
+const FooterSection = () => {
   return (
-    <footer className="bg-white py-16 px-6 md:px-12 border-t border-gray-100">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          <div className="col-span-1 md:col-span-2 lg:col-span-1">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
+    <footer className="bg-background py-12 md:py-16 border-t">
+      <div className="container mx-auto px-5 sm:px-6 md:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* About Section */}
+          <div>
+            <Link to="/" className="flex items-center gap-2 group mb-4">
               <div className="relative p-1">
                 <div className="absolute inset-0 rounded-full bg-primary opacity-20 group-hover:opacity-30 transition-opacity"></div>
                 <Moon className="h-8 w-8 text-primary relative z-10" />
               </div>
               <span className="font-display font-bold text-lg sm:text-xl">moonlighting.ph</span>
             </Link>
-            <p className="text-gray-600 mb-6 max-w-xs">
-              Connecting healthcare professionals with flexible work opportunities across the Philippines.
+            <p className="text-muted-foreground">
+              Seamlessly connects understaffed hospitals with pre-vetted, on-demand medical professionals
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-primary hover:text-white transition-colors duration-300">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                </svg>
-              </a>
-              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-primary hover:text-white transition-colors duration-300">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/>
-                </svg>
-              </a>
-              <a href="#" className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-primary hover:text-white transition-colors duration-300">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                </svg>
-              </a>
-            </div>
           </div>
           
+          {/* Quick Links Section */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wide mb-6 text-primary">For Providers</h4>
-            <ul className="space-y-4">
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Post a Job</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Find Healthcare Professionals</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Provider Dashboard</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Payment Options</a>
-              </li>
+            <h4 className="font-semibold text-lg mb-4">Quick Links</h4>
+            <ul className="text-muted-foreground">
+              <li className="mb-2"><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
+              <li className="mb-2"><a href="#services" className="hover:text-primary transition-colors">Services</a></li>
+              <li className="mb-2"><a href="#jobs" className="hover:text-primary transition-colors">Job Listings</a></li>
+              <li><Link to="/client" className="hover:text-primary transition-colors">For Medical Providers</Link></li>
             </ul>
           </div>
           
+          {/* Contact Section */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wide mb-6 text-primary">For Moonlighters</h4>
-            <ul className="space-y-4">
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Browse Jobs</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Create Profile</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Moonlighter Dashboard</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">PRC Verification</a>
-              </li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wide mb-6 text-primary">Company</h4>
-            <ul className="space-y-4">
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">About Us</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Contact</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Privacy Policy</a>
-              </li>
-              <li>
-                <a href="#" className="text-gray-600 hover:text-primary transition-colors duration-300">Terms of Service</a>
-              </li>
-            </ul>
+            <h4 className="font-semibold text-lg mb-4">Contact Us</h4>
+            <p className="text-muted-foreground">
+              Email: <a href="mailto:info@moonlighting.ph" className="hover:text-primary transition-colors">info@moonlighting.ph</a>
+            </p>
+            <p className="text-muted-foreground">
+              Phone: <a href="tel:+639123456789" className="hover:text-primary transition-colors">+63 912 345 6789</a>
+            </p>
+            <p className="text-muted-foreground">
+              Address: 123 Main Street, Metro Manila, Philippines
+            </p>
           </div>
         </div>
         
-        <div className="mt-16 pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} moonlighting.ph. All rights reserved.
-          </p>
-          <div className="mt-4 md:mt-0">
-            <p className="text-sm text-gray-500">
-              Connecting healthcare professionals across the Philippines
-            </p>
-          </div>
+        {/* Copyright */}
+        <div className="mt-12 text-center text-muted-foreground">
+          &copy; {new Date().getFullYear()} Moonlighting.ph. All rights reserved.
         </div>
       </div>
     </footer>
   );
 };
 
-export default Footer;
+export default FooterSection;
