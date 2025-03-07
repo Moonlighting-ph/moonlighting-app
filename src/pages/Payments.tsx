@@ -1,28 +1,25 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import SmoothScroll from '@/components/SmoothScroll';
-import { ManualPayment } from '@/types/payment';
-import { fetchMoonlighterPayments, fetchProviderPayments } from '@/services/manualPaymentService';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { PaymentCard } from '@/components/PaymentCard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import PaymentCard from '@/components/PaymentCard';
+import { fetchMoonlighterPayments, fetchProviderPayments } from '@/services/manualPaymentService';
+import { ManualPayment } from '@/types/payment';
+import { supabase } from '@/integrations/supabase/client';
 
 const Payments: React.FC = () => {
   const { session } = useAuth();
+  const [userType, setUserType] = useState<'provider' | 'moonlighter' | null>(null);
   const [payments, setPayments] = useState<ManualPayment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userType, setUserType] = useState<'provider' | 'moonlighter' | null>(null);
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     const fetchUserType = async () => {
-      if (!session?.user) return;
+      if (!session?.user?.id) return;
       
       try {
         const { data, error } = await supabase
@@ -36,98 +33,99 @@ const Payments: React.FC = () => {
           return;
         }
         
-        if (data && (data.user_type === 'provider' || data.user_type === 'moonlighter')) {
+        if (data?.user_type === 'provider' || data?.user_type === 'moonlighter') {
           setUserType(data.user_type);
         }
-      } catch (err) {
-        console.error('Error in fetchUserType:', err);
+      } catch (error) {
+        console.error('Error fetching user type:', error);
       }
     };
     
     fetchUserType();
   }, [session]);
-
+  
   useEffect(() => {
     const fetchPayments = async () => {
-      if (!session?.user || !userType) return;
+      if (!session?.user?.id || !userType) return;
+      
+      setLoading(true);
       
       try {
-        setLoading(true);
-        let data: ManualPayment[] = [];
+        let paymentData: ManualPayment[] = [];
         
-        if (userType === 'provider') {
-          data = await fetchProviderPayments(session.user.id);
-        } else if (userType === 'moonlighter') {
-          data = await fetchMoonlighterPayments(session.user.id);
+        if (userType === 'moonlighter') {
+          paymentData = await fetchMoonlighterPayments(session.user.id);
+        } else if (userType === 'provider') {
+          paymentData = await fetchProviderPayments(session.user.id);
         }
         
-        setPayments(data);
-      } catch (err) {
-        console.error('Error fetching payments:', err);
+        setPayments(paymentData);
+      } catch (error) {
+        console.error('Error fetching payments:', error);
       } finally {
         setLoading(false);
       }
     };
     
-    if (userType) {
-      fetchPayments();
-    }
+    fetchPayments();
   }, [session, userType]);
-
-  const handleMakePayment = () => {
-    navigate('/provider/make-payment');
-  };
-
-  const handleManagePaymentMethods = () => {
-    navigate('/moonlighter/payment-methods');
-  };
+  
+  const filteredPayments = activeTab === 'all' 
+    ? payments 
+    : payments.filter(payment => payment.status === activeTab);
 
   return (
-    <SmoothScroll>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="container mx-auto py-8 px-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <h1 className="text-3xl font-bold mb-4 md:mb-0">
-              {userType === 'provider' ? 'Payments Made' : 'Payments Received'}
-            </h1>
+    <>
+      <Navbar />
+      <div className="container mx-auto py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">My Payments</h1>
             {userType === 'provider' && (
-              <Button onClick={handleMakePayment}>Make a Payment</Button>
-            )}
-            {userType === 'moonlighter' && (
-              <Button onClick={handleManagePaymentMethods}>Manage Payment Methods</Button>
+              <Button>Make a Payment</Button>
             )}
           </div>
+          
+          <Tabs defaultValue="all" className="mb-6" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="failed">Failed</TabsTrigger>
+            </TabsList>
+          </Tabs>
           
           {loading ? (
             <div className="text-center py-12">
               <p>Loading payments...</p>
             </div>
-          ) : payments.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+          ) : filteredPayments.length === 0 ? (
+            <div className="text-center py-12 border rounded-lg bg-gray-50">
               <h3 className="text-lg font-medium mb-2">No payments found</h3>
               <p className="text-gray-500 mb-4">
-                {userType === 'provider' 
-                  ? "You haven't made any payments yet." 
-                  : "You haven't received any payments yet."}
+                {activeTab !== 'all' 
+                  ? `You don't have any ${activeTab} payments.` 
+                  : 'You have not made or received any payments yet.'}
               </p>
               {userType === 'provider' && (
-                <Button onClick={handleMakePayment} variant="outline">
-                  Make Your First Payment
-                </Button>
+                <Button>Make Your First Payment</Button>
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              {payments.map((payment) => (
-                <PaymentCard key={payment.id} payment={payment} userType={userType} />
+            <div className="grid gap-4 md:grid-cols-2">
+              {filteredPayments.map(payment => (
+                <PaymentCard 
+                  key={payment.id} 
+                  payment={payment} 
+                  userType={userType as 'provider' | 'moonlighter'}
+                />
               ))}
             </div>
           )}
         </div>
-        <Footer />
       </div>
-    </SmoothScroll>
+      <Footer />
+    </>
   );
 };
 

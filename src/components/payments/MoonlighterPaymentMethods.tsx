@@ -1,87 +1,87 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { PaymentMethod } from '@/types/payment';
-import { fetchUserPaymentMethods } from '@/services/paymentMethodService';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building, CreditCard } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Smartphone, CreditCard, Building, Plus } from 'lucide-react';
 
 interface MoonlighterPaymentMethodsProps {
-  moonlighterId: string;
+  paymentMethods: PaymentMethod[];
+  onAddMethod: () => void;
 }
 
-const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ moonlighterId }) => {
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      try {
-        const methods = await fetchUserPaymentMethods(moonlighterId);
-        setPaymentMethods(methods);
-      } catch (error) {
-        console.error('Error fetching moonlighter payment methods:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (moonlighterId) {
-      fetchPaymentMethods();
-    }
-  }, [moonlighterId]);
-
+const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ 
+  paymentMethods, 
+  onAddMethod 
+}) => {
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'gcash':
+        return <Smartphone className="h-5 w-5 text-blue-500" />;
       case 'paymaya':
-        return <CreditCard className="h-5 w-5 text-blue-500" />;
+        return <CreditCard className="h-5 w-5 text-purple-500" />;
       case 'bank':
-        return <Building className="h-5 w-5 text-blue-500" />;
+        return <Building className="h-5 w-5 text-green-600" />;
       default:
-        return <CreditCard className="h-5 w-5 text-blue-500" />;
+        return <CreditCard className="h-5 w-5 text-gray-500" />;
     }
   };
-
-  if (loading) {
-    return <div className="p-4 text-center">Loading payment methods...</div>;
-  }
 
   if (paymentMethods.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-gray-500">
-            This moonlighter hasn't added any payment methods yet.
+        <CardHeader>
+          <CardTitle>Payment Methods</CardTitle>
+          <CardDescription>
+            You haven't added any payment methods yet.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500 mb-4">
+            Add a payment method to receive payments for completed moonlighting jobs.
           </p>
+          <Button onClick={onAddMethod}>
+            <Plus className="mr-2 h-4 w-4" /> Add Payment Method
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Available Payment Methods</h3>
-      {paymentMethods.map((method) => (
-        <Card key={method.id} className={method.is_default ? 'border-primary' : ''}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Payment Methods</CardTitle>
+            <CardDescription>
+              Your preferred payment methods
+            </CardDescription>
+          </div>
+          <Button size="sm" variant="outline" onClick={onAddMethod}>
+            <Plus className="mr-2 h-4 w-4" /> Add
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {paymentMethods.map(method => (
+            <div key={method.id} className="flex items-center p-2 border rounded-md bg-gray-50">
               {getMethodIcon(method.method)}
-              {method.method === 'gcash' ? 'GCash' : 
-               method.method === 'paymaya' ? 'PayMaya' : 
-               'Bank Transfer'}
+              <div className="ml-3">
+                <h4 className="text-sm font-medium capitalize">{method.method}</h4>
+                <p className="text-xs text-gray-500">{method.details}</p>
+              </div>
               {method.is_default && (
-                <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5 ml-2">
+                <span className="ml-auto text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                   Default
                 </span>
               )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">{method.details}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

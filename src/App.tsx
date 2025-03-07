@@ -12,6 +12,7 @@ import Jobs from "./pages/Jobs";
 import ProviderDashboard from "./pages/provider";
 import MoonlighterDashboard from "./pages/moonlighter";
 import NotFound from "./pages/NotFound";
+import PostJob from "./pages/provider/PostJob"; // Import the PostJob component
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/provider" element={<ProviderDashboard />} />
+            <Route path="/provider/post-job" element={<PostJob />} /> {/* Add the new route */}
             <Route path="/moonlighter" element={<MoonlighterDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

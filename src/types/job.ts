@@ -28,3 +28,8 @@ export interface JobApplication {
   job?: Job;
   moonlighter?: any; // Profile information
 }
+
+// Adding this to fix the reference in the JobFilters type
+export type JobFilterLimitProp = {
+  limit?: number;
+};

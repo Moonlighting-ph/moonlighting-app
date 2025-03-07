@@ -1,9 +1,10 @@
 
 export interface JobFilters {
+  searchTerm?: string;
   type?: string;
   location?: string;
   specialization?: string;
-  searchTerm?: string;
-  isUrgent?: boolean;
   experience_level?: string;
+  isUrgent?: boolean;
+  limit?: number; // Add the limit property
 }

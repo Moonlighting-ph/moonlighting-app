@@ -1,20 +1,22 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { addPaymentMethod } from '@/services/paymentMethodService';
-import { PaymentMethod, PaymentMethodType } from '@/types/payment';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { createPaymentMethod } from '@/services/paymentMethodService';
 import { toast } from 'sonner';
+import { PaymentMethodType } from '@/types/payment';
 
-interface PaymentMethodFormProps {
+export interface PaymentMethodFormProps {
   userId: string;
   onSuccess: () => void;
+  onCancel?: () => void; // Make onCancel optional
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ userId, onSuccess }) => {
-  const [method, setMethod] = useState<PaymentMethodType>('gcash');
+const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ userId, onSuccess, onCancel }) => {
+  const [activeTab, setActiveTab] = useState<PaymentMethodType>('gcash');
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,77 +24,104 @@ const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ userId, onSuccess
     e.preventDefault();
     
     if (!details.trim()) {
-      toast.error('Please enter payment details');
+      toast.error('Please enter your account details');
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      const newPaymentMethod: Omit<PaymentMethod, 'id' | 'created_at'> = {
+      await createPaymentMethod({
         user_id: userId,
-        method,
-        details,
-        is_default: false
-      };
+        method: activeTab,
+        details: details,
+        is_default: true
+      });
       
-      const result = await addPaymentMethod(newPaymentMethod);
-      
-      if (result) {
-        toast.success('Payment method added successfully');
-        setDetails('');
-        setMethod('gcash');
-        onSuccess();
-      } else {
-        toast.error('Failed to add payment method');
-      }
+      toast.success(`${activeTab.toUpperCase()} payment method added successfully`);
+      setDetails('');
+      onSuccess();
     } catch (error) {
       console.error('Error adding payment method:', error);
-      toast.error('An error occurred while adding payment method');
+      toast.error('Failed to add payment method');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleCancel = () => {
+    if (onCancel) onCancel();
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="method">Payment Method</Label>
-        <Select 
-          value={method} 
-          onValueChange={(value: PaymentMethodType) => setMethod(value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select payment method" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="gcash">GCash</SelectItem>
-            <SelectItem value="paymaya">PayMaya</SelectItem>
-            <SelectItem value="bank">Bank Transfer</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div>
-        <Label htmlFor="details">
-          {method === 'gcash' ? 'GCash Number' : 
-           method === 'paymaya' ? 'PayMaya Account' : 
-           'Bank Account Details'}
-        </Label>
-        <Input
-          id="details"
-          placeholder={method === 'gcash' ? 'Enter GCash number' : 
-                       method === 'paymaya' ? 'Enter PayMaya details' : 
-                       'Enter bank account details'}
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
-        />
-      </div>
-      
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Adding...' : 'Add Payment Method'}
-      </Button>
-    </form>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Add Payment Method</CardTitle>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PaymentMethodType)}>
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="gcash">GCash</TabsTrigger>
+              <TabsTrigger value="paymaya">PayMaya</TabsTrigger>
+              <TabsTrigger value="bank">Bank</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="gcash">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gcash-number">GCash Number</Label>
+                  <Input 
+                    id="gcash-number" 
+                    placeholder="09xxxxxxxxx"
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="paymaya">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="paymaya-number">PayMaya Number</Label>
+                  <Input 
+                    id="paymaya-number" 
+                    placeholder="09xxxxxxxxx or email"
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="bank">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bank-details">Bank Account Details</Label>
+                  <Input 
+                    id="bank-details" 
+                    placeholder="Bank name, account number, account name"
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Adding...' : 'Add Payment Method'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   );
 };
 

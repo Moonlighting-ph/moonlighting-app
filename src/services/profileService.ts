@@ -1,8 +1,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Profile } from '@/types/profile';
+import { UserProfile } from '@/types/profile';
 
-export const getUserProfile = async (userId: string): Promise<Profile | null> => {
+export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -15,14 +15,14 @@ export const getUserProfile = async (userId: string): Promise<Profile | null> =>
       return null;
     }
     
-    return data as Profile;
+    return data as UserProfile;
   } catch (error) {
     console.error('Error in getUserProfile:', error);
     return null;
   }
 };
 
-export const updateUserProfile = async (userId: string, profileData: Partial<Profile>): Promise<Profile | null> => {
+export const updateUserProfile = async (userId: string, profileData: Partial<UserProfile>): Promise<UserProfile | null> => {
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -36,7 +36,7 @@ export const updateUserProfile = async (userId: string, profileData: Partial<Pro
       throw error;
     }
     
-    return data as Profile;
+    return data as UserProfile;
   } catch (error) {
     console.error('Error in updateUserProfile:', error);
     throw error;

@@ -1,9 +1,11 @@
 
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { JobFilters } from '@/types/filter';
 
 interface JobFilterFormProps {
@@ -13,146 +15,119 @@ interface JobFilterFormProps {
 }
 
 const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, onReset }) => {
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    onFilterChange({ ...filters, [name]: value });
+  const handleTypeChange = (value: string) => {
+    onFilterChange({ ...filters, type: value });
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    onFilterChange({ ...filters, [name]: value });
+  const handleSpecChange = (value: string) => {
+    onFilterChange({ ...filters, specialization: value });
   };
 
-  const handleCheckboxChange = (checked: boolean) => {
-    onFilterChange({ ...filters, isUrgent: checked });
-  };
-
-  const handleExperienceLevelChange = (value: string) => {
+  const handleExperienceChange = (value: string) => {
     onFilterChange({ ...filters, experience_level: value });
   };
 
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFilterChange({ ...filters, location: e.target.value });
+  };
+
+  const handleUrgentChange = (checked: boolean) => {
+    onFilterChange({ ...filters, isUrgent: checked });
+  };
+
   return (
-    <div className="space-y-4 p-4 bg-white rounded-lg shadow-sm">
-      <h3 className="text-lg font-medium mb-2">Filter Jobs</h3>
-      
-      <div className="space-y-2">
-        <div>
-          <label htmlFor="searchTerm" className="text-sm font-medium">
-            Search
-          </label>
-          <Input
-            id="searchTerm"
-            name="searchTerm"
-            placeholder="Search by job title or description"
-            value={filters.searchTerm || ''}
-            onChange={handleInputChange}
-            className="w-full"
-          />
+    <Card className="sticky top-24">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-semibold">Filter Jobs</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="job-type">Job Type</Label>
+            <Select 
+              value={filters.type || "all"}
+              onValueChange={handleTypeChange}
+            >
+              <SelectTrigger id="job-type">
+                <SelectValue placeholder="Select job type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Full-time">Full-time</SelectItem>
+                <SelectItem value="Part-time">Part-time</SelectItem>
+                <SelectItem value="Contract">Contract</SelectItem>
+                <SelectItem value="Temporary">Temporary</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="specialization">Specialization</Label>
+            <Select 
+              value={filters.specialization || "all"}
+              onValueChange={handleSpecChange}
+            >
+              <SelectTrigger id="specialization">
+                <SelectValue placeholder="Select specialization" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Specializations</SelectItem>
+                <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
+                <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
+                <SelectItem value="Surgery">Surgery</SelectItem>
+                <SelectItem value="Obstetrics">Obstetrics</SelectItem>
+                <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                <SelectItem value="Dermatology">Dermatology</SelectItem>
+                <SelectItem value="General Practice">General Practice</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="experience">Experience Level</Label>
+            <Select 
+              value={filters.experience_level || "all"}
+              onValueChange={handleExperienceChange}
+            >
+              <SelectTrigger id="experience">
+                <SelectValue placeholder="Select experience" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                <SelectItem value="Entry-level">Entry-level</SelectItem>
+                <SelectItem value="Intermediate">Intermediate</SelectItem>
+                <SelectItem value="Experienced">Experienced</SelectItem>
+                <SelectItem value="Senior">Senior</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input 
+              id="location" 
+              placeholder="City or region"
+              value={filters.location || ''}
+              onChange={handleLocationChange}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <Switch 
+              id="urgent-only" 
+              checked={filters.isUrgent || false}
+              onCheckedChange={handleUrgentChange}
+            />
+            <Label htmlFor="urgent-only">Urgent positions only</Label>
+          </div>
+
+          <Button onClick={onReset} variant="outline" className="w-full mt-4">
+            Reset Filters
+          </Button>
         </div>
-        
-        <div>
-          <label htmlFor="type" className="text-sm font-medium">
-            Job Type
-          </label>
-          <Select
-            value={filters.type || ''}
-            onValueChange={(value) => handleSelectChange('type', value)}
-          >
-            <SelectTrigger id="type">
-              <SelectValue placeholder="Select Job Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Types</SelectItem>
-              <SelectItem value="Full-time">Full-time</SelectItem>
-              <SelectItem value="Part-time">Part-time</SelectItem>
-              <SelectItem value="Contract">Contract</SelectItem>
-              <SelectItem value="Temporary">Temporary</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <label htmlFor="location" className="text-sm font-medium">
-            Location
-          </label>
-          <Input
-            id="location"
-            name="location"
-            placeholder="Filter by location"
-            value={filters.location || ''}
-            onChange={handleInputChange}
-            className="w-full"
-          />
-        </div>
-        
-        <div>
-          <label htmlFor="specialization" className="text-sm font-medium">
-            Specialization
-          </label>
-          <Select
-            value={filters.specialization || ''}
-            onValueChange={(value) => handleSelectChange('specialization', value)}
-          >
-            <SelectTrigger id="specialization">
-              <SelectValue placeholder="Select Specialization" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Specializations</SelectItem>
-              <SelectItem value="Nursing">Nursing</SelectItem>
-              <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-              <SelectItem value="Surgery">Surgery</SelectItem>
-              <SelectItem value="Cardiology">Cardiology</SelectItem>
-              <SelectItem value="Laboratory">Laboratory</SelectItem>
-              <SelectItem value="Radiology">Radiology</SelectItem>
-              <SelectItem value="Pharmacy">Pharmacy</SelectItem>
-              <SelectItem value="General Practice">General Practice</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div>
-          <label htmlFor="experience_level" className="text-sm font-medium">
-            Experience Level
-          </label>
-          <Select
-            value={filters.experience_level || ''}
-            onValueChange={handleExperienceLevelChange}
-          >
-            <SelectTrigger id="experience_level">
-              <SelectValue placeholder="Select Experience Level" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All Experience Levels</SelectItem>
-              <SelectItem value="Entry-level">Entry-level</SelectItem>
-              <SelectItem value="Intermediate">Intermediate</SelectItem>
-              <SelectItem value="Experienced">Experienced</SelectItem>
-              <SelectItem value="Senior">Senior</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Checkbox 
-            id="isUrgent" 
-            checked={filters.isUrgent || false}
-            onCheckedChange={handleCheckboxChange}
-          />
-          <label 
-            htmlFor="isUrgent" 
-            className="text-sm font-medium cursor-pointer"
-          >
-            Urgent Positions Only
-          </label>
-        </div>
-        
-        <Button 
-          onClick={onReset} 
-          variant="outline" 
-          className="w-full mt-2"
-        >
-          Reset Filters
-        </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

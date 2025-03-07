@@ -86,9 +86,31 @@ export const fetchProviderJobs = async (providerId: string): Promise<Job[]> => {
 
 export const createJob = async (jobData: Partial<Job>): Promise<Job> => {
   try {
+    // Ensure required fields are present
+    if (!jobData.company || !jobData.title || !jobData.description || !jobData.type) {
+      throw new Error('Missing required job fields: company, title, description, and type are required');
+    }
+
+    const jobToInsert = {
+      company: jobData.company,
+      title: jobData.title,
+      description: jobData.description,
+      type: jobData.type,
+      location: jobData.location,
+      salary: jobData.salary,
+      deadline: jobData.deadline,
+      requirements: jobData.requirements,
+      responsibilities: jobData.responsibilities,
+      specialization: jobData.specialization,
+      experience_level: jobData.experience_level,
+      is_urgent: jobData.is_urgent,
+      provider_id: jobData.provider_id,
+      posted_date: jobData.posted_date || new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('jobs')
-      .insert(jobData)
+      .insert(jobToInsert)
       .select()
       .single();
     
@@ -139,8 +161,15 @@ export const getRecommendedJobs = async (userId: string, limit = 5): Promise<Job
     const profile = await getUserProfile(userId);
     
     if (!profile || !profile.specialization) {
-      // If there's no profile or specialization, return all jobs
-      return await fetchJobs({ limit: limit });
+      // If there's no profile or specialization, return all jobs with a limit
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .order('posted_date', { ascending: false })
+        .limit(limit);
+        
+      if (error) throw error;
+      return data as Job[];
     }
     
     // First try to match by specialization
