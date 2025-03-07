@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import ApplicationsList from '@/components/application/ApplicationsList';
 import EmptyApplicationsList from '@/components/application/EmptyApplicationsList';
 import ApplicationDetailsDialog from '@/components/application/ApplicationDetailsDialog';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Briefcase, Loader2 } from 'lucide-react';
 
 const Applications: React.FC = () => {
   const { session } = useAuth();
@@ -80,7 +82,7 @@ const Applications: React.FC = () => {
     fetchApplications();
   }, [session, navigate]);
 
-  const handleUpdateStatus = async (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected') => {
+  const handleUpdateStatus = async (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid') => {
     if (!session?.user) return;
     
     try {
@@ -121,11 +123,38 @@ const Applications: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-50">
         <Navbar />
-        <div className="container mx-auto py-8 px-4">
-          <h1 className="text-3xl font-bold mb-6">Job Applications</h1>
-          <div className="text-center py-12">Loading applications...</div>
+        <div className="container mx-auto py-8 px-4 max-w-6xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/provider')}
+              className="text-muted-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Dashboard
+            </Button>
+          </div>
+          
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">Job Applications</h1>
+              <p className="text-muted-foreground">Manage applications from healthcare professionals</p>
+            </div>
+            <Button onClick={() => navigate('/provider/post-job')} className="whitespace-nowrap">
+              <Briefcase className="h-4 w-4 mr-2" />
+              Post New Job
+            </Button>
+          </div>
+          
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground">Loading applications...</p>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>
@@ -133,10 +162,31 @@ const Applications: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Job Applications</h1>
+      <div className="container mx-auto py-8 px-4 max-w-6xl">
+        <div className="flex items-center gap-2 mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/provider')}
+            className="text-muted-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Dashboard
+          </Button>
+        </div>
+        
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Job Applications</h1>
+            <p className="text-muted-foreground">Manage applications from healthcare professionals</p>
+          </div>
+          <Button onClick={() => navigate('/provider/post-job')} className="whitespace-nowrap">
+            <Briefcase className="h-4 w-4 mr-2" />
+            Post New Job
+          </Button>
+        </div>
         
         {applications.length === 0 ? (
           <EmptyApplicationsList />
