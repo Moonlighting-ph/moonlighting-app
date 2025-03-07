@@ -38,7 +38,7 @@ const FooterSection = () => {
           <div>
             <h4 className="font-semibold text-lg mb-4">Contact Us</h4>
             <p className="text-muted-foreground">
-              Email: <a href="mailto:info@moonlighting.ph" className="hover:text-primary transition-colors">info@moonlighting.ph</a>
+              Email: <a href="mailto:hello@moonlighting.ph" className="hover:text-primary transition-colors">hello@moonlighting.ph</a>
             </p>
             <p className="text-muted-foreground">
               Phone: <a href="tel:+639123456789" className="hover:text-primary transition-colors">+63 912 345 6789</a>
