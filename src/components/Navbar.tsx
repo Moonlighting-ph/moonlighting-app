@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -93,9 +94,9 @@ const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-primary flex items-center">
+        <Link to="/" className="flex items-center group">
           <Moon className="mr-2 text-primary" width={28} height={28} />
-          moonlighting.ph
+          <span className="text-xl font-bold">moonlighting.ph</span>
         </Link>
         
         <nav className="flex items-center space-x-4">
