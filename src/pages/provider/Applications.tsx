@@ -33,7 +33,7 @@ const Applications: React.FC = () => {
         // First get all jobs by this provider
         const { data: jobs, error: jobsError } = await supabase
           .from('jobs')
-          .select('id')
+          .select('id, title, company')
           .eq('provider_id', session.user.id);
         
         if (jobsError) {
@@ -49,10 +49,24 @@ const Applications: React.FC = () => {
         // Then get applications for those jobs
         let allApplications: JobApplication[] = [];
         
-        for (const jobId of jobs.map(job => job.id)) {
-          const jobApplications = await fetchJobApplications(jobId);
-          allApplications = [...allApplications, ...jobApplications];
+        for (const job of jobs) {
+          const jobApplications = await fetchJobApplications(job.id);
+          
+          // Add job details to each application
+          const applicationsWithDetails = jobApplications.map(app => ({
+            ...app,
+            job: {
+              ...app.job,
+              title: job.title,
+              company: job.company
+            }
+          }));
+          
+          allApplications = [...allApplications, ...applicationsWithDetails];
         }
+        
+        // Log to debug
+        console.log('Fetched applications:', allApplications);
         
         setApplications(allApplications);
       } catch (error) {
@@ -71,7 +85,12 @@ const Applications: React.FC = () => {
     
     try {
       setStatusUpdateLoading(applicationId);
-      await updateApplicationStatus(applicationId, status, session.user.id);
+      
+      console.log(`Updating application ${applicationId} to status ${status}`);
+      
+      const updatedApplication = await updateApplicationStatus(applicationId, status, session.user.id);
+      
+      console.log('Update successful:', updatedApplication);
       
       // Update local state
       setApplications(prev => 
@@ -81,6 +100,11 @@ const Applications: React.FC = () => {
       );
       
       toast.success(`Application marked as ${status}`);
+      
+      // Close the dialog if it's open
+      if (showNoteDialog && selectedApplication?.id === applicationId) {
+        setShowNoteDialog(false);
+      }
     } catch (error: any) {
       console.error('Error updating application status:', error);
       toast.error(error.message || 'Failed to update application status');
@@ -90,6 +114,7 @@ const Applications: React.FC = () => {
   };
 
   const handleViewDetails = (application: JobApplication) => {
+    console.log('Viewing application details:', application);
     setSelectedApplication(application);
     setShowNoteDialog(true);
   };

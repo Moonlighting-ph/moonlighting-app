@@ -4,26 +4,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Job, JobApplication } from '@/types/job';
 import { useAuth } from '@/hooks/useAuth';
 import { fetchJobById } from '@/services/jobService';
-import { getApplicationForMoonlighter, submitJobApplication } from '@/services/jobApplicationService';
+import { getApplicationForMoonlighter } from '@/services/jobApplicationService';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import JobDetailHeader from './JobDetailHeader';
 import JobDetailContent from './JobDetailContent';
 import JobApplicationStatus from './JobApplicationStatus';
+import JobApplicationDialog from './JobApplicationDialog';
+import JobProviderActions from './JobProviderActions';
+import MoonlighterActions from './MoonlighterActions';
 
 const JobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -32,13 +25,11 @@ const JobDetail: React.FC = () => {
   
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
-  const [applying, setApplying] = useState(false);
-  const [applicationNotes, setApplicationNotes] = useState('');
-  const [showApplicationDialog, setShowApplicationDialog] = useState(false);
   const [userApplication, setUserApplication] = useState<JobApplication | null>(null);
   const [isProvider, setIsProvider] = useState(false);
   const [isMoonlighter, setIsMoonlighter] = useState(false);
   const [isJobProvider, setIsJobProvider] = useState(false);
+  const [showApplicationDialog, setShowApplicationDialog] = useState(false);
   
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -122,47 +113,6 @@ const JobDetail: React.FC = () => {
     setShowApplicationDialog(true);
   };
   
-  const handleSubmitApplication = async () => {
-    if (!job || !session?.user) return;
-    
-    try {
-      setApplying(true);
-      
-      // Get user profile first to include in application
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-        
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        toast.error('Failed to submit application: Could not retrieve your profile');
-        setApplying(false);
-        return;
-      }
-      
-      await submitJobApplication({
-        job_id: job.id,
-        moonlighter_id: session.user.id,
-        notes: applicationNotes.trim() || null,
-        profile_info: profileData
-      });
-      
-      // Get the updated application
-      const application = await getApplicationForMoonlighter(job.id, session.user.id);
-      setUserApplication(application);
-      
-      setShowApplicationDialog(false);
-      toast.success('Application submitted successfully');
-    } catch (error: any) {
-      console.error('Error submitting application:', error);
-      toast.error(error.message || 'Failed to submit application');
-    } finally {
-      setApplying(false);
-    }
-  };
-  
   const handleEditJob = () => {
     navigate(`/provider/edit-job/${jobId}`);
   };
@@ -216,72 +166,24 @@ const JobDetail: React.FC = () => {
           
           <div className="space-y-6">
             {isJobProvider ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <p className="text-blue-700 font-medium mb-2">
-                  You posted this job
-                </p>
-                <Button 
-                  onClick={handleEditJob} 
-                  className="w-full"
-                >
-                  Edit Job Post
-                </Button>
-              </div>
+              <JobProviderActions job={job} onEdit={handleEditJob} />
             ) : userApplication ? (
               <JobApplicationStatus application={userApplication} />
             ) : isMoonlighter ? (
-              <div className="bg-white shadow-sm rounded-lg p-6 border">
-                <h3 className="text-lg font-medium mb-2">Ready to Apply?</h3>
-                <p className="text-gray-500 mb-4">
-                  Submit your application for this position and the healthcare provider will review your profile.
-                </p>
-                <Button 
-                  onClick={handleApplyClick} 
-                  className="w-full"
-                >
-                  Apply Now
-                </Button>
-              </div>
+              <MoonlighterActions onApply={handleApplyClick} />
             ) : null}
-            
-            {/* Job Provider Info Card could go here */}
           </div>
         </div>
       </div>
       
-      <Dialog open={showApplicationDialog} onOpenChange={setShowApplicationDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Apply for {job.title}</DialogTitle>
-            <DialogDescription>
-              Add a note to the healthcare provider about why you're a good fit for this role (optional)
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4">
-            <Textarea
-              placeholder="Share your interest, relevant experience, or ask questions about the job..."
-              value={applicationNotes}
-              onChange={(e) => setApplicationNotes(e.target.value)}
-              className="h-32"
-            />
-          </div>
-          
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline" disabled={applying}>
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button 
-              onClick={handleSubmitApplication}
-              disabled={applying}
-            >
-              {applying ? 'Submitting...' : 'Submit Application'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {job && (
+        <JobApplicationDialog
+          job={job}
+          open={showApplicationDialog}
+          onOpenChange={setShowApplicationDialog}
+          onSuccess={(application) => setUserApplication(application)}
+        />
+      )}
       
       <Footer />
     </div>

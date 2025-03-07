@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { JobApplication } from '@/types/job';
 
@@ -83,7 +84,10 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
     // Fetch the applications
     const { data: applications, error } = await supabase
       .from('job_applications')
-      .select('*')
+      .select(`
+        *,
+        job:jobs(*)
+      `)
       .eq('job_id', jobId)
       .order('applied_date', { ascending: false });
     
@@ -93,21 +97,11 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
       return [];
     }
     
-    // Fetch moonlighter profiles
-    const moonlighterIds = applications.map(app => app.moonlighter_id);
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')
-      .in('id', moonlighterIds);
-    
-    if (profilesError) throw profilesError;
-    
-    // Combine the data
+    // Since we now store profile_info in the application, we can use that instead of fetching profiles separately
     const applicationsWithProfiles = applications.map(app => {
-      const moonlighter = profiles?.find(p => p.id === app.moonlighter_id) || null;
       return {
         ...app,
-        moonlighter,
+        moonlighter: app.profile_info || null,
       };
     });
     
@@ -129,7 +123,7 @@ export const updateApplicationStatus = async (
       .from('job_applications')
       .select('job_id')
       .eq('id', applicationId)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single
     
     if (fetchError) throw fetchError;
     
@@ -142,11 +136,15 @@ export const updateApplicationStatus = async (
       .from('jobs')
       .select('provider_id')
       .eq('id', application.job_id)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single
     
     if (jobError) throw jobError;
     
-    if (job?.provider_id !== providerId) {
+    if (!job) {
+      throw new Error('Job not found');
+    }
+    
+    if (job.provider_id !== providerId) {
       throw new Error('You do not have permission to update this application');
     }
     
@@ -155,12 +153,25 @@ export const updateApplicationStatus = async (
       .from('job_applications')
       .update({ status })
       .eq('id', applicationId)
-      .select()
-      .single();
+      .select(`
+        *,
+        job:jobs(*)
+      `)
+      .maybeSingle(); // Use maybeSingle instead of single
     
     if (error) throw error;
     
-    return data as JobApplication;
+    if (!data) {
+      throw new Error('Failed to update application status');
+    }
+    
+    // Ensure moonlighter property exists using profile_info
+    const result = {
+      ...data,
+      moonlighter: data.profile_info || null
+    };
+    
+    return result as JobApplication;
   } catch (error) {
     console.error('Error updating application status:', error);
     throw error;
@@ -174,7 +185,10 @@ export const getApplicationForMoonlighter = async (
   try {
     const { data, error } = await supabase
       .from('job_applications')
-      .select('*')
+      .select(`
+        *,
+        job:jobs(*)
+      `)
       .eq('job_id', jobId)
       .eq('moonlighter_id', moonlighterId)
       .maybeSingle();
