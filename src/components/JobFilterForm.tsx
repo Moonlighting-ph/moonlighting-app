@@ -76,14 +76,14 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({
           <div>
             <Label htmlFor="type">Job Type</Label>
             <Select 
-              value={formValues.type || ""}
+              value={formValues.type || "all"}
               onValueChange={(value) => handleSelectChange('type', value)}
             >
               <SelectTrigger id="type">
                 <SelectValue placeholder="All job types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All job types</SelectItem>
+                <SelectItem value="all">All job types</SelectItem>
                 <SelectItem value="Full-time">Full-time</SelectItem>
                 <SelectItem value="Part-time">Part-time</SelectItem>
                 <SelectItem value="Contract">Contract</SelectItem>
@@ -106,14 +106,14 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({
           <div>
             <Label htmlFor="specialization">Specialization</Label>
             <Select 
-              value={formValues.specialization || ""}
+              value={formValues.specialization || "all"}
               onValueChange={(value) => handleSelectChange('specialization', value)}
             >
               <SelectTrigger id="specialization">
                 <SelectValue placeholder="All specializations" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All specializations</SelectItem>
+                <SelectItem value="all">All specializations</SelectItem>
                 <SelectItem value="Nursing">Nursing</SelectItem>
                 <SelectItem value="Pediatrics">Pediatrics</SelectItem>
                 <SelectItem value="Surgery">Surgery</SelectItem>
@@ -129,14 +129,14 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({
           <div>
             <Label htmlFor="experience_level">Experience Level</Label>
             <Select 
-              value={formValues.experience_level || ""}
+              value={formValues.experience_level || "all"}
               onValueChange={(value) => handleSelectChange('experience_level', value)}
             >
               <SelectTrigger id="experience_level">
                 <SelectValue placeholder="All levels" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All levels</SelectItem>
+                <SelectItem value="all">All levels</SelectItem>
                 <SelectItem value="Entry-level">Entry-level</SelectItem>
                 <SelectItem value="Intermediate">Intermediate</SelectItem>
                 <SelectItem value="Experienced">Experienced</SelectItem>

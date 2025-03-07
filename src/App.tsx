@@ -16,6 +16,7 @@ import PostJob from "./pages/provider/PostJob";
 import JobDetail from "./pages/jobs/JobDetail";
 import EditJob from "./pages/provider/EditJob";
 import Applications from "./pages/provider/Applications";
+import MoonlighterApplications from "./pages/moonlighter/Applications";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/provider/edit-job/:jobId" element={<EditJob />} />
             <Route path="/provider/applications" element={<Applications />} />
             <Route path="/moonlighter" element={<MoonlighterDashboard />} />
+            <Route path="/moonlighter/applications" element={<MoonlighterApplications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

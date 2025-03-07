@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { CalendarClock, MapPin, BriefcaseBusiness, BuildingIcon, GraduationCapIcon } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const JobDetail: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -270,7 +271,7 @@ const JobDetail: React.FC = () => {
                       <Badge 
                         className="text-sm py-1 px-3"
                         variant={
-                          applicationStatus === 'approved' ? 'success' :
+                          applicationStatus === 'approved' ? 'outline' :
                           applicationStatus === 'rejected' ? 'destructive' :
                           'secondary'
                         }

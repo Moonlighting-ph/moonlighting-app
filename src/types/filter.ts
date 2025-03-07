@@ -6,5 +6,5 @@ export interface JobFilters {
   specialization?: string;
   experience_level?: string;
   isUrgent?: boolean;
-  limit?: number; // Add the limit property
+  limit?: number;
 }

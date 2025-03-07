@@ -71,7 +71,7 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobB
       );
     }
 
-    if (filters.type) {
+    if (filters.type && filters.type !== 'all') {
       result = result.filter(job => job.type === filters.type);
     }
 
@@ -81,8 +81,12 @@ const JobBoard = ({ jobs: propJobs, loading: propLoading, initialFilters }: JobB
       );
     }
 
-    if (filters.specialization) {
+    if (filters.specialization && filters.specialization !== 'all') {
       result = result.filter(job => job.specialization === filters.specialization);
+    }
+
+    if (filters.experience_level && filters.experience_level !== 'all') {
+      result = result.filter(job => job.experience_level === filters.experience_level);
     }
 
     if (filters.isUrgent) {
