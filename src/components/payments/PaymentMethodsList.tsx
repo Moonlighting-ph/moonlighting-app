@@ -1,184 +1,124 @@
 
-import React, { useEffect, useState } from 'react';
-import { fetchUserPaymentMethods, deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
-import { PaymentMethod } from '@/types/payment';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Trash2, CreditCard, Star, StarIcon } from 'lucide-react';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PaymentMethod } from '@/types/payment';
+import { deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
+import { toast } from 'sonner';
+import { Bank, CreditCard, Trash2 } from 'lucide-react';
 
 interface PaymentMethodsListProps {
-  userId?: string;
-  onItemClick?: (method: PaymentMethod) => void;
-  refreshTrigger?: number;
+  paymentMethods: PaymentMethod[];
+  userId: string;
+  onUpdate: () => void;
 }
 
-const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ 
-  userId, 
-  onItemClick,
-  refreshTrigger = 0
-}) => {
-  const [methods, setMethods] = useState<PaymentMethod[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ paymentMethods, userId, onUpdate }) => {
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadPaymentMethods = async () => {
-      setLoading(true);
-      const data = await fetchUserPaymentMethods(userId);
-      setMethods(data);
-      setLoading(false);
-    };
-
-    loadPaymentMethods();
-  }, [userId, refreshTrigger]);
-
-  const handleDelete = async (id: string) => {
-    const success = await deletePaymentMethod(id);
-    if (success) {
-      setMethods(methods.filter(method => method.id !== id));
+  const handleSetDefault = async (methodId: string) => {
+    setIsLoading(`default-${methodId}`);
+    try {
+      const success = await setDefaultPaymentMethod(userId, methodId);
+      if (success) {
+        toast.success('Default payment method updated');
+        onUpdate();
+      } else {
+        toast.error('Failed to update default payment method');
+      }
+    } catch (error) {
+      console.error('Error setting default payment method:', error);
+      toast.error('An error occurred');
+    } finally {
+      setIsLoading(null);
     }
   };
 
-  const handleSetDefault = async (id: string) => {
-    const success = await setDefaultPaymentMethod(id);
-    if (success) {
-      setMethods(methods.map(method => ({
-        ...method,
-        is_default: method.id === id
-      })));
+  const handleDelete = async (methodId: string) => {
+    if (!confirm('Are you sure you want to delete this payment method?')) {
+      return;
+    }
+    
+    setIsLoading(`delete-${methodId}`);
+    try {
+      const success = await deletePaymentMethod(userId, methodId);
+      if (success) {
+        toast.success('Payment method deleted');
+        onUpdate();
+      } else {
+        toast.error('Failed to delete payment method');
+      }
+    } catch (error) {
+      console.error('Error deleting payment method:', error);
+      toast.error('An error occurred');
+    } finally {
+      setIsLoading(null);
     }
   };
 
   const getMethodIcon = (method: string) => {
-    return <CreditCard className="h-5 w-5" />;
+    switch (method) {
+      case 'gcash':
+      case 'paymaya':
+        return <CreditCard className="h-5 w-5 text-blue-500" />;
+      case 'bank':
+        return <Bank className="h-5 w-5 text-blue-500" />;
+      default:
+        return <CreditCard className="h-5 w-5 text-blue-500" />;
+    }
   };
 
-  const formatMethodDetails = (method: PaymentMethod) => {
-    return method.details;
-  };
-
-  if (loading) {
+  if (paymentMethods.length === 0) {
     return (
-      <div className="flex justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <div className="text-center p-4 bg-gray-50 rounded-md">
+        <p className="text-gray-500">No payment methods added yet.</p>
       </div>
     );
   }
 
-  if (methods.length === 0) {
-    return (
-      <Card className="w-full">
-        <CardContent className="py-6">
-          <p className="text-center text-gray-500">No payment methods found</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Your Payment Methods</CardTitle>
-        <CardDescription>
-          Payment methods that will be visible to healthcare providers
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {methods.map((method) => (
-            <div 
-              key={method.id}
-              className={`flex items-center justify-between p-4 rounded-lg border ${
-                method.is_default ? 'border-primary/50 bg-primary/5' : 'border-border'
-              } ${onItemClick ? 'cursor-pointer hover:bg-accent' : ''}`}
-              onClick={() => onItemClick && onItemClick(method)}
-            >
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-full ${method.is_default ? 'bg-primary/20' : 'bg-secondary'}`}>
-                  {getMethodIcon(method.method)}
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h4 className="font-medium capitalize">{method.method}</h4>
-                    {method.is_default && (
-                      <Badge variant="outline" className="border-primary/50 text-primary">
-                        <StarIcon className="h-3 w-3 mr-1 fill-primary" /> Default
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500">{formatMethodDetails(method)}</p>
-                </div>
-              </div>
-
-              {!onItemClick && (
-                <div className="flex space-x-2">
-                  {!method.is_default && (
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSetDefault(method.id);
-                      }}
-                      title="Set as default"
-                    >
-                      <Star className="h-4 w-4" />
-                    </Button>
-                  )}
-                  
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="icon"
-                        className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(method.id);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete this payment method.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          onClick={() => {
-                            if (deleteId) handleDelete(deleteId);
-                          }}
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+    <div className="space-y-4">
+      {paymentMethods.map((method) => (
+        <Card key={method.id} className={`${method.is_default ? 'border-primary' : ''}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              {getMethodIcon(method.method)}
+              {method.method === 'gcash' ? 'GCash' : 
+               method.method === 'paymaya' ? 'PayMaya' : 
+               'Bank Transfer'}
+              {method.is_default && (
+                <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5 ml-2">
+                  Default
+                </span>
               )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">{method.details}</p>
+            <div className="flex items-center justify-end mt-4 space-x-2">
+              {!method.is_default && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleSetDefault(method.id)}
+                  disabled={isLoading === `default-${method.id}`}
+                >
+                  {isLoading === `default-${method.id}` ? 'Setting...' : 'Set as Default'}
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => handleDelete(method.id)}
+                disabled={isLoading === `delete-${method.id}`}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+              </Button>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
 

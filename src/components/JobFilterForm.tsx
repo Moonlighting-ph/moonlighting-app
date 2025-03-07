@@ -92,7 +92,8 @@ const JobFilterForm: React.FC<JobFilterFormProps> = ({ filters, onFilterChange, 
               <SelectValue placeholder="Select Specialization" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Specializations</SelectItem>
+              {/* Ensure all SelectItem components have a non-empty value prop */}
+              <SelectItem value="all">All Specializations</SelectItem>
               <SelectItem value="Nursing">Nursing</SelectItem>
               <SelectItem value="Pediatrics">Pediatrics</SelectItem>
               <SelectItem value="Surgery">Surgery</SelectItem>

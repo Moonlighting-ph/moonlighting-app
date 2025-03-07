@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { PaymentMethod } from '@/types/payment';
 import { fetchUserPaymentMethods } from '@/services/paymentMethodService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, Wallet, Building } from 'lucide-react';
+import { Bank, CreditCard } from 'lucide-react';
 
-export interface MoonlighterPaymentMethodsProps {
+interface MoonlighterPaymentMethodsProps {
   moonlighterId: string;
 }
 
@@ -15,74 +15,73 @@ const MoonlighterPaymentMethods: React.FC<MoonlighterPaymentMethodsProps> = ({ m
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
-      if (!moonlighterId) return;
-      
       try {
-        setLoading(true);
         const methods = await fetchUserPaymentMethods(moonlighterId);
         setPaymentMethods(methods);
       } catch (error) {
-        console.error('Error fetching payment methods:', error);
+        console.error('Error fetching moonlighter payment methods:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPaymentMethods();
+    if (moonlighterId) {
+      fetchPaymentMethods();
+    }
   }, [moonlighterId]);
 
-  const getIcon = (method: string) => {
+  const getMethodIcon = (method: string) => {
     switch (method) {
       case 'gcash':
-        return <Wallet className="w-5 h-5 text-blue-500" />;
       case 'paymaya':
-        return <CreditCard className="w-5 h-5 text-purple-500" />;
+        return <CreditCard className="h-5 w-5 text-blue-500" />;
       case 'bank':
-        return <Building className="w-5 h-5 text-green-500" />;
+        return <Bank className="h-5 w-5 text-blue-500" />;
       default:
-        return <CreditCard className="w-5 h-5" />;
+        return <CreditCard className="h-5 w-5 text-blue-500" />;
     }
   };
 
   if (loading) {
-    return <div className="text-center py-6">Loading payment methods...</div>;
+    return <div className="p-4 text-center">Loading payment methods...</div>;
   }
 
   if (paymentMethods.length === 0) {
     return (
-      <Card className="mt-4">
-        <CardContent className="text-center py-6">
-          <p className="text-muted-foreground">No payment methods available for this moonlighter.</p>
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-center text-gray-500">
+            This moonlighter hasn't added any payment methods yet.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle className="text-xl">Payment Methods</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {paymentMethods.map((method) => (
-            <div 
-              key={method.id} 
-              className="p-4 border rounded-lg flex items-start gap-3"
-            >
-              <div className="mt-1">{getIcon(method.method)}</div>
-              <div>
-                <div className="font-medium capitalize">{method.method}</div>
-                <div className="text-sm text-muted-foreground break-all">{method.details}</div>
-                {method.is_default && (
-                  <div className="mt-1 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full inline-block">Default</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Available Payment Methods</h3>
+      {paymentMethods.map((method) => (
+        <Card key={method.id} className={method.is_default ? 'border-primary' : ''}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              {getMethodIcon(method.method)}
+              {method.method === 'gcash' ? 'GCash' : 
+               method.method === 'paymaya' ? 'PayMaya' : 
+               'Bank Transfer'}
+              {method.is_default && (
+                <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5 ml-2">
+                  Default
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">{method.details}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
 
