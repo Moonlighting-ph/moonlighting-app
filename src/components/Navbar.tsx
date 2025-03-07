@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="text-xl font-bold text-primary flex items-center">
           <Moon className="mr-2 text-primary" width={28} height={28} />
-          Moonlighting.ph
+          moonlighting.ph
         </Link>
         
         <nav className="flex items-center space-x-4">
