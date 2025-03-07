@@ -68,21 +68,41 @@ export const fetchMoonlighterApplications = async (moonlighterId: string): Promi
 
 export const fetchJobApplications = async (jobId: string): Promise<JobApplication[]> => {
   try {
-    const { data, error } = await supabase
+    // First fetch the applications
+    const { data: applications, error } = await supabase
       .from('job_applications')
-      .select(`
-        *,
-        moonlighter:profiles(*)
-      `)
+      .select('*')
       .eq('job_id', jobId)
       .order('applied_date', { ascending: false });
     
     if (error) throw error;
     
-    return (data || []) as JobApplication[];
+    if (!applications || applications.length === 0) {
+      return [];
+    }
+    
+    // Then fetch the moonlighter profiles separately
+    const moonlighterIds = applications.map(app => app.moonlighter_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', moonlighterIds);
+    
+    if (profilesError) throw profilesError;
+    
+    // Combine the data
+    const applicationsWithProfiles = applications.map(app => {
+      const moonlighter = profiles?.find(p => p.id === app.moonlighter_id) || null;
+      return {
+        ...app,
+        moonlighter
+      };
+    });
+    
+    return applicationsWithProfiles as JobApplication[];
   } catch (error) {
     console.error('Error fetching job applications:', error);
-    return [];
+    throw error;
   }
 };
 
@@ -95,16 +115,26 @@ export const updateApplicationStatus = async (
     // First verify that the provider owns the job
     const { data: application, error: fetchError } = await supabase
       .from('job_applications')
-      .select(`
-        job_id,
-        jobs!inner(provider_id)
-      `)
+      .select('job_id')
       .eq('id', applicationId)
       .single();
     
     if (fetchError) throw fetchError;
     
-    if (application?.jobs?.provider_id !== providerId) {
+    if (!application?.job_id) {
+      throw new Error('Application not found');
+    }
+    
+    // Verify job ownership
+    const { data: job, error: jobError } = await supabase
+      .from('jobs')
+      .select('provider_id')
+      .eq('id', application.job_id)
+      .single();
+    
+    if (jobError) throw jobError;
+    
+    if (job?.provider_id !== providerId) {
       throw new Error('You do not have permission to update this application');
     }
     
