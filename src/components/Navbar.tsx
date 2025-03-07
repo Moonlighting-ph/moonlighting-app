@@ -96,7 +96,7 @@ const Navbar: React.FC = () => {
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
           <Moon className="text-primary" />
-          <span className="font-display font-bold text-lg sm:text-xl">moonlighting.ph</span>
+          <span className="hidden sm:inline-block font-display font-bold text-lg sm:text-xl">moonlighting.ph</span>
         </Link>
         
         <nav className="flex items-center gap-6">
