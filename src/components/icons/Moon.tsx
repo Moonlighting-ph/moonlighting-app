@@ -9,16 +9,17 @@ export function Moon(props: SVGProps<SVGSVGElement>) {
         xmlns="http://www.w3.org/2000/svg"
         width="24"
         height="24"
-        viewBox="0 0 24 24"
+        viewBox="0 0 32 32"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         className="h-7 w-7 text-primary relative z-10 group-hover:rotate-12 transition-transform duration-300"
         {...props}
       >
-        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        <path d="M16 4a8 8 0 0 0 12 12 12 12 0 1 1-12-12z" />
+        <circle cx="16" cy="16" r="16" fill="currentColor" opacity="0.3" />
       </svg>
     </div>
   );
