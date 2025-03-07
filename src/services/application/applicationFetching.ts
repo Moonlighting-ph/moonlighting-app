@@ -28,7 +28,7 @@ export const getApplicationForMoonlighter = async (jobId: string, moonlighterId:
     const application: JobApplication = {
       ...data,
       status: data.status as JobApplication['status'],
-      moonlighter: data.profile_info
+      moonlighter: data.profile_info || null
     };
     
     return application;
@@ -58,7 +58,7 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
     const applications = data.map(app => ({
       ...app,
       status: app.status as JobApplication['status'],
-      moonlighter: app.profile_info
+      moonlighter: app.profile_info || null
     }));
     
     return applications as JobApplication[];
@@ -89,7 +89,7 @@ export const fetchMoonlighterApplications = async (moonlighterId: string): Promi
     const applications = data.map(app => ({
       ...app,
       status: app.status as JobApplication['status'],
-      moonlighter: app.profile_info
+      moonlighter: app.profile_info || null
     }));
     
     return applications as JobApplication[];

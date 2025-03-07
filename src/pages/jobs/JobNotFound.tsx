@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { NavigateFunction } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
