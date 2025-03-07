@@ -15,7 +15,7 @@ export function Moon(props: SVGProps<SVGSVGElement>) {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-[32px] w-[32px] text-primary relative z-10 group-hover:rotate-12 transition-transform duration-300"
+        className="h-7 w-7 text-primary relative z-10 group-hover:rotate-12 transition-transform duration-300"
         {...props}
       >
         <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />

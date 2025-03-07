@@ -10,8 +10,8 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
-            <div className="flex items-center group mb-6">
-              <Moon className="mr-2 text-primary" width={24} height={24} />
+            <div className="flex items-center gap-3 group mb-6">
+              <Moon className="text-primary" />
               <span className="text-xl font-bold">moonlighting.ph</span>
             </div>
             <p className="text-gray-600 mb-6 max-w-xs">

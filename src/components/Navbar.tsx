@@ -1,9 +1,17 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { DropdownMenu } from '@/components/ui/dropdown-menu';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 import { User, LogOut, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { Moon } from './icons/Moon';
@@ -86,7 +94,7 @@ const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to="/" className="flex items-center gap-3 group">
           <Moon className="text-primary" />
           <span className="font-display font-bold text-lg sm:text-xl">moonlighting.ph</span>
         </Link>
