@@ -1,6 +1,6 @@
 Prompt for Redesigning Moonlighting.ph Dashboards and Components
 Objective:
-Revamp the design, UI/UX, and overall user experience of the Moonlighting.ph platform’s dashboards and components to match the attached visual designs—especially the first image, which reflects the current landing page design (hosted separately). The goal is to create a cohesive, modern, and user-friendly experience across the entire platform.
+Revamp the design, UI/UX, and overall user experience of the Moonlighting.ph platform’s dashboards and components to match the attached visual designs—especially the moonlighting-landing.png, which reflects the current landing page design (hosted separately). The goal is to create a cohesive, modern, and user-friendly experience across the entire platform.
 
 Key Requirements:
 
