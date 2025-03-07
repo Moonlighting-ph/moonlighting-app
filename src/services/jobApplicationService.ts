@@ -148,7 +148,7 @@ export const updateApplicationStatus = async (
       throw new Error('You do not have permission to update this application');
     }
     
-    // Update the status
+    // Update the status - KEY FIX: use maybeSingle() instead of single()
     const { data, error } = await supabase
       .from('job_applications')
       .update({ status })
@@ -157,7 +157,7 @@ export const updateApplicationStatus = async (
         id, job_id, moonlighter_id, notes, status, applied_date, ai_match_score, profile_info,
         job:jobs(*)
       `)
-      .single();
+      .maybeSingle(); // Changed from single() to maybeSingle()
     
     if (error) {
       console.error('Supabase error updating application:', error);
@@ -165,7 +165,7 @@ export const updateApplicationStatus = async (
     }
     
     if (!data) {
-      throw new Error('Failed to update application status');
+      throw new Error('Application not found after update');
     }
     
     // Ensure moonlighter property exists using profile_info

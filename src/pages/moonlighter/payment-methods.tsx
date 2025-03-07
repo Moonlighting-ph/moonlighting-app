@@ -14,13 +14,9 @@ const PaymentMethodsPage: React.FC = () => {
       <div className="container mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold mb-6">Payment Methods</h1>
         
-        {session?.user ? (
-          <div className="max-w-3xl mx-auto">
+        {session?.user && (
+          <div className="max-w-2xl mx-auto">
             <MoonlighterPaymentMethods userId={session.user.id} />
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Please sign in to manage your payment methods.</p>
           </div>
         )}
       </div>

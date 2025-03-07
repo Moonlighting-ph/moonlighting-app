@@ -1,9 +1,7 @@
 
 import React from 'react';
-import { NavigateFunction } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { NavigateFunction } from 'react-router-dom';
 
 interface JobNotFoundProps {
   navigate: NavigateFunction;
@@ -11,15 +9,14 @@ interface JobNotFoundProps {
 
 const JobNotFound: React.FC<JobNotFoundProps> = ({ navigate }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">Job not found</p>
-          <Button onClick={() => navigate('/jobs')}>Browse Jobs</Button>
-        </div>
-      </div>
-      <Footer />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">Job Not Found</h1>
+      <p className="text-gray-600 mb-8 text-center max-w-md">
+        The job you're looking for doesn't exist or may have been removed.
+      </p>
+      <Button onClick={() => navigate('/jobs')}>
+        Browse All Jobs
+      </Button>
     </div>
   );
 };

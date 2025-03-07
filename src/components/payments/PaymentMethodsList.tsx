@@ -1,104 +1,43 @@
-
 import React from 'react';
 import { PaymentMethod } from '@/types/payment';
-import { CreditCard, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Trash } from 'lucide-react';
 
 export interface PaymentMethodsListProps {
   methods: PaymentMethod[];
-  userId: string;
-  onUpdate: () => Promise<void>;
+  onMethodsChanged: () => Promise<void>;
 }
 
-const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ methods, userId, onUpdate }) => {
-  const deletePaymentMethod = async (id: string) => {
-    try {
-      const response = await fetch(`/api/payment-methods/${id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete payment method');
-      
-      await onUpdate();
-    } catch (error) {
-      console.error('Error deleting payment method:', error);
-    }
+const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ methods, onMethodsChanged }) => {
+  const handleDelete = async (methodId: string) => {
+    // Call the delete function and refresh the methods list
+    await deletePaymentMethod(methodId);
+    await onMethodsChanged();
   };
 
-  if (!methods || methods.length === 0) {
-    return (
-      <div className="text-center py-6">
-        <p className="text-gray-500">No payment methods found.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {methods.map((method) => (
-        <Card key={method.id} className="overflow-hidden">
-          <CardHeader className="bg-muted/50">
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              <span>{method.method}</span>
-              {method.is_default && <Badge variant="outline">Default</Badge>}
-            </CardTitle>
-            <CardDescription>{formatMethodDetails(method.method, method.details)}</CardDescription>
+    <div className="space-y-4">
+      {methods.map(method => (
+        <Card key={method.id}>
+          <CardHeader>
+            <CardTitle>{method.method}</CardTitle>
           </CardHeader>
-          <CardContent className="p-4">
-            <p className="text-sm text-gray-600">
-              Added on {new Date(method.created_at || '').toLocaleDateString()}
-            </p>
-          </CardContent>
-          <CardFooter className="bg-muted/20 p-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="ml-auto text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => deletePaymentMethod(method.id)}
-            >
-              <Trash className="h-4 w-4 mr-1" />
-              Remove
+          <CardContent className="flex justify-between items-center">
+            <div>
+              <Badge variant={method.is_default ? 'outline' : 'default'}>
+                {method.is_default ? 'Default' : 'Standard'}
+              </Badge>
+            </div>
+            <Button variant="destructive" onClick={() => handleDelete(method.id)}>
+              <Trash className="mr-2" /> Remove
             </Button>
-          </CardFooter>
+          </CardContent>
         </Card>
       ))}
     </div>
   );
-};
-
-// Helper function to format the payment method details
-const formatMethodDetails = (method: string, details: string): string => {
-  try {
-    const detailsObj = JSON.parse(details);
-    switch (method.toLowerCase()) {
-      case 'bank':
-        return `${detailsObj.bank_name} - ${mask(detailsObj.account_number)}`;
-      case 'gcash':
-        return mask(detailsObj.phone_number);
-      case 'paymaya':
-        return mask(detailsObj.phone_number);
-      case 'card':
-        return `${detailsObj.brand} - ${mask(detailsObj.last4, 4, '*')}`;
-      default:
-        return details;
-    }
-  } catch (e) {
-    return details;
-  }
-};
-
-// Mask a string showing only the last 4 characters
-const mask = (value: string, visible = 4, char = '•') => {
-  if (!value) return '';
-  if (value.length <= visible) return value;
-  
-  const visiblePart = value.slice(-visible);
-  const maskedPart = char.repeat(value.length - visible);
-  return `${maskedPart}${visiblePart}`;
 };
 
 export default PaymentMethodsList;
