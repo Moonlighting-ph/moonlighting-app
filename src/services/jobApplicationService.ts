@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { JobApplication } from '@/types/job';
 
@@ -40,7 +39,9 @@ export const submitJobApplication = async (
     const { data, error } = await supabase
       .from('job_applications')
       .insert({
-        ...applicationData,
+        job_id: applicationData.job_id,
+        moonlighter_id: applicationData.moonlighter_id,
+        notes: applicationData.notes,
         applied_date: new Date().toISOString(),
         status: 'pending',
         profile_info: profileData // Include the profile info
@@ -107,8 +108,6 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
       return {
         ...app,
         moonlighter,
-        // Add profile_info if not already present
-        profile_info: app.profile_info || moonlighter
       };
     });
     

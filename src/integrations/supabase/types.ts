@@ -17,6 +17,7 @@ export type Database = {
           job_id: string | null
           moonlighter_id: string | null
           notes: string | null
+          profile_info: Json | null
           status: string
         }
         Insert: {
@@ -26,6 +27,7 @@ export type Database = {
           job_id?: string | null
           moonlighter_id?: string | null
           notes?: string | null
+          profile_info?: Json | null
           status?: string
         }
         Update: {
@@ -35,6 +37,7 @@ export type Database = {
           job_id?: string | null
           moonlighter_id?: string | null
           notes?: string | null
+          profile_info?: Json | null
           status?: string
         }
         Relationships: [

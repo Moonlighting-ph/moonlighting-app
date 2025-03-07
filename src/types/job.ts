@@ -22,12 +22,12 @@ export interface JobApplication {
   job_id: string;
   moonlighter_id: string;
   applied_date: string;
-  status: 'pending' | 'reviewed' | 'approved' | 'rejected';
+  status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid';
   notes?: string | null;
   ai_match_score?: number | null;
+  profile_info?: any; // Adding profile_info to the type
   job?: Job;
   moonlighter?: any; // Profile information
-  profile_info?: any; // Additional profile information
 }
 
 // Adding this to fix the reference in the JobFilters type

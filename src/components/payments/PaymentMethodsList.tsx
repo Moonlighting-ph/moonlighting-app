@@ -1,104 +1,104 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { CreditCard, Wallet, Trash } from 'lucide-react';
 import { PaymentMethod } from '@/types/payment';
-import { deletePaymentMethod, setDefaultPaymentMethod } from '@/services/paymentMethodService';
-import { toast } from 'sonner';
+import { CreditCard, Trash } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
-interface PaymentMethodsListProps {
+export interface PaymentMethodsListProps {
   methods: PaymentMethod[];
   userId: string;
   onUpdate: () => Promise<void>;
 }
 
 const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ methods, userId, onUpdate }) => {
-  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
-  const [isSettingDefault, setIsSettingDefault] = React.useState<string | null>(null);
-
-  const handleDelete = async (id: string) => {
+  const deletePaymentMethod = async (id: string) => {
     try {
-      setIsDeleting(id);
-      await deletePaymentMethod(id, userId);
+      const response = await fetch(`/api/payment-methods/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete payment method');
+      
       await onUpdate();
-      toast.success('Payment method deleted');
     } catch (error) {
       console.error('Error deleting payment method:', error);
-      toast.error('Failed to delete payment method');
-    } finally {
-      setIsDeleting(null);
     }
   };
 
-  const handleSetDefault = async (id: string) => {
-    try {
-      setIsSettingDefault(id);
-      await setDefaultPaymentMethod(id, userId);
-      await onUpdate();
-      toast.success('Default payment method updated');
-    } catch (error) {
-      console.error('Error setting default payment method:', error);
-      toast.error('Failed to update default payment method');
-    } finally {
-      setIsSettingDefault(null);
-    }
-  };
-
-  const getPaymentIcon = (method: string) => {
-    switch (method.toLowerCase()) {
-      case 'bank':
-        return <Wallet className="h-5 w-5" />;
-      default:
-        return <CreditCard className="h-5 w-5" />;
-    }
-  };
-
-  if (!methods.length) {
-    return <p className="text-gray-500 text-center py-4">No payment methods added yet.</p>;
+  if (!methods || methods.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-gray-500">No payment methods found.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {methods.map((method) => (
-        <div key={method.id} className="flex items-center justify-between p-4 bg-white border rounded-lg">
-          <div className="flex items-center gap-3">
-            {getPaymentIcon(method.method)}
-            <div>
-              <p className="font-medium">
-                {method.method}
-                {method.is_default && (
-                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                    Default
-                  </span>
-                )}
-              </p>
-              <p className="text-sm text-gray-500">{method.details}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {!method.is_default && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleSetDefault(method.id)}
-                disabled={!!isSettingDefault}
-              >
-                {isSettingDefault === method.id ? 'Setting...' : 'Set Default'}
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(method.id)}
-              disabled={!!isDeleting}
+        <Card key={method.id} className="overflow-hidden">
+          <CardHeader className="bg-muted/50">
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              <span>{method.method}</span>
+              {method.is_default && <Badge variant="outline">Default</Badge>}
+            </CardTitle>
+            <CardDescription>{formatMethodDetails(method.method, method.details)}</CardDescription>
+          </CardHeader>
+          <CardContent className="p-4">
+            <p className="text-sm text-gray-600">
+              Added on {new Date(method.created_at || '').toLocaleDateString()}
+            </p>
+          </CardContent>
+          <CardFooter className="bg-muted/20 p-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-auto text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => deletePaymentMethod(method.id)}
             >
-              <Trash className="h-4 w-4 text-red-500" />
+              <Trash className="h-4 w-4 mr-1" />
+              Remove
             </Button>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       ))}
     </div>
   );
+};
+
+// Helper function to format the payment method details
+const formatMethodDetails = (method: string, details: string): string => {
+  try {
+    const detailsObj = JSON.parse(details);
+    switch (method.toLowerCase()) {
+      case 'bank':
+        return `${detailsObj.bank_name} - ${mask(detailsObj.account_number)}`;
+      case 'gcash':
+        return mask(detailsObj.phone_number);
+      case 'paymaya':
+        return mask(detailsObj.phone_number);
+      case 'card':
+        return `${detailsObj.brand} - ${mask(detailsObj.last4, 4, '*')}`;
+      default:
+        return details;
+    }
+  } catch (e) {
+    return details;
+  }
+};
+
+// Mask a string showing only the last 4 characters
+const mask = (value: string, visible = 4, char = '•') => {
+  if (!value) return '';
+  if (value.length <= visible) return value;
+  
+  const visiblePart = value.slice(-visible);
+  const maskedPart = char.repeat(value.length - visible);
+  return `${maskedPart}${visiblePart}`;
 };
 
 export default PaymentMethodsList;
