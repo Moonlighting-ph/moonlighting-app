@@ -19,7 +19,6 @@ export function Moon(props: SVGProps<SVGSVGElement>) {
         {...props}
       >
         <path d="M16 4a8 8 0 0 0 12 12 12 12 0 1 1-12-12z" />
-        <circle cx="16" cy="16" r="16" fill="currentColor" opacity="0.3" />
       </svg>
     </div>
   );
