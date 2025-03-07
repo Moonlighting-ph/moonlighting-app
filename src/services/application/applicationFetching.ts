@@ -2,6 +2,27 @@
 import { supabase } from '@/integrations/supabase/client';
 import { JobApplication } from '@/types/job';
 
+// Helper function to ensure requirements and responsibilities are string arrays
+const formatJobData = (jobData: any) => {
+  if (!jobData) return null;
+  
+  // Ensure requirements is a string array
+  const requirements = Array.isArray(jobData.requirements) 
+    ? jobData.requirements.map(r => String(r)) 
+    : [];
+    
+  // Ensure responsibilities is a string array
+  const responsibilities = Array.isArray(jobData.responsibilities) 
+    ? jobData.responsibilities.map(r => String(r)) 
+    : [];
+    
+  return {
+    ...jobData,
+    requirements,
+    responsibilities
+  };
+};
+
 // Fetch a specific application for a moonlighter
 export const getApplicationForMoonlighter = async (jobId: string, moonlighterId: string): Promise<JobApplication | null> => {
   try {
@@ -28,7 +49,8 @@ export const getApplicationForMoonlighter = async (jobId: string, moonlighterId:
     const application: JobApplication = {
       ...data,
       status: data.status as JobApplication['status'],
-      moonlighter: data.profile_info && typeof data.profile_info === 'object' ? data.profile_info : null
+      moonlighter: data.profile_info && typeof data.profile_info === 'object' ? data.profile_info : null,
+      job: formatJobData(data.job)
     };
     
     return application;
@@ -58,7 +80,8 @@ export const fetchJobApplications = async (jobId: string): Promise<JobApplicatio
     const applications = data.map(app => ({
       ...app,
       status: app.status as JobApplication['status'],
-      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null
+      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null,
+      job: formatJobData(app.job)
     }));
     
     return applications as JobApplication[];
@@ -89,7 +112,8 @@ export const fetchMoonlighterApplications = async (moonlighterId: string): Promi
     const applications = data.map(app => ({
       ...app,
       status: app.status as JobApplication['status'],
-      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null
+      moonlighter: app.profile_info && typeof app.profile_info === 'object' ? app.profile_info : null,
+      job: formatJobData(app.job)
     }));
     
     return applications as JobApplication[];

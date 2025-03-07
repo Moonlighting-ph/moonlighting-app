@@ -10,11 +10,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import ApplicationCard from './ApplicationCard';
+import EmptyApplicationsList from './EmptyApplicationsList';
 
 interface ApplicationsListProps {
   applications: JobApplication[];
   onViewDetails: (application: JobApplication) => void;
-  onUpdateStatus: (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected') => void;
+  onUpdateStatus: (applicationId: string, status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid') => void;
   statusUpdateLoading: string | null;
 }
 
@@ -25,11 +26,11 @@ const ApplicationsList: React.FC<ApplicationsListProps> = ({
   statusUpdateLoading
 }) => {
   if (!applications || applications.length === 0) {
-    return null;
+    return <EmptyApplicationsList />;
   }
 
   return (
-    <Card>
+    <Card className="shadow-md border-0">
       <CardContent className="p-0">
         <Table>
           <TableHeader>

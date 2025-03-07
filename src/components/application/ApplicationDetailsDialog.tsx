@@ -39,7 +39,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
       case 'reviewed':
         return 'secondary';
       case 'paid':
-        return 'default';
+        return 'success';
       default:
         return 'outline';
     }

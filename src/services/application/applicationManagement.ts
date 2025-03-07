@@ -2,6 +2,27 @@
 import { supabase } from '@/integrations/supabase/client';
 import { JobApplication } from '@/types/job';
 
+// Helper function to ensure requirements and responsibilities are string arrays
+const formatJobData = (jobData: any) => {
+  if (!jobData) return null;
+  
+  // Ensure requirements is a string array
+  const requirements = Array.isArray(jobData.requirements) 
+    ? jobData.requirements.map(r => String(r)) 
+    : [];
+    
+  // Ensure responsibilities is a string array
+  const responsibilities = Array.isArray(jobData.responsibilities) 
+    ? jobData.responsibilities.map(r => String(r)) 
+    : [];
+    
+  return {
+    ...jobData,
+    requirements,
+    responsibilities
+  };
+};
+
 export const updateApplicationStatus = async (
   applicationId: string, 
   status: 'pending' | 'reviewed' | 'approved' | 'rejected' | 'paid',
@@ -96,7 +117,8 @@ export const updateApplicationStatus = async (
     const result: JobApplication = {
       ...updatedApplication,
       status: updatedApplication.status as JobApplication['status'],
-      moonlighter: updatedApplication.profile_info && typeof updatedApplication.profile_info === 'object' ? updatedApplication.profile_info : null
+      moonlighter: updatedApplication.profile_info && typeof updatedApplication.profile_info === 'object' ? updatedApplication.profile_info : null,
+      job: formatJobData(updatedApplication.job)
     };
     
     console.log('Updated application successfully:', result);

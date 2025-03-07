@@ -35,7 +35,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
       case 'reviewed':
         return 'secondary';
       case 'paid':
-        return 'default';
+        return 'success';
       default:
         return 'outline';
     }
