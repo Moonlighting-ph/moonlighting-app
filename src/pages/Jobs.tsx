@@ -12,31 +12,6 @@ const Jobs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState<JobFilters>({});
 
-  // Update filters whenever searchTerm changes
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      // Apply the search term to filter jobs by title, description, or facility/company
-      setFilters(prev => ({ 
-        ...prev, 
-        searchTerm: searchTerm.trim()
-      }));
-    } else {
-      // If search is empty, remove the searchTerm filter
-      const { searchTerm: _, ...restFilters } = filters;
-      setFilters(restFilters);
-    }
-  }, [searchTerm]);
-
-  // Clear search function
-  const clearSearch = () => {
-    setSearchTerm('');
-  };
-
-  // Handle input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
   return (
     <SmoothScroll>
       <div className="min-h-screen bg-gray-50">
@@ -47,26 +22,6 @@ const Jobs: React.FC = () => {
             <p className="text-gray-600 max-w-2xl mx-auto">
               Browse through available positions at hospitals, clinics, and healthcare facilities across the Philippines.
             </p>
-            
-            <div className="mt-6 max-w-md mx-auto relative">
-              <Input
-                type="text"
-                placeholder="Search for jobs, specializations, or locations..."
-                className="pl-10 h-12 bg-white pr-10"
-                value={searchTerm}
-                onChange={handleSearchChange}
-              />
-              <Search className="absolute left-3 top-4 h-4 w-4 text-gray-400" />
-              {searchTerm && (
-                <button 
-                  type="button"
-                  className="absolute right-3 top-4 text-gray-400 hover:text-gray-600"
-                  onClick={clearSearch}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
           </div>
           
           <JobBoard initialFilters={filters} />
