@@ -100,7 +100,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
                   Mark as Paid
                 </Button>
               )}
-              {(application.status !== 'approved' && application.status !== 'paid') && (
+              {application.status !== 'approved' && application.status !== 'paid' && (
                 <>
                   <Button
                     variant="outline"
