@@ -4,14 +4,7 @@ import { JobApplication } from '@/types/job';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { 
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { MoreVertical, CheckCircle } from 'lucide-react';
+import { Eye, CheckCircle, X } from 'lucide-react';
 
 interface ApplicationCardProps {
   application: JobApplication;
@@ -26,6 +19,10 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   onUpdateStatus,
   statusUpdateLoading
 }) => {
+  const { id, status, applied_date, moonlighter, job } = application;
+  
+  const isLoading = statusUpdateLoading === id;
+  
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'approved':
@@ -40,75 +37,62 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         return 'outline';
     }
   };
-
-  const isLoading = statusUpdateLoading === application.id;
-
+  
+  const getStatusText = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+  
   return (
-    <TableRow key={application.id}>
-      <TableCell className="font-medium">
-        {application.moonlighter?.first_name} {application.moonlighter?.last_name}
-      </TableCell>
-      <TableCell>{application.job?.title}</TableCell>
+    <TableRow>
       <TableCell>
-        {new Date(application.applied_date).toLocaleDateString()}
+        <div className="font-medium">
+          {moonlighter?.first_name} {moonlighter?.last_name}
+        </div>
       </TableCell>
       <TableCell>
-        <Badge variant={getStatusBadgeVariant(application.status)}>
-          {isLoading ? (
-            <span className="flex items-center">
-              <span className="mr-1 h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-              Updating...
-            </span>
-          ) : (
-            application.status.charAt(0).toUpperCase() + application.status.slice(1)
-          )}
+        <div className="font-medium">{job?.title}</div>
+        <div className="text-xs text-gray-500">{job?.company}</div>
+      </TableCell>
+      <TableCell>
+        {applied_date ? new Date(applied_date).toLocaleDateString() : 'N/A'}
+      </TableCell>
+      <TableCell>
+        <Badge variant={getStatusBadgeVariant(status)}>
+          {isLoading ? 'Updating...' : getStatusText(status)}
         </Badge>
       </TableCell>
-      <TableCell>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0" disabled={isLoading}>
-              <MoreVertical className="h-4 w-4" />
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-2">
+          <Button
+            onClick={() => onViewDetails(application)}
+            size="sm"
+            variant="ghost"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          
+          {status !== 'approved' && status !== 'paid' && (
+            <Button
+              onClick={() => onUpdateStatus(id, 'approved')}
+              size="sm"
+              variant="ghost"
+              disabled={isLoading}
+            >
+              <CheckCircle className="h-4 w-4 text-green-500" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              onClick={() => onViewDetails(application)}
+          )}
+          
+          {status !== 'rejected' && (
+            <Button
+              onClick={() => onUpdateStatus(id, 'rejected')}
+              size="sm"
+              variant="ghost"
+              disabled={isLoading}
             >
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              disabled={isLoading || application.status === 'reviewed'}
-              onClick={() => onUpdateStatus(application.id, 'reviewed')}
-            >
-              Mark as Reviewed
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={isLoading || application.status === 'approved'}
-              onClick={() => onUpdateStatus(application.id, 'approved')}
-            >
-              Approve
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={isLoading || application.status === 'rejected'}
-              onClick={() => onUpdateStatus(application.id, 'rejected')}
-              className="text-red-600"
-            >
-              Reject
-            </DropdownMenuItem>
-            {application.status === 'approved' && (
-              <DropdownMenuItem
-                disabled={isLoading || application.status === 'paid'}
-                onClick={() => onUpdateStatus(application.id, 'paid')}
-                className="text-green-600"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Mark as Paid
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <X className="h-4 w-4 text-red-500" />
+            </Button>
+          )}
+        </div>
       </TableCell>
     </TableRow>
   );
