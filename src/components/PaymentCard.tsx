@@ -37,6 +37,11 @@ const PaymentCard: React.FC<PaymentCardProps> = ({ payment, userType }) => {
     return 'reference_number' in payment;
   };
 
+  // Check if receipt URL exists
+  const hasReceiptUrl = (payment: Payment | ManualPayment): boolean => {
+    return 'receipt_url' in payment && !!payment.receipt_url;
+  };
+
   return (
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <CardHeader className="pb-2">
@@ -71,7 +76,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({ payment, userType }) => {
         </p>
       </CardContent>
       <CardFooter className="pt-2 pb-4">
-        {isManualPayment(payment) && payment.receipt_url && (
+        {hasReceiptUrl(payment) && (
           <Button 
             variant="outline" 
             size="sm" 

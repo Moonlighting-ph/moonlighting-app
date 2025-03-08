@@ -1,3 +1,4 @@
+
 export type PaymentMethodType = 'gcash' | 'paymaya' | 'bank' | 'bank_account' | 'credit_card' | 'paypal';
 
 export interface PaymentMethod {
@@ -51,6 +52,7 @@ export interface ManualPayment {
   status?: string;
   created_at?: string;
   updated_at?: string;
+  receipt_url?: string;
 }
 
 export interface PaymentMethodFormProps {
@@ -66,6 +68,7 @@ export interface ManualPaymentFormProps {
   paymentMethods?: PaymentMethod[];
   onSuccess?: (payment: ManualPayment) => void;
   onCancel?: () => void;
+  onComplete?: () => void;
 }
 
 export interface StripePaymentFormProps {

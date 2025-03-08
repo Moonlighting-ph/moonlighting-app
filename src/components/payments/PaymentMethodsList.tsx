@@ -46,9 +46,9 @@ const PaymentMethodsList: React.FC<PaymentMethodsListProps> = ({ methods, onDele
                 )}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {method.type === 'bank_account' && method.details.account_number 
+                {method.type === 'bank_account' && typeof method.details === 'object' && method.details.account_number 
                   ? `**** ${method.details.account_number.slice(-4)}` 
-                  : method.type === 'gcash' && method.details.phone 
+                  : method.type === 'gcash' && typeof method.details === 'object' && method.details.phone 
                   ? method.details.phone 
                   : 'Details hidden for security'}
               </p>

@@ -90,7 +90,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
             </DialogClose>
             
             <div className="space-x-2">
-              {application.status === 'approved' ? (
+              {application.status === 'approved' && (
                 <Button
                   variant="default"
                   disabled={isLoading || application.status === 'paid'}
@@ -99,7 +99,8 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Mark as Paid
                 </Button>
-              ) : (
+              )}
+              {application.status !== 'approved' && application.status !== 'paid' && (
                 <>
                   <Button
                     variant="outline"
