@@ -66,6 +66,17 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
   };
   
   if (!application) return null;
+
+  // Extract moonlighter and job information
+  const userName = application.moonlighter?.first_name && application.moonlighter?.last_name
+    ? `${application.moonlighter.first_name} ${application.moonlighter.last_name}`
+    : 'Unknown Applicant';
+  
+  const userEmail = application.moonlighter?.email || 'No email provided';
+  const jobTitle = application.job?.title || 'Unknown Job';
+  const jobCompany = application.job?.company || 'Unknown Company';
+  const coverLetter = application.notes || 'No cover letter provided';
+  const appliedDate = application.applied_date || '';
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -73,7 +84,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Application Details</DialogTitle>
           <DialogDescription>
-            Reviewing application from {application.user_name} for {application.job_title}
+            Reviewing application from {userName} for {jobTitle}
           </DialogDescription>
         </DialogHeader>
         
@@ -81,7 +92,7 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Applicant</Label>
-              <p className="font-medium">{application.user_name}</p>
+              <p className="font-medium">{userName}</p>
             </div>
             <div>
               <Label>Status</Label>
@@ -89,25 +100,25 @@ const ApplicationDetailsDialog: React.FC<ApplicationDetailsDialogProps> = ({
             </div>
             <div>
               <Label>Applied On</Label>
-              <p>{formatDate(application.created_at)}</p>
+              <p>{appliedDate ? formatDate(appliedDate) : 'Unknown date'}</p>
             </div>
             <div>
               <Label>Contact</Label>
-              <p>{application.user_email}</p>
+              <p>{userEmail}</p>
             </div>
           </div>
           
           <div className="mt-2">
             <Label>Cover Letter / Note</Label>
             <div className="p-3 bg-gray-50 rounded-md mt-1">
-              {application.cover_letter || 'No cover letter provided'}
+              {coverLetter}
             </div>
           </div>
           
           <div className="mt-2">
             <Label>Job Applied For</Label>
-            <p className="font-medium">{application.job_title}</p>
-            <p className="text-sm text-gray-500">{application.job_company}</p>
+            <p className="font-medium">{jobTitle}</p>
+            <p className="text-sm text-gray-500">{jobCompany}</p>
           </div>
           
           {/* Only show status update if not paid yet */}

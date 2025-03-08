@@ -151,9 +151,9 @@ const Applications: React.FC = () => {
         
         <ApplicationDetailsDialog
           application={selectedApplication}
-          open={showNoteDialog}
-          onOpenChange={setShowNoteDialog}
-          onUpdateStatus={handleUpdateStatus}
+          isOpen={showNoteDialog}
+          onClose={() => setShowNoteDialog(false)}
+          onStatusChange={handleUpdateStatus}
           statusUpdateLoading={statusUpdateLoading}
         />
       </div>
